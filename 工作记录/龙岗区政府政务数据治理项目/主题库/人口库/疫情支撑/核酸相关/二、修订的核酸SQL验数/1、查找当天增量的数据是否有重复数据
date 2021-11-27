@@ -1,0 +1,7 @@
+1、查找当天增量的数据是否有重复数据
+select REAL_NAME,ID_CARD_NO,COLLECTION_TIME,count(1)from dm_yq_hsjcjg_incre_dqzl 
+ group by  REAL_NAME,ID_CARD_NO,COLLECTION_TIME  having count(1)=1;
+ 
+ select REAL_NAME,ID_CARD_NO,COLLECTION_TIME,count(1)from dm_yq_hsjcjg_incre_dqzl 
+ group by  REAL_NAME,ID_CARD_NO,COLLECTION_TIME  having count(1)>1;
+ 

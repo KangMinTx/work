@@ -1,0 +1,8 @@
+--找到新增的数据（没有在历史表出现,核酸新增人员的数据）
+drop table if EXISTS dm_yq_hsjcjg_incre_zl;
+create  table dm_yq_hsjcjg_incre_zl
+select * from dm_yq_hsjcjg_incre_dqzl a where not EXISTS(select 1 from dm_yq_hsjcjg_incre_lsqlb b 
+                                                         where  a.SPECIMEN_CODE=b.SPECIMEN_CODE ) AND SPECIMEN_CODE IS NOT NULL ;
+                                                         
+--查看这部分的人员
+

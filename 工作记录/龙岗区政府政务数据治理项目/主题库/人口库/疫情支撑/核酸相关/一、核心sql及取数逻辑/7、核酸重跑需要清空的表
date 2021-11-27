@@ -1,0 +1,9 @@
+TRUNCATE table dm_yq_hsjcjg_incre_dqzl;
+TRUNCATE table dm_yq_hsjcjg_incre_xg;
+TRUNCATE table dm_yq_hsjcjg_incre_lsqlb_temp;
+TRUNCATE table dm_rkk_syrkfyqk_hs_02;
+TRUNCATE table cyb_temp01_hsql;
+TRUNCATE table cyb_temp02_hsql;
+TRUNCATE table cyb_temp03_hsql;
+TRUNCATE table dm_rkk_syrkfyqk_1_temp_hsql;
+TRUNCATE table dm_rkk_syrkfyqk_incre_hsxg_LS;

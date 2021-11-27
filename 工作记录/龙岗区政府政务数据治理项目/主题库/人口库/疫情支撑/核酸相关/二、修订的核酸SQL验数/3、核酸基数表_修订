@@ -1,0 +1,145 @@
+--SparkSQL
+--_********************************************************_
+--author: chenbk
+--create time: 2021-10-25 
+--_********************************************************_
+insert overwrite table HSCYRYBDB_SM
+select
+xm
+,zjhm
+,case when zjlx='中华人民共和国居民身份证' then 1 else 7 end zjlx
+,'0' byzd
+,byzd1 byzd1
+,cast(null as string) byzd2
+,'0' byzd3
+,cast(null as string) byzd4
+,cast(null as string) byzd5
+from (
+select xm,replace(zjhm,'.','') zjhm,zjlx,byzd1,row_number() over(partition by replace(zjhm,'.','') order by XGSJ desc,case when zjlx='中华人民共和国居民身份证' then 1 else 7 end  asc) rn 
+   ,		case when length(replace(zjhm,'.',''))=18 then 
+ if(
+ /*18位身份证校验*/
+ case when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='0' then '1'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='1' then '0'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='2' then 'X'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='3' then '9'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='4' then '8'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='5' then '7'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='6' then '6'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='7' then '5'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='8' then '4'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='9' then '3'
+	  when 
+		mod( (substr(replace(zjhm,'.',''),1,1)*7)+(substr(replace(zjhm,'.',''),2,1)*9)+(substr(replace(zjhm,'.',''),3,1)*10)+(substr(replace(zjhm,'.',''),4,1)*5)
+			+(substr(replace(zjhm,'.',''),5,1)*8)+(substr(replace(zjhm,'.',''),6,1)*4)+(substr(replace(zjhm,'.',''),7,1)*2)+(substr(replace(zjhm,'.',''),8,1)*1)
+			+(substr(replace(zjhm,'.',''),9,1)*6)+(substr(replace(zjhm,'.',''),10,1)*3)+(substr(replace(zjhm,'.',''),11,1)*7)+(substr(replace(zjhm,'.',''),12,1)*9)
+			+(substr(replace(zjhm,'.',''),13,1)*10)+(substr(replace(zjhm,'.',''),14,1)*5)+(substr(replace(zjhm,'.',''),15,1)*8)+(substr(replace(zjhm,'.',''),16,1)*4)
+			+(substr(replace(zjhm,'.',''),17,1)*2),11) ='10' then '2' 
+	 end = substr(replace(zjhm,'.',''),18,1) ,'1','0')
+ when  
+	/*15位身份证无需校验*/
+	length(replace(zjhm,'.',''))=15 then '1'
+ when 
+    /*港澳通行证*/
+    ((replace(zjhm,'.','') like 'H%' or replace(zjhm,'.','') like 'M%') and (length(replace(zjhm,'.',''))=9 or length(replace(zjhm,'.',''))=11)) then '1'
+ when 
+	/*电子港澳通行证*/
+	(replace(zjhm,'.','') RLIKE '^C[A-Z]\\d{7}$' or replace(zjhm,'.','') RLIKE '^C\\d{8}$' ) then '1'     
+ when 
+	/*香港身份证*/
+	(replace(zjhm,'.','') RLIKE '^[A-Z]{1}\\d{6}[\\（\\(][0-9A]{1}[\\）\\)]$') then '1'
+ when 
+	/*澳门身份证*/
+    (replace(zjhm,'.','') RLIKE '^[1|5|7]\\d{6}[\\(\\(][0-9Aa][\\)\\）]$') then '1'
+ when 
+	/*台湾身份证*/
+	((ASCII(replace(zjhm,'.',''))>=65 and ASCII(replace(zjhm,'.',''))<=90) and (length(replace(zjhm,'.',''))=10) and
+      replace(zjhm,'.','') not rlike '^[A-Z]{1}\\d{6}[\\（\\(][0-9A]{1}[\\）\\)]$') then '1'
+ else '0' end as byzd4
+  from   dm_rkk_syrkfyqk_lsql_bqb 
+ )where rn=1 and byzd4=1
+union all
+select
+xm
+,zjhm
+,case when zjlx='中华人民共和国居民身份证' then 1 else 7 end zjlx
+,'0' byzd
+,'实有人口' byzd1
+,cast(null as string) byzd2
+,'0' byzd3
+,cast(null as string) byzd4
+,cast(null as string) byzd5
+from dm_rkk_syrkkb a
+where dt=(select max(dt) from dm_rkk_syrkkb) and not exists(
+select 1 from dm_rkk_syrkfyqk_lsql_bqb b where a.zjhm=replace(b.zjhm,'.','') and a.xm=b.xm
+) and xm is not null
+union all
+select
+xm
+,zjhm
+,case when zjlx='中华人民共和国居民身份证' then 1 else 7 end zjlx
+,'0' byzd
+,'重点核查人员' byzd1
+,cast(null as string) byzd2
+,'0' byzd3
+,cast(null as string) byzd4
+,cast(null as string) byzd5
+from (
+select  name xm, cardno zjhm ,case when length(cardno)=18 then '中华人民共和国居民身份证' else '其他' end zjlx,row_number() over(partition by cardno order by hcsj desc) rn from
+ods_yxy_yqfksyxshc_total where dt=(select max(dt) from ods_yxy_yqfksyxshc_total) and name is not null and cardno is not null and length(cardno)=18
+)a 
+where not exists(
+select 1 from dm_rkk_syrkfyqk_lsql_bqb b where a.zjhm=replace(b.zjhm,'.','') and a.xm=b.xm
+) and rn=1 and not exists(
+select 1 from dm_rkk_syrkkb c where a.xm=c.xm and a.zjhm=c.zjhm
+)

@@ -1,0 +1,302 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-08-17 18:51:10
+--_********************************************************_
+drop table if exists dm_rkk_syrkfyqk_incre_02_hsxg;
+create table dm_rkk_syrkfyqk_incre_02_hsxg as 
+select 
+cast(a.zjlx as String) as zjlx --证件类型
+,nvl(b.ID_CARD_NO,a.zjhm) zjhm --证件号码
+,cast(a.bm  as String) as bm --别名
+,nvl(b.REAL_NAME,a.xm)  xm --姓名
+,cast(a.gj as String) as gj --国籍
+,cast(a.gatbz as String) as gatbz --港澳台标志
+,cast(a.csny as String) as csny --出生年月
+,cast(a.xb as String) as xb --性别
+,cast(a.mz as String) as mz --民族
+,cast(a.jg as String) as jg --籍贯
+,cast(a.zjxy as String) as zjxy --宗教信仰
+,cast(a.lsrq as String) as lsrq --来深日期
+,cast(a.hyzk as String) as hyzk --婚姻状况
+,cast(a.chrq as String) as chrq --初婚日期
+,cast(a.swrq as String) as swrq --死亡日期
+,cast(a.jkzk as String) as jkzk --健康状况
+,cast(a.byyx as String) as byyx --毕业院校
+,cast(a.hy as String) as hy --行业
+,cast(a.zhy as String) as zhy --职业
+,cast(a.zc as String) as zc --职称
+,cast(a.ysr as String) as ysr --月收入
+,cast(a.sg as String) as sg --身高
+,cast(a.zy as String) as zy --专业
+,cast(a.by as String) as by --兵役
+,cast(a.xx as String) as xx --血型
+,cast(a.xw as String) as xw --学位
+,cast(a.yhzgx as String) as yhzgx --与户主关系
+,cast(a.hjlx as String) as hjlx --户籍类型
+,cast(a.yhj as String) as yhj --原户籍
+,cast(a.hklx as String) as hklx --户口类型
+,cast(a.hkxz as String) as hkxz --户口性质
+,cast(a.sfds as String) as sfds --是否独生
+,cast(a.whcd as String) as whcd --文化程度
+,cast(a.zzmm as String) as zzmm --政治面貌
+,cast(a.hkszd as String) as hkszd --户口所在地
+,cast(a.gllb as String) as gllb --管理类别
+,cast(a.xzqhid as String) as xzqhid --行政区划id
+,cast(a.sftj as String) as sftj --是否统计
+,cast(a.gxbz as String) as gxbz --更新标志
+,cast(a.zjhm2 as String) as zjhm2 --证件号码2
+,cast(a.xgljgid as String) as xgljgid --新管理机构id
+,cast(a.lkyy as String) as lkyy --离开原因
+,cast(a.ckqk as String) as ckqk --持卡情况
+,cast(a.bydt as String) as bydt --避孕动态
+,cast(a.sydt as String) as sydt --生育动态
+,cast(a.yx as String) as yx  --邮箱
+,nvl(b.PHONE,a.sj) sj  --手机
+,cast(a.zzdh as String) as zzdh --住宅电话
+,cast(a.zslb as String) as zslb --住所类别
+,cast(a.gzdw as String) as gzdw --工作单位
+,cast(a.dwdz as String) as dwdz --单位地址
+,cast(a.bgdh as String) as bgdh --办公电话
+,cast(a.blr as String) as blr --办理人
+,cast(a.blsj as String) as blsj --办理时间
+,cast(a.xgz as String) as xgz --修改者
+,cast(a.xgsj as String) as xgsj --修改时间
+,cast(a.cjsj as String) as cjsj --创建时间
+,cast(a.cjz as String) as cjz --创建者
+,cast(a.bz as String) as bz --备注
+,cast(a.djr as String) as djr --登记人
+,cast(a.djsj as String) as djsj --登记时间
+,cast(a.crsj as String) as crsj --插入时间
+,cast(a.yxx as String) as  yxx --有效性
+,cast(a.yxrq as String) as yxrq --有效日期
+,nvl(a.jdbm,'0') as jdbm  --街道编码
+,nvl(a.jdmc,'0') as jdmc --街道名称
+,nvl(a.sqbm,'0') as sqbm --社区编码
+,nvl(a.sqmc,'0') as sqmc --社区名称
+,nvl(a.wgbm,'0') as wgbm  --网格编码
+,nvl(a.wgmc,'0') as wgmc --网格名称
+,cast(a.house_code as String) as house_code --房屋编码
+,cast(a.building_code as String) as building_code --楼栋编码
+,cast(a.lxdh as String) as lxdh --联系电话
+,cast(a.tzr as String) as tzr --同住人
+,cast(b.COLLECTION_TIME as String) as hsjcsj  --核酸检测时间
+,cast(null as String) ymjzsj  --疫苗接种时间
+,cast(a.lyb as String) as lyb
+,cast(a.lyjg as String) as lyjg
+,substr(now(),1,17) yxsj
+,cast(a.syrkjzdz as String) as syrkjzdz
+,cast(a.fwmc as String) as fwmc
+,cast(b.COOPERATIVE_INSTITUTION as String) as jcjg
+,cast(b.REPORT_TIME as String)  as bgrq
+,cast(b.RECEIVE_TIME as String)  as jsrq
+,cast(b.SPECIMEN_TYPE as String)  as bblx
+,cast(b.CHECK_RESULT as String)  as jcjieguo
+,cast(b.IMPORT_BATCH as String)  as drpc
+,cast(a.byzd1 as String)  as byzd1 --实有人口标识
+,cast(a.byzd2 as String) as byzd2 --手机号
+,cast(a.byzd3 as String) as byzd3 --手机号来源说明
+,cast(b.bz as String)  as byzd4 --核酸来源说明
+,'核酸检测' as byzd5 --分类
+from
+(select * from dm_yq_hsjcjg_incre_zlsj_to_or ) b
+left join
+dm_rkk_syrkkb_tjt a
+on trim(a.zjhm)=trim(b.ID_CARD_NO);
+
+
+
+--采样表增量去重
+drop table if exists cyb_incre_temp01_hsxg; 
+create table cyb_incre_temp01_hsxg as 
+select * from 
+(select 
+  cardno
+ ,areaid
+ ,CJTIME as hsjcsj
+ ,JCJGMC
+ ,MOBILEPHONE
+ ,name
+,row_number() over(partition by MOBILEPHONE,substr(CJTIME,1,10),CARDNO,JCJGMC
+					   order by CJTIME desc,MOBILEPHONE,CJTIME,CARDNO,JCJGMC desc ) as rn
+from ods_swsjkwyh_yqfkhscjcollection_temp_cs  )
+where rn=1;
+
+
+drop table if exists cyb_temp02_hszl;
+create table cyb_temp02_hszl as 
+select distinct replace(streetname,'街道','') jdmc
+				,replace(communityname,'社区','') sqmc
+				,substr(areaid,1,12) as areaid from  ods_swyt_street_community;
+--采样表增量关联街道
+drop table if exists cyb_incre_temp03_hsxg;
+create table cyb_incre_temp03_hsxg as 
+select 
+ t1.cardno
+,t1.hsjcsj
+,t1.areaid
+,t1.jcjgmc
+,t1.name
+,t1.MOBILEPHONE
+,t2.jdmc
+,t2.sqmc
+from cyb_incre_temp01_hsxg t1
+left join cyb_temp02_hszl t2 
+on substr(t1.areaid,1,12)=t2.areaid;
+
+
+--实有人口表，非实有人口补充街道
+drop table if exists dm_rkk_syrkfyqk_incre_1_temp_hsxg ;
+create table dm_rkk_syrkfyqk_incre_1_temp_hsxg as 
+select 
+t1.*
+,t2.jdmc as byzd6
+,t2.sqmc as byzd7
+,cast(null as string) as byzd8
+,cast(null as string) as byzd9
+,cast(null as string) as byzd10
+from
+(select * from dm_rkk_syrkfyqk_incre_02_hsxg where byzd1 is null) t1 
+left join cyb_incre_temp03_hsxg t2 
+on concat_ws('',t1.zjhm,xm,t1.hsjcsj,t1.jcjg)=concat_ws('',t2.cardno,name,t2.hsjcsj,t2.jcjgmc)
+union 
+select 
+t3.*
+,cast(null as STRING) as byzd6
+,cast(null as string) as byzd7
+,cast(null as STRING) as byzd8
+,cast(null as string) as byzd9
+,cast(null as string) as byzd10
+from dm_rkk_syrkfyqk_incre_02_hsxg t3 where byzd1='实有人口';
+
+
+/*drop table if exists dm_rkk_syrkfyqk_incre_hsxg;
+create table dm_rkk_syrkfyqk_incre_hsxg as  
+select * from dm_rkk_syrkfyqk_incre_1_temp_hsxg ;*/
+drop table if exists dm_rkk_syrkfyqk_incre_hsxg;
+create table dm_rkk_syrkfyqk_incre_hsxg as  
+select 
+zjlx
+,zjhm
+,bm
+,xm
+,gj
+,gatbz
+,csny
+,xb
+,mz
+,jg
+,zjxy
+,lsrq
+,hyzk
+,chrq
+,swrq
+,jkzk
+,byyx
+,hy
+,zhy
+,zc
+,ysr
+,sg
+,zy
+,by
+,xx
+,xw
+,yhzgx
+,hjlx
+,yhj
+,hklx
+,hkxz
+,sfds
+,whcd
+,zzmm
+,hkszd
+,gllb
+,xzqhid
+,sftj
+,gxbz
+,zjhm2
+,xgljgid
+,lkyy
+,ckqk
+,bydt
+,sydt
+,yx
+,sj
+,zzdh
+,zslb
+,gzdw
+,dwdz
+,bgdh
+,blr
+,blsj
+,xgz
+,xgsj
+,cjsj
+,cjz
+,bz
+,djr
+,djsj
+,crsj
+,yxx
+,yxrq
+,jdbm
+,jdmc
+,sqbm
+,sqmc
+,wgbm
+,wgmc
+,house_code
+,building_code
+,lxdh
+,tzr
+,hsjcsj
+,ymjzsj
+,lyb
+,lyjg
+,yxsj
+,syrkjzdz
+,fwmc
+,jcjg
+,bgrq
+,jsrq
+,bblx
+,jcjieguo
+,drpc
+,byzd1
+,byzd2
+,byzd3
+,byzd4
+,byzd5
+,byzd6
+,byzd7
+,byzd8
+,byzd9
+,byzd10
+from (
+select * from (
+select a.*, row_number() over(partition by xm,zjhm,substr(hsjcsj,1,10)
+					   order by sj,byzd7 desc ) as rn
+					   from dm_rkk_syrkfyqk_incre_1_temp_hsxg a ) where rn=1 );
+
+insert overwrite table dm_rkk_syrkfyqk_incre_hsxg_LS partition (dt='${DayBeforeStartTime}')
+SELECT * FROM dm_rkk_syrkfyqk_incre_hsxg;
+
+
+-------------------------------------------------用于标签表（全量加增量）----------------------------------------------------
+--修改全量表（保留上一次的历史全量表）
+ drop table if EXISTS dm_rkk_syrkfyqk_lsql_bqb_temp;
+CREATE table dm_rkk_syrkfyqk_lsql_bqb_temp select * from dm_rkk_syrkfyqk_lsql_bqb;
+
+-----把当前的数据插回到全量的表
+INSERT overwrite table dm_rkk_syrkfyqk_lsql_bqb
+select a.* from dm_rkk_syrkfyqk_lsql_bqb_temp  a
+left join dm_rkk_syrkfyqk_incre_hsxg b
+on nvl(a.xm,'1') = nvl(b.xm,'1')
+and nvl(a.zjhm,'1') = nvl(b.zjhm,'1')
+and nvl(substr(a.hsjcsj,1,10),'1')=nvl(substr(b.hsjcsj,1,10),'1')
+where b.yxsj is NULL
+union ALL
+select * from dm_rkk_syrkfyqk_incre_hsxg;
+
+
