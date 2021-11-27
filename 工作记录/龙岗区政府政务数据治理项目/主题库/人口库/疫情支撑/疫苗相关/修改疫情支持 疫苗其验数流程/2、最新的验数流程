@@ -1,0 +1,183 @@
+--疫苗表
+SELECT COUNT(1) FROM dm_rkk_syrkfyqk_2_new;--8437100
+SELECT COUNT(1) FROM dm_rkk_ymfk_ymb;--8434861
+--根据姓名、身份证及接种时间去重
+SELECT COUNT(1) FROM (
+SELECT YMJZRQ,SZZXM,SFZ FROM dm_rkk_syrkfyqk_2_new GROUP BY YMJZRQ,SZZXM,SFZ HAVING COUNT(1)=1 ); --8424150
+SELECT COUNT(1) FROM (
+SELECT YMJZRQ,SZZXM,SFZ FROM dm_rkk_ymfk_ymb GROUP BY YMJZRQ,SZZXM,SFZ HAVING COUNT(1)=1 );--8434820
+--新表比旧表多，但与没有去重的数据相比，少了不少，查看是否有重复数据
+
+--查看疫苗表总数，新表及旧表
+SELECT COUNT(1),COUNT(DISTINCT sfz) FROM DM_RKK_YQFMYMBQB_YMB;--4609116,4609116
+SELECT COUNT(1),COUNT(DISTINCT sfz)  FROM DM_RKK_YQFMYMBQB;--4599700,4598390
+--找出旧表（DM_RKK_YQFMYMBQB）没有在新表（DM_RKK_YQFMYMBQB_YMB）的数据
+SELECT count(1) FROM (
+SELECT * FROM DM_RKK_YQFMYMBQB A 
+WHERE NOT EXISTS (SELECT 1 FROM DM_RKK_YQFMYMBQB_YMB B WHERE A.SFZ=B.SFZ)) WHERE sfz IS NOT  NULL;--221
+
+--疫苗表
+SELECT count(1) FROM dm_rkk_syrkfyqk_2_new a WHERE NOT EXISTS (SELECT 1 FROM dm_rkk_ymfk_ymb b WHERE a.SFZ=b.SFZ);--256
+
+--找出新表有，旧表没有的数据
+SELECT COUNT(1) FROM (
+SELECT * FROM DM_RKK_YQFMYMBQB_ymb A 
+WHERE NOT EXISTS (SELECT 1 FROM DM_RKK_YQFMYMBQB B WHERE A.SFZ=B.SFZ)) WHERE sfz IS NOT  NULL;--10935
+
+
+-------------------------------------------如果发现疫苗视图的数据不对---------------------------------------
+1、查看新表不在旧表的数据--疫苗表、及疫苗视图表
+SELECT count(1) FROM dm_rkk_syrkfyqk_2_new a WHERE NOT EXISTS (SELECT 1 FROM dm_rkk_ymfk_ymb b WHERE a.SFZ=b.SFZ);--256
+
+
+SELECT COUNT(1) FROM (
+SELECT * FROM DM_RKK_YQFMYMBQB A 
+WHERE NOT EXISTS (SELECT 1 FROM DM_RKK_YQFMYMBQB_YMB B WHERE A.SFZ=B.SFZ)) WHERE sfz IS NOT  NULL;--218
+
+如果发现，数据差距达到4百以上，则需要重新查原因，可能是因为调度出了问题
+疫苗有关的全量表，有两张：一、ymjz_new_cbk_ql（大数据平台），其对应：dm_rkk_ymfk_ymb
+二、DM_RKK_YQFMYMBQB_TO_YXY（疫苗视图表），其对应：DM_RKK_YQFMYMBQB_YMB
+
+方法：
+把大数据平台的DM_RKK_YQFMYMBQB_TO_YXY推到14物理机，表出为：DM_RKK_YQFMYMBQB_TO_YXY
+bridge:ZH_DM_RKK_YQFMYMBQB_TO_YXY_疫苗总数
+
+--找出不在新表的数据，并创建表
+CREATE TABLE DM_RKK_YQFMYMBQB_TO_YXY_cbk as
+SELECT * FROM DM_RKK_YQFMYMBQB_TO_YXY a WHERE NOT EXISTS (SELECT 1 FROM DM_RKK_YQFMYMBQB_YMB  b WHERE a.sfz=b.sfz);
+
+--利用merge into,插入相应的数据
+MERGE INTO  LQGSM.DM_RKK_YQFMYMBQB_YMB A
+USING (SELECT
+szzxm
+,sfz
+,ym_mc
+,zc
+,ym_dm
+,dyzjzsj
+,dezjzsj
+,dszjzsj
+,cjydm
+,cjedm
+,cjsdm
+,cjymc
+,cjemc
+,cjsmc
+,jdmc
+,jdbm
+,jzdwmc
+,szsxtdwbm
+,sfywc
+,yxsj
+,yxsj2
+,byzd2
+,byzd3
+,byzd4
+,byzd5
+,byzd6
+,byzd7
+,byzd8
+,byzd9
+,byzd10
+  FROM LQGSM.DM_RKK_YQFMYMBQB_TO_YXY_cbk ) B
+ON (A.SFZ=B.SFZ )
+WHEN MATCHED
+THEN
+  UPDATE SET
+--A.szzxm=B.szzxm
+--,A.sfz=B.sfz
+A.ym_mc=B.ym_mc
+,A.zc=B.zc
+,A.ym_dm=B.ym_dm
+,A.dyzjzsj=B.dyzjzsj
+,A.dezjzsj=B.dezjzsj
+,A.dszjzsj=B.dszjzsj
+,A.cjydm=B.cjydm
+,A.cjedm=B.cjedm
+,A.cjsdm=B.cjsdm
+,A.cjymc=B.cjymc
+,A.cjemc=B.cjemc
+,A.cjsmc=B.cjsmc
+,A.jdmc=B.jdmc
+,A.jdbm=B.jdbm
+,A.jzdwmc=B.jzdwmc
+,A.szsxtdwbm=B.szsxtdwbm
+,A.sfywc=B.sfywc
+,A.yxsj=SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,A.yxsj2=SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,A.byzd2=B.byzd2
+,A.byzd3=B.byzd3
+,A.byzd4=B.byzd4
+,A.byzd5=B.byzd5
+,A.byzd6=B.byzd6
+,A.byzd7=B.byzd7
+,A.byzd8=B.byzd8
+,A.byzd9=B.byzd9
+,A.byzd10=B.byzd10
+WHEN NOT MATCHED
+THEN
+  INSERT (
+A.szzxm
+,A.sfz
+,A.ym_mc
+,A.zc
+,A.ym_dm
+,A.dyzjzsj
+,A.dezjzsj
+,A.dszjzsj
+,A.cjydm
+,A.cjedm
+,A.cjsdm
+,A.cjymc
+,A.cjemc
+,A.cjsmc
+,A.jdmc
+,A.jdbm
+,A.jzdwmc
+,A.szsxtdwbm
+,A.sfywc
+,A.yxsj
+,A.yxsj2
+,A.byzd2
+,A.byzd3
+,A.byzd4
+,A.byzd5
+,A.byzd6
+,A.byzd7
+,A.byzd8
+,A.byzd9
+,A.byzd10
+  ) VALUES (
+B.szzxm
+,B.sfz
+,B.ym_mc
+,B.zc
+,B.ym_dm
+,B.dyzjzsj
+,B.dezjzsj
+,B.dszjzsj
+,B.cjydm
+,B.cjedm
+,B.cjsdm
+,B.cjymc
+,B.cjemc
+,B.cjsmc
+,B.jdmc
+,B.jdbm
+,B.jzdwmc
+,B.szsxtdwbm
+,B.sfywc
+,SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,B.byzd2
+,B.byzd3
+,B.byzd4
+,B.byzd5
+,B.byzd6
+,B.byzd7
+,B.byzd8
+,B.byzd9
+,B.byzd10
+  );
+commit;
+

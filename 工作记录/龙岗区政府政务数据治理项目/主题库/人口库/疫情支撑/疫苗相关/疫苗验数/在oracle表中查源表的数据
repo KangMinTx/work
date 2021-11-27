@@ -1,0 +1,22 @@
+SELECT count(1) FROM (
+SELECT a.idcard_num,a.CHILDREN_NAME ,a.CTIME,mx.VACCINE_CODE ,
+        mx.VACCINE_NAME,mx.NEEDLE_TIMES,mx.INOCULATOR_NAME ,mx.INOCULATION_PLACE,mx.TIMEFLAG FROM SJHPT.t_vac_basic_children a
+                LEFT JOIN sjhpt.t_vac_cdc_inoculation mx
+                ON a.CHILD_ID =mx.CHILD_ID 
+                WHERE TO_CHAR(INOCULATION_DATE,'yyyy-mm-dd') ='2021-08-11');  --5161
+                
+                
+SELECT COUNT(DISTINCT ZJHM) FROM SJHPT.WJZXGYMRYXX107248 WHERE SUBSTR(JZSJ,1,10)='2021-08-11';  --2832
+
+
+2、在oracle上查源表的数（两张表融合，去重）
+SELECT COUNT(DISTINCT idcard_num ) FROM (
+SELECT idcard_num FROM (
+SELECT a.idcard_num,a.CHILDREN_NAME ,a.CTIME,mx.VACCINE_CODE ,
+        mx.VACCINE_NAME,mx.NEEDLE_TIMES,mx.INOCULATOR_NAME ,mx.INOCULATION_PLACE,mx.TIMEFLAG FROM SJHPT.t_vac_basic_children a
+                LEFT JOIN sjhpt.t_vac_cdc_inoculation mx
+                ON a.CHILD_ID =mx.CHILD_ID 
+                WHERE TO_CHAR(INOCULATION_DATE,'yyyy-mm-dd') ='2021-08-11')
+ UNION all               
+                
+SELECT ZJHM AS idcard_num FROM SJHPT.WJZXGYMRYXX107248 WHERE SUBSTR(JZSJ,1,10)='2021-08-11');

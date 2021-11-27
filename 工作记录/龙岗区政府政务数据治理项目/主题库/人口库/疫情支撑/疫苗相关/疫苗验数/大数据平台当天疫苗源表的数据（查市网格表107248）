@@ -1,0 +1,6 @@
+select count(1) from ods_sjhpt_wjzxgymryxx107248_total where dt=20210809; --5901819
+
+  select count(1) from ods_sjhpt_wjzxgymryxx107248_total where dt=20210809 and SUBSTR(gxsj,1,10)='2021-08-10'; --58
+
+
+  select * from ods_sjhpt_wjzxgymryxx107248_total where dt=20210809 and SUBSTR(gxsj,1,10)='2021-08-10';

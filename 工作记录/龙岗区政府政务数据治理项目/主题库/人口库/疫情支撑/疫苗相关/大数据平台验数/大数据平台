@@ -1,0 +1,82 @@
+--总数，已完成接种的人数
+SELECT COUNT(DISTINCT SFZ) FROM dm_rkk_syrkfyqk_2_new  WHERE dt=20210731 and byzd1 ='1'; --3341698
+
+--2、总数，已经开始，但未完成的人数
+SELECT COUNT(dISTINCT SFZ) FROM dm_rkk_syrkfyqk_2_new a  WHERE dt=20210731 and byzd1='0'  
+and not exists (select 1 from (select sfz from dm_rkk_syrkfyqk_2_new  WHERE dt=20210731 and byzd1='1')b where a.sfz=b.sfz )
+--746707
+--3、实有人口总数
+select count(DISTINCT cardno) from std_qzfw_zfw_resident1 b where dt=(select max(dt) from std_qzfw_zfw_resident1);
+--4、实有人口完成接种人数
+select count(DISTINCT cardno) from std_qzfw_zfw_resident1 a where dt=(select max(dt) from std_qzfw_zfw_resident1)
+and  exists(
+select 1 from (SELECT SFZ FROM dm_rkk_syrkfyqk_2_new a  WHERE dt=20210731 and byzd1='1')b where a.cardno=b.sfz
+)
+--5、实有人口已开始未完成接种
+select count(DISTINCT cardno) from std_qzfw_zfw_resident1 a where dt=(select max(dt) from std_qzfw_zfw_resident1)
+and  exists(
+select 1 from (SELECT SFZ FROM dm_rkk_syrkfyqk_2_new a  WHERE dt=20210731 and byzd1='0'  
+and not exists (select 1 from (select sfz from dm_rkk_syrkfyqk_2_new  WHERE dt=20210731 and byzd1='1')b where a.sfz=b.sfz ))b where a.cardno=b.sfz
+)
+----6、实有人口未接种人数
+select count(DISTINCT cardno) from std_qzfw_zfw_resident1 a where dt=(select max(dt) from std_qzfw_zfw_resident1)
+and  exists(
+select 1 from (SELECT SFZ FROM dm_rkk_syrkfyqk_2_new a  WHERE dt=20210731 and byzd1='0'  
+and not exists (select 1 from (select sfz from dm_rkk_syrkfyqk_2_new  WHERE dt=20210731 and byzd1='1')b where a.sfz=b.sfz ))b where a.cardno=b.sfz
+)
+
+--7、实有人口完成接种人数（占比）18-59  
+select count(DISTINCT sfz) from (select sfz from dm_rkk_syrkfyqk_2_new where dt=20210731 and byzd1='1') a where exists (
+	select 1 from (select 
+						cardno
+						,nl 
+			from (
+				select 
+					cardno, 
+					floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(birthday,'yyyy-mm-dd'))/12) nl --年龄
+				from std_qzfw_zfw_resident1 
+				where dt=(select max(dt) from std_qzfw_zfw_resident1)
+				) where nl >=18 and nl<=59
+		 )  b  where a.sfz=b.cardno
+) ;
+
+---8、实有人口已开始未完成接种人数（占比）18-59
+select count(DISTINCT sfz) from (select sfz from dm_rkk_syrkfyqk_2_new  a where dt=20210731 and byzd1='0' and  not exists(
+											select 1 from (select sfz from dm_rkk_syrkfyqk_2_new where dt=20210731 and byzd1='1') b
+												where a.sfz=b.sfz 
+																	)
+						) a where exists (
+						select 1 from (select 
+											cardno
+											,nl 
+								from (
+									select 
+										cardno, 
+										floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(birthday,'yyyy-mm-dd'))/12) nl --年龄
+									from std_qzfw_zfw_resident1 
+									where dt=(select max(dt) from std_qzfw_zfw_resident1)
+									) where nl >=18 and nl<=59
+							)  b  where a.sfz=b.cardno
+					) ;
+
+----9、18岁到59岁实有人口数
+select 
+	count(distinct cardno)
+			from (
+				select 
+					cardno, 
+					floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(birthday,'yyyy-mm-dd'))/12) nl --年龄
+				from std_qzfw_zfw_resident1 
+				where dt=(select max(dt) from std_qzfw_zfw_resident1)
+				) where nl >=18 and nl<=59;
+				
+--10、18岁到59岁实有人口数未接种人员
+select 
+	count(distinct cardno)
+			from (
+				select 
+					cardno, 
+					floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(birthday,'yyyy-mm-dd'))/12) nl --年龄
+				from std_qzfw_zfw_resident1 a
+				where dt=(select max(dt) from std_qzfw_zfw_resident1)
+				)a where nl >=18 and nl<=59 and not exists(select 1 from dm_rkk_syrkfyqk_2_new b where b.dt=20210731 and a.cardno=b.sfz);

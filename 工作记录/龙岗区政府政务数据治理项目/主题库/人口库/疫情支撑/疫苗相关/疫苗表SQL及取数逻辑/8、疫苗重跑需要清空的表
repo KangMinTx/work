@@ -1,0 +1,17 @@
+--清空14物理机表，删除源表分区（4张），修改bridge 目的表，更换表为增量表（运行时，再改）
+TRUNCATE table ods_sjhpt_t_vac_basic_children_new_ymxg;
+TRUNCATE table ods_sjhpt_t_vac_basic_children_totals;
+TRUNCATE table ods_sjhpt_t_vac_basic_children_totals_zl;
+TRUNCATE table ods_sjhpt_t_vac_basic_children_totals_xg;
+TRUNCATE table ods_sjhpt_t_vac_basic_children_totals_temp;
+TRUNCATE table ods_sjhpt_t_vac_basic_children_total_ls;
+TRUNCATE table ods_sjhpt_t_vac_cdc_inoculation_new_ymxg;
+TRUNCATE table ymjz_new_cbk_temp01;
+TRUNCATE table ymjz_new_cbk_temp04_sj;
+TRUNCATE table ymjz_new_cbk_temp07;
+TRUNCATE table ymjz_new_cbk_temp02;
+TRUNCATE table ymjz_new_cbk_ql_temp;
+TRUNCATE table ymjz_new_cbk_ql_old;
+TRUNCATE table ymjz_new_cbk_ql;
+TRUNCATE table ymjz_new_cbk_CU;
+TRUNCATE table  DM_RKK_YQFMYMBQB_TO_YXY_ls;

@@ -1,0 +1,215 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin   
+--create time: 2021-08-17 16:39:28
+--_********************************************************_
+from(
+select a.*,b.child_ids from (select *,ROW_NUMBER()over(PARTITION BY child_id ORDER BY update_time) rn 
+from (select * from ods_sjhpt_t_vac_basic_children_new_ymxg where dt=(select max(dt) from ods_sjhpt_t_vac_basic_children_new_ymxg )) a ) a
+left join (select *,nvl(child_id,'1')child_ids from ods_sjhpt_t_vac_basic_children_totals) b
+on nvl(a.child_id,'1')= b.child_ids where a.rn=1)
+insert overwrite table ods_sjhpt_t_vac_basic_children_totals_zl
+select
+children_number
+,inoculation_cardnumber
+,children_name
+,gender_code
+,gender_name
+,idcard_num
+,class_of_registered_residence
+,birth_certification
+,birthdate
+,birth_hospital
+,hospital_level
+,birth_weight
+,telephonenumber
+,mobile_phonenumber
+,email_address
+,current_address
+,father_name
+,father_employer
+,father_phone_no
+,father_occupation
+,mother_name
+,mother_employer
+,mother_phone_no
+,mother_hbs_ag
+,mother_occupation
+,family_address
+,family_phone_no
+,town_of_registered_residence
+,kindergarten_admission_date
+,kindergarten
+,primary_school_admission_year
+,regional_division
+,residential_property
+,in_the_book
+,county_of_building_a_book
+,date_of_building_a_book
+,person_of_building_a_book
+,administration
+,responsible_doctor
+,notes
+,subject_employer
+,update_time
+,business_gener_time
+,birthcertificateno
+,idcardtypecode
+,gestationalage
+,parity
+,nationcode
+,maritalstatuscode
+,professioncode
+,persontype
+,educationcode
+,workunit
+,permanentaddrcode
+,permanentaddrdetai
+,currentaddrcode
+,motheridtype
+,motheridcard
+,hepatitismothers
+,hepatitischildren
+,surfaceantibodychildren
+,fatheridtype
+,fatheridcard
+,contacts
+,contactsrelcode
+,vaccinationcontraindcode
+,signsdrugallergycode
+,infecthistorycode
+,diseasehistorycode
+,currentmanagementcode
+,managementdate
+,updateorgcode
+,updateperson
+,updatedatetime
+,uuid
+,child_id
+,ctime
+,mdical_ins
+,nationality
+,record_status
+,medical_ins_code
+,idcard_type
+,local_id
+,china_area
+,valid_residence_permit
+,ins_area
+,jobtype
+,timeflag
+,lyjg
+,load_time
+where child_ids is null
+insert overwrite table ods_sjhpt_t_vac_basic_children_totals_xg
+select
+children_number
+,inoculation_cardnumber
+,children_name
+,gender_code
+,gender_name
+,idcard_num
+,class_of_registered_residence
+,birth_certification
+,birthdate
+,birth_hospital
+,hospital_level
+,birth_weight
+,telephonenumber
+,mobile_phonenumber
+,email_address
+,current_address
+,father_name
+,father_employer
+,father_phone_no
+,father_occupation
+,mother_name
+,mother_employer
+,mother_phone_no
+,mother_hbs_ag
+,mother_occupation
+,family_address
+,family_phone_no
+,town_of_registered_residence
+,kindergarten_admission_date
+,kindergarten
+,primary_school_admission_year
+,regional_division
+,residential_property
+,in_the_book
+,county_of_building_a_book
+,date_of_building_a_book
+,person_of_building_a_book
+,administration
+,responsible_doctor
+,notes
+,subject_employer
+,update_time
+,business_gener_time
+,birthcertificateno
+,idcardtypecode
+,gestationalage
+,parity
+,nationcode
+,maritalstatuscode
+,professioncode
+,persontype
+,educationcode
+,workunit
+,permanentaddrcode
+,permanentaddrdetai
+,currentaddrcode
+,motheridtype
+,motheridcard
+,hepatitismothers
+,hepatitischildren
+,surfaceantibodychildren
+,fatheridtype
+,fatheridcard
+,contacts
+,contactsrelcode
+,vaccinationcontraindcode
+,signsdrugallergycode
+,infecthistorycode
+,diseasehistorycode
+,currentmanagementcode
+,managementdate
+,updateorgcode
+,updateperson
+,updatedatetime
+,uuid
+,child_id
+,ctime
+,mdical_ins
+,nationality
+,record_status
+,medical_ins_code
+,idcard_type
+,local_id
+,china_area
+,valid_residence_permit
+,ins_area
+,jobtype
+,timeflag
+,lyjg
+,load_time
+where child_ids is not null;
+
+
+--drop table if exists ods_sjhpt_t_vac_basic_children_totals_temp;
+insert overwrite table ods_sjhpt_t_vac_basic_children_totals_temp 
+select * from ods_sjhpt_t_vac_basic_children_totals_zl
+union ALL
+select aa.* from ods_sjhpt_t_vac_basic_children_totals  aa
+left join (select *,nvl(child_id,'1')child_ids from ods_sjhpt_t_vac_basic_children_totals_xg) bb
+on nvl(aa.child_id,'1')=  bb.child_ids
+where bb.child_ids is NULL
+UNION ALL
+select * from ods_sjhpt_t_vac_basic_children_totals_xg;
+
+insert overwrite table ods_sjhpt_t_vac_basic_children_totals select * from ods_sjhpt_t_vac_basic_children_totals_temp;
+
+insert into ods_sjhpt_t_vac_basic_children_total_ls 
+select aa.* from ods_sjhpt_t_vac_basic_children_totals  aa
+inner join (select *,nvl(child_id,'1')child_ids from ods_sjhpt_t_vac_basic_children_totals_xg) bb
+on nvl(aa.child_id,'1')=  bb.child_ids;

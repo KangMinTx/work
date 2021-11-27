@@ -1,0 +1,317 @@
+1、查找实有人口的数量
+SELECT COUNT(1) FROM (
+ SELECT  * FROM  (
+SELECT id,ZJHM ,NAME ,JDMC ,NLD ,ROW_NUMBER() over(PARTITION BY id ORDER BY yxsj desc) rn ,yxx,FLAGFIELD FROM DM_RKK_SYRK_TO_YXY a 
+) a WHERE rn=1  AND  NOT EXISTS (SELECT 1 FROM (SELECT * FROM  DM_RKK_SYRK_TO_YXY WHERE FLAGFIELD='3') b WHERE a.id=b.id) )WHERE YXX='0';
+
+2、创建实有人口临时表（WHERE YXX='0' 条件和添加 视情况而定）
+CREATE TABLE DM_RKK_SYRK_CBK_TEST 
+As
+SELECT * FROM (
+ SELECT  * FROM  (
+SELECT id,ZJHM ,NAME ,JDMC ,NLD ,ROW_NUMBER() over(PARTITION BY id ORDER BY yxsj desc) rn ,yxx,FLAGFIELD FROM DM_RKK_SYRK_TO_YXY a 
+) a WHERE rn=1  AND  NOT EXISTS (SELECT 1 FROM (SELECT * FROM  DM_RKK_SYRK_TO_YXY WHERE FLAGFIELD='3') b WHERE a.id=b.id) )WHERE YXX='0';
+
+3、统计各街道的实有人口数
+SELECT COUNT(1),JDMC FROM DM_RKK_SYRK_CBK_TEST GROUP BY JDMC ;
+
+4、各区街道完成接种的总人数
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1') a;
+
+5、各街道完成接种的人数
+SELECT JDMC,COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1' AND YXX='0') a
+GROUP BY JDMC;  
+
+6、各街道未开始接种的总人数
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL AND a.NLD<>'0') c --1663643
+
+7、各区道完成接种的人数
+SELECT JDMC,NLD,COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1' AND YXX='0') a
+GROUP BY JDMC,NLD;  
+
+8、各区开始未完成接种（一针没有打 身份证为空）
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL) a;
+
+9、各街道开始未完成接种（一针没有打 身份证为空）
+SELECT JDMC,NLD,COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL) a
+GROUP BY JDMC,NLD; 
+
+10、各街道已开始未完成接种总数
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT null ) a;
+
+11、各街道已开始未完成总人数接种
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT null ) a;----439130（440375）
+
+12、各街道已开始未完成人数
+SELECT JDMC,COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT null ) a
+GROUP BY JDMC;  
+
+13、年龄为3岁以上，完成标识为0或者标识为空，和针次为空
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND nld<>'0' ) a  -----445768
+
+14、3岁到17岁的总人口及各街道
+SELECT COUNT(1) FROM DM_RKK_SYRK_CBK_TEST drsct WHERE NLD ='1';
+SELECT COUNT(1),JDMC  FROM (SELECT * FROM DM_RKK_SYRK_CBK_TEST drsct WHERE NLD ='1') GROUP BY JDMC ;--各街道3岁到17岁的人口
+
+15、各街道3岁到17岁的人口，已完成接种的总人数
+SELECT COUNT(1) 
+FROM 
+ (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1' AND YXX='0' AND NLD='1') a ;
+
+16、各街道3-7岁未开始接种的总人数
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL AND a.NLD='1') c;
+
+17、各街道未开始接种（3周岁以上）的人数
+SELECT COUNT(1),JDMC
+FROM (
+SELECT * FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL AND a.NLD='1') c)
+GROUP BY JDMC;
+
+18、各街道已开始未完成接种（3-17）总人数
+SELECT COUNT(1),JDMC FROM (
+SELECT *
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT NULL AND a.NLD ='1') a )
+GROUP BY JDMC;
+
+19、18到59岁
+SELECT COUNT(1) FROM DM_RKK_SYRK_CBK_TEST drsct WHERE NLD ='2'; --18到59岁的总人口：3643713
+
+------各街道18到59岁的人口
+SELECT COUNT(1),JDMC  FROM (SELECT * FROM DM_RKK_SYRK_CBK_TEST drsct WHERE NLD ='2') GROUP BY JDMC 
+
+-----各街道18到59岁的人口，已完成接种的总人数
+SELECT COUNT(1) 
+FROM 
+ (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1' AND YXX='0' AND NLD='2') a --2441650
+
+------各街道18到59岁的人口，已完成接种的人数
+SELECT COUNT(1),JDMC FROM (
+SELECT * FROM 
+ (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1' AND YXX='0' AND NLD='2') a )
+GROUP BY JDMC 
+
+------各街道18到59岁未开始接种的总人数
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL AND a.NLD='2') c  ---809418
+
+--各街道未开始接种（3周岁以上）的人数
+SELECT COUNT(1),JDMC
+FROM (
+SELECT * FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL AND a.NLD='2') c)
+GROUP BY JDMC 
+
+----各街道已开始未完成接种（18-59）总人数
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT NULL AND a.NLD ='2') a;--392452（392666）
+
+------------------------------------------------------------------
+----各街道已开始未完成接种（18-59）人数
+SELECT COUNT(1),JDMC FROM (
+SELECT *
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT NULL AND a.NLD ='2') a )
+GROUP BY JDMC;
+
+20、60岁以上
+SELECT COUNT(1) FROM DM_RKK_SYRK_CBK_TEST drsct WHERE NLD ='3'; --18到59岁的总人口：232444
+
+------各街道60岁以上人口
+SELECT COUNT(1),JDMC  FROM (SELECT * FROM DM_RKK_SYRK_CBK_TEST drsct WHERE NLD ='3') GROUP BY JDMC 
+
+-----各街道60岁以上的人口，已完成接种的总人数
+SELECT COUNT(1) 
+FROM 
+ (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1' AND YXX='0' AND NLD='3') a --8362
+
+------各街道60岁以上的人口，已完成接种的人数
+SELECT COUNT(1),JDMC FROM (
+SELECT * FROM 
+ (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1' AND YXX='0' AND NLD='3') a )
+GROUP BY JDMC 
+
+------各街道60岁以上岁未开始接种的总人数
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL AND a.NLD='3') c  ---809418
+
+--各街道未开始接种（3周岁以上）的人数
+SELECT COUNT(1),JDMC
+FROM (
+SELECT * FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL AND a.NLD='3') c)
+GROUP BY JDMC 
+
+----各街道已开始未完成接种（60以上）总人数
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT NULL AND a.NLD ='3') a;--392452（392666）
+
+------------------------------------------------------------------
+----各街道已开始未完成接种（60以上）人数
+SELECT COUNT(1),JDMC FROM (
+SELECT *
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT NULL AND a.NLD ='3') a )
+GROUP BY JDMC;
+
+21、年龄段为空
+SELECT COUNT(1) FROM DM_RKK_SYRK_CBK_TEST drsct WHERE NLD='4'; --年龄段为空总人口：2959
+
+------年龄段为空总人口
+SELECT COUNT(1),JDMC  FROM (SELECT * FROM DM_RKK_SYRK_CBK_TEST drsct WHERE NLD ='4') GROUP BY JDMC;
+
+-----年龄段为空总人口，已完成接种的总人数
+SELECT COUNT(1) 
+FROM 
+ (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1' AND YXX='0' AND NLD='4') a --621
+
+------年龄段为空总人口，各街道已完成接种的人数
+SELECT COUNT(1),JDMC FROM (
+SELECT * FROM 
+ (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='1' AND YXX='0' AND NLD='4') a )
+GROUP BY JDMC
+ORDER BY JDMC ASC ;
+
+------各街道年龄段为空未开始接种的总人数
+SELECT COUNT(1) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL AND a.NLD='4') c  ---2082
+
+--各街道年龄段为空未开始接种的人数
+SELECT COUNT(1),JDMC
+FROM (
+SELECT * FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A left JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE  YXX='0' AND b.SFZ IS NULL AND a.NLD='4') c)
+GROUP BY JDMC 
+ORDER BY JDMC ASC ;
+
+----各街道已开始未完成接种（年龄段为空）总人数
+SELECT COUNT(DISTINCT ZJHM) 
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT NULL AND a.NLD ='4') a;--257
+
+------------------------------------------------------------------
+----各街道已开始未完成接种（年龄段为空）人数
+SELECT COUNT(1),JDMC FROM (
+SELECT *
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT NULL AND a.NLD ='4') a )
+GROUP BY JDMC
+ORDER BY JDMC ASC ;
+
+-----------------------------------------------------------------------------
+
+SELECT COUNT(1) FROM DM_RKK_SYRK_CBK_TEST drsct;
+
+--------------------------------------------------------------------------------------
+SELECT COUNT(DISTINCT ZJHM ) FROM (
+SELECT *
+FROM (
+SELECT a.jdmc jdmc,nld,id,zjhm FROM 
+DM_RKK_SYRK_CBK_TEST A INNER JOIN DM_RKK_YQFMYMBQB B ON A.ZJHM=B.SFZ 
+WHERE B.SFYWC ='0' AND YXX='0' AND zc IS NOT NULL AND a.NLD ='4') a )
+--------------------------------------------------------------------------------------------------------------------------------------
+SELECT COUNT(1) FROM (
+SELECT * FROM (
+ SELECT  * FROM  (
+SELECT id,ZJHM ,NAME ,a.JDMC ,NLD ,ROW_NUMBER() over(PARTITION BY id ORDER BY yxsj desc) rn ,yxx,FLAGFIELD FROM DM_RKK_SYRK_TO_YXY a 
+) a WHERE rn=1  AND  NOT EXISTS (SELECT 1 FROM (SELECT * FROM  DM_RKK_SYRK_TO_YXY WHERE FLAGFIELD='3') b WHERE a.id=b.id) )WHERE YXX='0') a;
+

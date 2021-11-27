@@ -1,0 +1,15 @@
+SELECT count(distinct sfz) from DM_RKK_YQFMYMBQB  where NOT (ZC=1 AND SFYWC =1) AND 
+ TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')<21; --57984
+ 
+  SELECT count(distinct sfz) from DM_RKK_YQFMYMBQB  where NOT (ZC=1 AND SFYWC =1) AND 
+ TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')<7; --278
+ 
+   SELECT count(distinct sfz) from DM_RKK_YQFMYMBQB  where NOT (ZC=1 AND SFYWC =1) AND 
+  TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')>=7
+  and  TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')<14;--392
+  
+   SELECT count(distinct sfz) from DM_RKK_YQFMYMBQB  where NOT (ZC=1 AND SFYWC =1) AND 
+  TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')>=14
+  and  TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')<21;--57314
+  
+  select 57314+392+278 from dual;--57984

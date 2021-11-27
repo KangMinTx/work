@@ -1,0 +1,126 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-08-17 16:41:51
+--_********************************************************_
+--保存接种表未匹配数据
+--drop table if exists ymjz_new_cbk_temp02;
+insert OVERWRITE table ymjz_new_cbk_temp02
+SELECT t1.* from
+(select * from (select * from ods_sjhpt_t_vac_cdc_inoculation_new_ymxg where dt=(select max(dt) from ods_sjhpt_t_vac_cdc_inoculation_new_ymxg))
+where   VACCINE_CODE like '56%'
+union all select * from ymjz_new_cbk_temp01 
+ ) t1  --接种表
+left join (select bb.*,nvl(bb.child_id,'1')child_ids from ods_sjhpt_t_vac_basic_children_totals bb) t2 --个案表
+on nvl(t1.child_id,'1')=t2.child_ids
+where t2.child_ids is NULL;
+
+--drop table if EXISTS ymjz_new_cbk_temp07;
+--CREATE TABLE ymjz_new_cbk_temp07
+--as 
+insert OVERWRITE table ymjz_new_cbk_temp07
+select 
+t1.children_number as SZZBM --受种者编码
+,t1.inoculation_cardnumber as MYKH --免疫卡号
+,t1.children_name as SZZXM	--受种者姓名
+,t1.gender_code as XBDM	--性别代码
+,t1.gender_name as XBMC	--性别名称
+,t1.idcard_num as SFZ	--身份证
+,case when length(t1.IDCARD_NUM)= 18 then  floor(months_between(to_date(current_date,'yyyy-MM-dd'),to_date(substr(trim(t1.IDCARD_NUM),7,8),'yyyyMMdd'))/12)
+      when length(t1.IDCARD_NUM)= 15 then  floor(months_between(to_date(current_date,'yyyy-MM-dd'),to_date('19'||substr(trim(t1.IDCARD_NUM),7,6),'yyyyMMdd'))/12)
+      when length(t1.IDCARD_NUM) not in(18,15) and length(t1.birthdate)>=10 then  floor(months_between(to_date(current_date,'yyyy-MM-dd'),to_date(substr(t1.birthdate,1,10),'yyyy-MM-dd'))/12)
+end as NL	--年龄
+,t1.telephonenumber as LXDH	--联系电话
+,t1.mobile_phonenumber as LXSJ	--联系手机
+,t1.current_address as XZZ	--现住址
+,substr(t2.due_inoculation_date,1,19) as YJRQ	--应接日期
+,substr(t2.inoculation_date,1,19) as YMJZRQ	--疫苗接种日期
+,t2.inoculation_place as YMJZDD	--疫苗接种地点
+,t2.inoculation_type_code as MYLXDM	--免疫类型代码
+,t2.inoculation_type_name as MYLXMC	--免疫类型名称
+,t2.vaccine_code as YM_DM	--疫苗-代码
+,t2.vaccine_name as YM_MC	--疫苗-名称
+,t2.vaccine_batchnumber as YM_PH	--疫苗-批号
+,t2.needle_times as ZC	--针次
+,t2.vaccine_manufacturer_code as YM_SCCJDM	--疫苗-生产厂家代码
+,t2.vaccine_manufacturer as YM_SCCJMC	--疫苗-生产厂家名称
+,concat_ws('',t1.idcard_num,t2.inoculation_date) as wybs
+,'t_vac_cdc_inoculation' as BZ   --来源表标志
+from ods_sjhpt_t_vac_basic_children_totals t1 --个案表
+inner join 
+(select * from (select * from ods_sjhpt_t_vac_cdc_inoculation_new_ymxg where dt=(select max(dt) from ods_sjhpt_t_vac_cdc_inoculation_new_ymxg))
+where   VACCINE_CODE like '56%'  
+union all select * from ymjz_new_cbk_temp01) t2  --接种表
+on nvl(t1.child_id,'1')=nvl(t2.child_id,'1') where t1.idcard_num is not null
+union all 
+select 
+ cast(null as String) SZZBM --受种者编码
+,cast(null as String)  MYKH --免疫卡号
+,cast(CHILDREN_NAME as String) AS SZZXM --受种者姓名
+,cast(GENDER_CODE as String) AS XBDM --性别代码
+,cast(GENDER_NAME as String) AS XBMC --性别名称
+,cast(IDCARD_NUM as String) AS SFZ --身份证
+--,floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(t1.IDCARD_NUM,7,8),'yyyy-mm-dd'))/12) as NL --年龄
+,case when length(t1.IDCARD_NUM)= 18 then  floor(months_between(to_date(current_date,'yyyy-MM-dd'),to_date(substr(trim(t1.IDCARD_NUM),7,8),'yyyyMMdd'))/12)
+      when length(t1.IDCARD_NUM)= 15 then  floor(months_between(to_date(current_date,'yyyy-MM-dd'),to_date('19'||substr(trim(t1.IDCARD_NUM),7,6),'yyyyMMdd'))/12)
+end as NL --年龄
+,cast(null as String) AS LXDH --联系电话
+,cast(null as String) AS LXSJ --联系手机
+,cast(null as String) AS XZZ --现住址
+,cast(null as String) AS YJRQ --应接日期
+,cast(substr(INOCULATION_DATE,1,19) as String) AS YMJZRQ --疫苗接种日期
+,cast(INOCULATION_PLACE as String) AS YMJZDD --疫苗接种地点
+,cast(null as String) AS MYLXDM --免疫类型代码
+,cast(null as String) AS MYLXMC --免疫类型名称
+,cast(VACCINE_CODE as String) AS YM_DM --疫苗-代码
+,cast(VACCINE_NAME as String) AS YM_MC --疫苗-名称
+,cast(null as String) AS YM_PH --疫苗-批号
+,cast(NEEDLE_TIMES as String) AS ZC --针次
+,cast(null as String) AS YM_SCCJDM --疫苗-生产厂家代码
+,cast(null as String) AS YM_SCCJMC --疫苗-生产厂家名称
+,cast(null as String) AS WYBS
+,'yqfk_xgymjz_20210622' AS BZ
+from  (select * from yqfk_xgymjz_20210622_qc_ymxg where dt=(select max(dt) from yqfk_xgymjz_20210622_qc_ymxg )) t1
+union all 
+select 
+ cast(null as String) SZZBM --受种者编码
+,cast(null as String)  MYKH --免疫卡号
+,xm AS SZZXM --受种者姓名
+,cast(null as String) as XBDM --性别代码
+,cast(null as String) as XBMC --性别名称
+,zjhm as SFZ --身份证
+--,floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(trim(zjhm),7,8),'yyyyMMdd'))/12) as NL --年龄
+,case when length(zjhm)= 18 then  floor(months_between(to_date(current_date,'yyyy-MM-dd'),to_date(substr(trim(zjhm),7,8),'yyyyMMdd'))/12)
+      when length(zjhm)= 15 then  floor(months_between(to_date(current_date,'yyyy-MM-dd'),to_date('19'||substr(trim(zjhm),7,6),'yyyyMMdd'))/12)
+end as NL --年龄
+,cast(null as String) AS LXDH --联系电话
+,lxfs as  LXSJ --联系手机
+,jzdz AS XZZ --现住址
+,cast(null as String) AS YJRQ --应接日期
+,jzsj AS YMJZRQ --疫苗接种日期
+,cast(null as String) AS YMJZDD  --疫苗接种地点
+,cast(null as String) AS MYLXDM --免疫类型代码
+,cast(null as String) AS MYLXMC --免疫类型名称
+,case when ymmc='新冠疫苗（腺病毒载体）' then '5602' when  ymmc='新冠疫苗（CHO细胞）'  then '5603'  when ymmc='新冠疫苗（Vero细胞）'  then '5601' end as YM_DM --疫苗-代码
+,ymmc AS YM_MC --疫苗-名称
+,ympc AS YM_PH --疫苗-批号
+,jzcs AS ZC--针次
+,jzchsh AS YM_SCCJDM --疫苗-生产厂家代码
+,B.YM_SCCJMC AS YM_SCCJMC --疫苗-生产厂家名称
+,cast(null as String) AS WYBS
+,'sjhpt_wjzxgymryxx107248' as BZ   --来源表标志
+from (SELECT * FROM ods_sjhpt_wjzxgymryxx107248_ymxg where dt=(select MAX(dt) from ods_sjhpt_wjzxgymryxx107248_ymxg) and ymmc is not null) A
+LEFT JOIN DM_YM_SCCJ B 
+ON A.jzchsh=B.YM_SCCJDM;
+
+--保存接种表未匹配数据
+--DROP TABLE IF EXISTS ymjz_new_cbk_temp01;
+--CREATE TABLE ymjz_new_cbk_temp01 select * from ymjz_new_cbk_temp02;
+insert overwrite table ymjz_new_cbk_temp01 select * from ymjz_new_cbk_temp02;
+
+----保留历史增量数据(为了配合电话号码清洗表)
+--create table ymjz_new_cbk_temp04_sj like ymjz_new_cbk_temp04;
+--DROP TABLE IF EXISTS ymjz_new_cbk_temp04_sj;
+--CREATE TABLE ymjz_new_cbk_temp04_sj select * from ymjz_new_cbk_temp04;
+--DESC ymjz_new_cbk_temp04;
+INSERT into ymjz_new_cbk_temp04_sj select * from ymjz_new_cbk_temp07;

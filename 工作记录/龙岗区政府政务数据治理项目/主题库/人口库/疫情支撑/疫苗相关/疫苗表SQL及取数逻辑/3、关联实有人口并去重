@@ -1,0 +1,218 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-08-18 18:12:38
+--_********************************************************_
+
+--疫苗全量数据
+--drop table if EXISTS ymjz_new_cbk_ql_temp;
+insert overwrite table  ymjz_new_cbk_ql_temp 
+select
+SZZBM
+,MYKH
+,SZZXM
+,XBDM
+,XBMC
+,SFZ
+,NL
+,LXDH
+,LXSJ
+,XZZ
+,YJRQ
+,YMJZRQ
+,YMJZDD
+,MYLXDM
+,MYLXMC
+,YM_DM
+,YM_MC
+,YM_PH
+,ZC
+,YM_SCCJDM
+,YM_SCCJMC
+,jdbm  --街道编码
+,jdmc --街道名称
+,sqbm --社区编码
+,sqmc --社区名称
+,wgbm  --网格编码
+,wgmc --网格名称
+,SYRKJZDZ  --实有人口居住地址
+,SYRKLXDH  --实有人口联系电话
+,SYRKBS  --实有人口标识
+,substr(now(),1,19) as YXSJ  --运行时间
+/* ,case when LAG(riqi,1,0) over(partition by SFZ order by riqi asc) = 0 then 1
+else case when  YM_DM='5601'  and datediff(riqi,LAG(riqi,1,0) over(partition by SFZ order by riqi asc))>=21 then 1 
+when  YM_DM='5603'  and datediff(riqi,LAG(riqi,1,0) over(partition by SFZ order by riqi asc))>=28 then 1 end end AS ZCX */ --最新针次序
+,case when LAG(riqi,1,0) over(partition by SFZ order by riqi asc) = 0 then 999999999 
+else datediff(riqi,LAG(riqi,1,0) over(partition by SFZ order by riqi asc)) end AS ZCX --最新针次序
+,cast(bz as String) as byzd2  --byzd2
+,cast(null as String) as byzd3  --byzd3
+,cast(null as String) as byzd4  --byzd4
+,cast(null as String) as byzd5  --byzd5
+,cast(null as String) as byzd6  --byzd6
+,cast(null as String) as byzd7  --byzd7
+,cast(null as String) as byzd8  --byzd8
+,wybs
+,riqi
+from (
+select 
+ SZZBM
+,MYKH
+,if(length(regexp_replace(regexp_replace(SZZXM,'[\u4e00-\u9fa5]',''),'',''))=length(SZZXM), trim(SZZXM),
+ regexp_replace(trim(regexp_replace(trim(SZZXM),
+         '[/\[.*\]/]|[\A-Za-z]|[\0-9]|[(]|[)]|[:]|[：]|[。]
+        |[、]|[、]|[，]|[,]|[/]|[?]|[？]|[+]|[*]|[`]|[.]|[-]|[≤]|[·]|[‘]|[]|[‘]|[∵]|[′]|[；]|[]
+        |[＋]|[]|[｀]|[！]|[……]|[＇]|[|]|[…]|[。]|[@]|[〉]|[丶]|[“”]|[（）]|[\\^]|[\\_]|[　]','')),'','')) as SZZXM --姓名
+,XBDM
+,XBMC
+,SFZ
+,NL
+,LXDH
+,LXSJ
+,XZZ
+,YJRQ
+,YMJZRQ
+,YMJZDD
+,MYLXDM
+,MYLXMC
+,YM_DM
+,YM_MC
+,YM_PH
+,ZC
+,YM_SCCJDM
+,YM_SCCJMC
+,jdbm  --街道编码
+,jdmc --街道名称
+,sqbm --社区编码
+,sqmc --社区名称
+,wgbm  --网格编码
+,wgmc --网格名称
+,SYRKJZDZ  --实有人口居住地址
+,SYRKLXDH  --实有人口联系电话
+,SYRKBS  --实有人口标识
+,wybs
+,BZ,
+NVL(riqi,substr(YMJZRQ,1,10)) as riqi,
+row_number() over(partition by SFZ,YM_DM,substr(YMJZRQ,1,10) order by case when bz='t_vac_cdc_inoculation' then 1 
+                  when bz='yqfk_xgymjz_20210622'then 2 when bz='sjhpt_wjzxgymryxx107248' then 3 end,YMJZRQ) AS rn
+from (
+SELECT
+SZZBM
+,MYKH
+,SZZXM
+,XBDM
+,XBMC
+,SFZ
+,NL
+,LXDH
+,LXSJ
+,XZZ
+,YJRQ
+,YMJZRQ
+,YMJZDD
+,MYLXDM
+,MYLXMC
+,YM_DM
+,YM_MC
+,YM_PH
+,ZC
+,YM_SCCJDM
+,YM_SCCJMC
+,wybs
+,byzd2 BZ
+,jdbm  --街道编码
+,jdmc --街道名称
+,sqbm --社区编码
+,sqmc --社区名称
+,wgbm  --网格编码
+,wgmc --网格名称
+,SYRKJZDZ  --实有人口居住地址
+,SYRKLXDH  --实有人口联系电话
+,SYRKBS  --实有人口标识
+,riqi
+from ymjz_new_cbk_ql
+union all
+select c.*
+,nvl(a.jdbm,'0') as jdbm  --街道编码
+,nvl(a.jdmc,'0') as jdmc --街道名称
+,nvl(a.sqbm,'0') as sqbm --社区编码
+,nvl(a.sqmc,'0') as sqmc --社区名称
+,nvl(a.wgbm,'0') as wgbm  --网格编码
+,nvl(a.wgmc,'0') as wgmc --网格名称
+,cast(a.SYRKJZDZ as String) as SYRKJZDZ  --实有人口居住地址
+,cast(sj as String) as SYRKLXDH  --实有人口联系电话
+,case when a.zjhm is not null then '实有人口' end  as SYRKBS  --实有人口标识
+,cast(null as string) riqi 
+from ymjz_new_cbk_temp07 c
+left join dm_rkk_syrkkb_tjt a
+on trim(a.zjhm)=trim(c.sfz)
+) )where rn=1;
+
+--去掉重复的数据
+--drop table if EXISTS ymjz_new_cbk_ql_old;
+--CREATE TABLE ymjz_new_cbk_ql_old AS SELECT * FROM ymjz_new_cbk_ql;
+
+--drop table if EXISTS ymjz_new_cbk_ql;
+insert overwrite table  ymjz_new_cbk_ql 
+SELECT 
+SZZBM
+,MYKH
+,SZZXM
+,XBDM
+,XBMC
+,SFZ
+,NL
+,LXDH
+,LXSJ
+,XZZ
+,YJRQ
+,YMJZRQ
+,YMJZDD
+,MYLXDM
+,MYLXMC
+,YM_DM
+,YM_MC
+,YM_PH
+,ZC
+,YM_SCCJDM
+,YM_SCCJMC
+,jdbm  --街道编码
+,jdmc --街道名称
+,sqbm --社区编码
+,sqmc --社区名称
+,wgbm  --网格编码
+,wgmc --网格名称
+,SYRKJZDZ  --实有人口居住地址
+,SYRKLXDH  --实有人口联系电话
+,SYRKBS  --实有人口标识
+,YXSJ  --运行时间
+,ZZC --最新针次
+,case when YM_DM='5602' and ZZC>=1  then '1'
+ 	  when YM_DM='5603' and ZZC>=3 then '1'
+      when YM_DM='5601' and ZZC>=2 then '1'
+      else '0' 
+ end as SFYWC --是否完成接种
+,byzd2  --byzd2
+,byzd3  --byzd3
+,byzd4  --byzd4
+,byzd5  --byzd5
+,byzd6  --byzd6
+,byzd7  --byzd7
+,byzd8  --byzd8
+,wybs
+,riqi
+FROM (SELECT *,ROW_NUMBER() OVER(partition by SFZ order by riqi asc) AS ZZC --最新针次
+FROM ymjz_new_cbk_ql_temp WHERE  ZCX>=1 );
+ -- ZCX = 999999999 OR (YM_DM='5601' AND ZCX>=21) OR (YM_DM='5603' AND ZCX>=28) 
+   --   or  (YM_DM='5601' AND ZCX>=7 and riqi >='2021-01-01' and riqi<='2021-02-28')
+   
+
+--drop table if EXISTS ymjz_new_cbk_CU;
+insert overwrite table  ymjz_new_cbk_CU 
+SELECT * FROM ymjz_new_cbk_ql_temp B
+WHERE NOT EXISTS(SELECT 1 FROM ymjz_new_cbk_ql_temp A WHERE  zcx>=1 AND A.SFZ = B.SFZ);
+                 --(A.ZCX = 999999999 OR (A.YM_DM='5601' AND A.ZCX>=21) OR (A.YM_DM='5603' AND A.ZCX>=28)
+                  --         or  (YM_DM='5601' AND ZCX>=7 and riqi >='2021-01-01' and riqi<='2021-02-28' )
+                                                 
+                
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------

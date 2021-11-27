@@ -1,0 +1,3 @@
+--在大数据上查
+select count(1) from ymjz_new_cbk_ql where zzc='1' and SUBSTR(YMJZDD,1,6)=440307;---3358815
+
