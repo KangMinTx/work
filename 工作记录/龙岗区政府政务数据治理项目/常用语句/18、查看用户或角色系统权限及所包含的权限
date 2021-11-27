@@ -1,0 +1,8 @@
+ select * from user_sys_privs; --------查看当前用户的权限
+ select * from role_sys_privs;   -------查看角色所包含的权限
+ select * from all_tab_privs;   --------查看所用的用户的可操作表权限
+ select * from user_tab_privs; --------查看当前用户的表可操作权限
+ select * from user_role_privs;   ------查看当前用户的角色
+ select * from user_constraints where TABLE_NAME='DM_RKK_SYRKKBDHZLJGB';    -----查看某一个表的约束
+ 
+

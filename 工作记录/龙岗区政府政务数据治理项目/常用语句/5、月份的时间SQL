@@ -1,0 +1,7 @@
+select trunc(add_moths(sysdate,-1),'mm') as 上个月月初，trunc(add_months(sysdate,0),'mm')-1 as 上个月月末 from dual;
+
+当月第一天
+select trunc(sysdate,'mm') from dual;
+
+当月月末
+select last_day(sysdate) from dual;

@@ -1,0 +1,12 @@
+SELECT COUNT(DISTINCT sfz ) FROM DM_RKK_YQFMYMBQB WHERE DEZJZSJ IS NOT NULL AND DSZJZSJ IS NULL 
+AND TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')<21;
+
+SELECT * from DM_RKK_YQFMYMBQB  where NOT (ZC=1 AND SFYWC =1) AND 
+ TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')<21 ;
+ 
+ 
+ 
+ ----查找第二针时间大于等于180天的人数
+SELECT COUNT(1),COUNT(DISTINCT SFZ)  FROM DM_RKK_YQFMYMBQB 
+WHERE TO_DATE( TO_CHAR(SYSDATE,'yyyy-mm-dd'),'yyyy-mm-dd')-TO_DATE( SUBSTR(dezjzsj,1,10),'yyyy-mm-dd')>=180 AND dezjzsj IS NOT NULL AND zc='2';
+ 

@@ -1,0 +1,1 @@
+alter table tbl_name add unique index_name (column_list):

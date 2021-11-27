@@ -1,0 +1,10 @@
+ 1.  select  * from user_indexes-          -----查看当前用户下的所有索引
+
+ 2.  select  * from user_indexes where table_name='A';      -----查看当前用户下表A的索引
+      （drop index index_name去掉索引） 
+
+ 3. select index_name,index_type,status,blevel from user_indexes where table_name = '？';  
+
+           -----查看某一个表的所有索引
+
+ 4.  select table_name, index_name, column_name, column_position from        user_ind_columns where  table_name='？';    ----查看索引的构成

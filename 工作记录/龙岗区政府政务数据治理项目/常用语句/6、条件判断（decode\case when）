@@ -1,0 +1,69 @@
+
+-- 条件控制查询 
+DECODE（列|值，判断值1，返回值1，判断值2，返回值2，...，默认值）
+--不是所有数据库都可用  多值判断，如果列值与判断值相同，则显示对应返回值输出，如果没有满足条件，则显示默认值
+
+CASE WHEN 条件1 THEN 返回值1 [WHEN 条件2 THEN 返回值2 ...] ELSE 默认值 END
+--所有数据库都支持   用于实现多条件判断，如果都不满足条件，则返回默认值
+
+
+ CASE WHEN 的第一种写法 ：
+CASE WHEN 条件1 THEN 结果1 
+     WHEN 条件2 THEN 结果2
+      ...
+     ELSE 结果其他 
+END  
+
+根据员工的工资是否 >= 3000 返回员工的岗位别名 
+  如果工资 >= 3000 则返回 '正式工' ，否则返回 '临时工' 
+
+SELECT E.* , 
+      CASE WHEN  E.SAL >= 3000 THEN '正式工'
+           WHEN  E.SAL < 3000 THEN  '临时工'
+      END  岗位别名 ，
+FROM EMP E
+ORDER BY E.SAL DESC ; 
+
+
+ CASE WHEN 的第二种写法 ：
+ CASE  条件  WHEN  值1  THEN 结果1 
+             WHEN  值2  THEN 结果2  
+               ...
+             ELSE 结果其他 
+ END  
+ 
+--根据员工的部门 返回他们的关系 
+ 如果部门为10则返回 老板亲戚 ，部门20则返回 老板心腹  部门30则返回临时工
+
+SELECT E.* ,
+       CASE E.DEPTNO WHEN 10 THEN '老板亲戚'
+                     WHEN 20 THEN '老板心腹'
+                     ELSE '临时工' END  AS "跟老板的关系1" ,
+       DECODE(E.DEPTNO,   10 ,'老板亲戚' ,   20 ,'老板心腹' , '临时工' ) 跟老板的关系2
+FROM EMP E
+ORDER BY E.DEPTNO ;
+
+
+CASE WHEN 和 DECODE() 的区别：
+  1 CASE WHEN 这种条件判断查询是SQL通用的写法。 DECODE() 函数是ORACLE特有的函数 。
+  2 CASE WHEN 是条件判断 ， DECODE() 是等值判断。
+  
+如果 DECODE() 要进行条件判断 ，需要结合其他的函数( SIGN() )一起使用才可以进行简单的条件判断 。
+ SIGN() 是根据参数计算结果 返回  1  ， 0 ， -1 
+ 如果 计算结果 > 0 则返回 1 
+ 如果 计算结果 = 0 则返回 0 
+ 如果 计算结果 < 0 则返回 -1 
+ 
+ SELECT SIGN( 3+5 ) , SIGN( 3 -3 ) ,  SIGN( 3-5 ) FROM DUAL;
+ 
+ 
+比如： 根据员工的工资是否 >= 3000 返回员工的岗位别名 
+  如果工资 >= 3000 则返回 '正式工' ，否则返回 '临时工' 
+  
+SELECT E.* ,
+       DECODE( SIGN(E.SAL - 3000) , -1 ,'临时工' ,'正式工')  岗位别名
+FROM EMP E
+ORDER BY E.SAL DESC  ;
+
+
+

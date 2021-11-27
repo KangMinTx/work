@@ -1,0 +1,21 @@
+create table cbk_log
+(
+id VARCHAR2(20),
+dkye VARCHAR2(20),
+sjsd VARCHAR2(20)
+)
+PARTITION by RANGE(sjsd)
+(
+PARTITION p_month_1 VALUES less than ('2030101')
+TABLESPACE fas_dat_t
+PCTFREE 10
+INITRANS 1
+MAXTRANS 255
+STORAGE 
+(
+initial 8m
+next 1m
+MINEXTENTS 1
+MAXEXTENTS UNLIMITED
+)
+);

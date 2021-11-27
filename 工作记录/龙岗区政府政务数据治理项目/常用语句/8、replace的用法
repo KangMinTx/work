@@ -1,0 +1,2 @@
+Replace（"字符串","要被替代的字符串","替代后的字符串"）
+replace(replace(birthday,' 00:00:00.0',''),' 00:00:00','') birthday

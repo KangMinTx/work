@@ -1,0 +1,8 @@
+--查询一张表里面索引
+select * from user_indexes where table_name=upper('DM_RKK_SYRKKBDHZLJGB');
+SELECT * FROM user_indexes WHERE TABLE_NAME='DM_RKK_SYRKKBDHZLJGB';
+--查询被索引字段
+select * from user_ind_columns where index_name=upper('LXDH_INDEX');
+--给某一字段创建索引
+create index index_name on table_name(col_name);
+

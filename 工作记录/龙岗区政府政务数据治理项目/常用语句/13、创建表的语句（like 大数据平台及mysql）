@@ -1,0 +1,1 @@
+create table ymjz_new_cbk_ql like ymjz_new_cbk_ql_temp;

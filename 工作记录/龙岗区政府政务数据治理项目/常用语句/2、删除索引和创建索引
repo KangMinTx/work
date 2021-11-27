@@ -1,0 +1,39 @@
+drop index index_name on table_name ;
+ 
+alter table table_name drop index index_name ;
+ 
+alter table table_name drop primary key ;
+
+alter table tbl_name add primary key (column_list)；
+
+-----删除索引 
+drop index  SYRKYQFKBQB_IND_SFZHS;
+drop index  SYRKYQFKBQB_IND_ZLBS;
+drop index  SYRKYQFKBQB_IND_DXHFBZLG;
+drop index  SYRKYQFKBQB_IND_ZXYMJZSJ;
+drop index  SYRKYQFKBQB_IND_ZJYCHSJCSJ;
+drop index  SYRKYQFKBQB_IND_ZJHM;
+----创建索引
+create index LQGSM.SYRKYQFKBQB_IND_SFZHS on lqgsm.DM_RKK_SYRKYQFKBQB (SFZHS) parallel 6
+tablespace USERS
+nologging;
+  
+create index LQGSM.SYRKYQFKBQB_IND_ZLBS on LQGSM.DM_RKK_SYRKYQFKBQB (ZLBS) parallel 6
+tablespace USERS
+nologging;
+ 
+create index LQGSM.SYRKYQFKBQB_IND_DXHFBZLG on LQGSM.DM_RKK_SYRKYQFKBQB (DXHFBZLG) parallel 6
+tablespace USERS
+nologging;  
+
+create index LQGSM.SYRKYQFKBQB_IND_ZXYMJZSJ on LQGSM.DM_RKK_SYRKYQFKBQB (ZXYMJZSJ) parallel 6
+tablespace USERS
+nologging;  
+
+create index LQGSM.SYRKYQFKBQB_IND_ZJYCHSJCSJ on LQGSM.DM_RKK_SYRKYQFKBQB (ZJYCHSJCSJ) parallel 6
+tablespace USERS
+nologging;
+
+create index LQGSM.SYRKYQFKBQB_IND_ZJHM on LQGSM.DM_RKK_SYRKYQFKBQB (ZJHM) parallel 6
+tablespace USERS
+nologging;

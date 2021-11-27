@@ -1,0 +1,4 @@
+,case when length(t1.IDCARD_NUM)= 18 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(trim(t1.IDCARD_NUM),7,8),'yyyyMMdd'))/12)
+      when length(t1.IDCARD_NUM)= 15 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date('19'||substr(trim(t1.IDCARD_NUM),7,6),'yyyyMMdd'))/12)
+      when length(t1.IDCARD_NUM) not in(18,15) and length(t1.birthdate)>=10 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(t1.birthdate,1,10),'yyyy-MM-dd'))/12)
+end as NL	--年龄
