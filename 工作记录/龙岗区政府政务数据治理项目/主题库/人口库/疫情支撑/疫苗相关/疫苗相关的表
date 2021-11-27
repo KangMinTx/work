@@ -1,0 +1,46 @@
+----------------------------14物理机旧表------------------------------
+DM_RKK_SYRKFYQK_2_NEW --疫苗表
+DM_RKK_YQFMYMBQB --疫苗视图表
+DM_RKK_SYRK_TO_YXY --永兴元人口表
+DM_RKK_YQFMYMBQB_bak --错误表
+dm_yq_hsjcjg    --核酸结果表
+dm_rkk_syrkfyqk_1 --核酸与实有人口关联的表
+
+核酸旧表
+DM_YQ_HSJCJG
+DM_RKK_SYRKFYQK_1
+---------------------------14物理机新表-------------------------------
+DM_RKK_YMFK_YMB --疫苗表
+DM_RKK_YQFMYMBQB_YMB --疫苗视图表
+
+DM_RKK_YQFK_HS   --核酸结果表
+dm_rkk_syrkyqfk_hs --核酸与实有人口关联的表
+
+
+---------------------------人口表-------------------------------------
+dm_rkk_rkb_ls          --历史表
+dm_rkk_syrkkb_temp    --增量运行后制作与太极平台一样的增量表
+dm_rkk_syrkkb_tjt      --制作根据人、更新时间、创建时间去重后的表，并去暂离
+dm_rkk_syrkkb_bq       --制作标签使用的表
+dm_rkk_syrk_to_yxy_th  --制作和永兴元一样字段的表
+
+--------------------------------大数据平台-------------------------------
+疫苗表：ymjz_new_cbk_ql（新表），dm_rkk_syrkfyqk_2_new（旧表）--全量
+核酸：dm_rkk_syrkfyqk_lsql_bqb（新表：核酸与实有人口关联的表）
+
+-------------------------------------------------
+现在上线，依然为旧表
+DM_RKK_YQFMYMBQB   --疫苗视图表
+dm_yq_hsjcjg    --核酸结果表
+dm_rkk_syrkfyqk_1 --核酸与实有人口关联的表
+
+
+实有人口
+有效的实有人口：dm_rkk_syrkkb_tjt
+数量：select count(1) from dm_rkk_syrkkb_tjt;--4478187
+
+带暂离的实有人口表：dm_rkk_syrkkb_temp
+数量：select count(1) from dm_rkk_syrkkb_temp;--4962212
+
+暂离的实有人口表数量 
+select count(1) from dm_rkk_syrkkb_temp where yxx='暂离';--240374
