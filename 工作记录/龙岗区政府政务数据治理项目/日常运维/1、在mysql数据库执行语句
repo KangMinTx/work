@@ -1,0 +1,13 @@
+select a.*,if(substr(a.table_yxsj,1,10)=substr(now(),1,10),'运行成功','运行失败') as '运行结果' 
+from table_data_log a where substr(create_time,1,10)=substr(now(),1,10) ORDER BY table_yxsj;
+
+主要是为了查看，法人负面、一企一档接口整体运行情况，并形成相应的表，查看运行成功及运行失败的原因，从orcale数据库及大数据平台找相关的原因
+
+然后导出表格，格式为csv
+
+用notepad++打开，,替换为\t
+
+新建表格，全选-设置单元格式-文本
+
+然后在notepad++复制相应的内容，到表格中
+
