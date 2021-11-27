@@ -9,5 +9,5 @@ from table_data_log a where substr(create_time,1,10)=substr(now(),1,10) ORDER BY
 
 新建表格，全选-设置单元格式-文本
 
-然后在notepad++复制相应的内容，到表格中  
+然后在notepad++复制相应的内容，到表格中
 
