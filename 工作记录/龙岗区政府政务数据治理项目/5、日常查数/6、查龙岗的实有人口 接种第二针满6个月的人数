@@ -1,0 +1,63 @@
+1、不关联实有人口，只查疫苗接种记录，第二针接种时间与当前时间比较大于180天的数
+SELECT COUNT(1),COUNT(DISTINCT SFZ)  FROM DM_RKK_YQFMYMBQB 
+WHERE TO_DATE( TO_CHAR(SYSDATE,'yyyy-mm-dd'),'yyyy-mm-dd')-TO_DATE( SUBSTR(dezjzsj,1,10),'yyyy-mm-dd')>=180 AND dezjzsj IS NOT NULL;
+
+2、不关联实有人口，只查疫苗接种记录，只接种第二针，且接种时间与当前时间比较大于180天的数
+SELECT COUNT(1),COUNT(DISTINCT SFZ)  FROM DM_RKK_YQFMYMBQB 
+WHERE TO_DATE( TO_CHAR(SYSDATE,'yyyy-mm-dd'),'yyyy-mm-dd')-TO_DATE( SUBSTR(dezjzsj,1,10),'yyyy-mm-dd')>=180 AND dezjzsj IS NOT NULL AND zc='2';
+
+3、与实有人口关联，flagfield 不等于3的数据（没有考虑到flagfield 为空的情况），所以数据有些问题
+SELECT COUNT(1),COUNT(DISTINCT zjhm) FROM (
+SELECT a.zjhm  FROM 
+(SELECT * FROM DM_RKK_YQFMYMBQB 
+WHERE TO_DATE( TO_CHAR(SYSDATE,'yyyy-mm-dd'),'yyyy-mm-dd')-TO_DATE( SUBSTR(dezjzsj,1,10),'yyyy-mm-dd')>=180 AND dezjzsj IS NOT NULL AND zc='2') b 
+INNER JOIN 
+(SELECT *  FROM (
+SELECT A.*,
+row_number() over(partition by ID order by YXSJ DESC ) rn2
+FROM dm_rkk_syrk_to_yxy a) WHERE RN2=1  AND flagfield <> 3) a 
+ON b.sfz=a.zjhm AND A.NAME=B.SZZXM );
+
+4、与实有人口关联，flagfield不等于3或者flagfield为空的数据，这应该为正确的数据 --406845
+SELECT COUNT(1),COUNT(DISTINCT zjhm) FROM (
+SELECT a.zjhm  FROM 
+(SELECT * FROM DM_RKK_YQFMYMBQB 
+WHERE TO_DATE( TO_CHAR(SYSDATE,'yyyy-mm-dd'),'yyyy-mm-dd')-TO_DATE( SUBSTR(dezjzsj,1,10),'yyyy-mm-dd')>=180 AND dezjzsj IS NOT NULL AND zc='2') b 
+INNER JOIN 
+(SELECT * FROM (
+SELECT *  FROM (
+SELECT A.*,
+row_number() over(partition by ID order by YXSJ DESC,YXSJ2 DESC ) rn2
+FROM DM_RKK_SYRK_TO_YXY a) WHERE RN2=1 ) WHERE flagfield <> 3 OR  flagfield IS  NULL) a 
+ON b.sfz=a.zjhm AND A.NAME=B.SZZXM );
+
+5、DM_RKK_SYRK_TO_YXY 总数为 可以用这样表
+---4985181
+SELECT COUNT(1) FROM (
+SELECT *  FROM (
+SELECT A.*,
+row_number() over(partition by ID order by YXSJ DESC,YXSJ2 DESC ) rn2
+FROM DM_RKK_SYRK_TO_YXY a) WHERE RN2=1 ) WHERE flagfield <> 3 OR  flagfield IS  NULL;
+
+
+
+
+---------------------------------------------大数据平台查数-------------------------------------------
+--实有人口去暂离  (383962)
+select count(1),count(DISTINCT zjhm) from (
+SELECT A.zjhm,A.XM,A.jdmc,A.GXBZ,case when length(ZJHM)= 18 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(trim(ZJHM),7,8),'yyyyMMdd'))/12)
+      when length(ZJHM)= 15 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date('19'||substr(trim(ZJHM),7,6),'yyyyMMdd'))/12)
+      when length(ZJHM) not in(18,15) and length(CSNY)>=10 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(CSNY,1,10),'yyyy-MM-dd'))/12)
+end as NL,B.YM_MC,B.ZC,B.YM_DM,B.JZDWMC,B.SFYWC,b.DEZJZSJ,substr(now(),1,19) as YXSJ_bd
+FROM dm_rkk_syrkkb_tjt A INNER JOIN DM_RKK_YQFMYMBQB_TO_YXY b ON a.ZJHM =b.SFZ) 
+where datediff(YXSJ_bd,DEZJZSJ)>=180 and DEZJZSJ is not null AND ZC='2' and GXBZ <> '删除';
+
+--实有人口不去暂离(393314)
+select count(1),count(DISTINCT zjhm) from (
+SELECT A.zjhm,A.XM,A.jdmc,A.GXBZ,case when length(ZJHM)= 18 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(trim(ZJHM),7,8),'yyyyMMdd'))/12)
+      when length(ZJHM)= 15 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date('19'||substr(trim(ZJHM),7,6),'yyyyMMdd'))/12)
+      when length(ZJHM) not in(18,15) and length(CSNY)>=10 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(CSNY,1,10),'yyyy-MM-dd'))/12)
+end as NL,B.YM_MC,B.ZC,B.YM_DM,B.JZDWMC,B.SFYWC,b.DEZJZSJ,substr(now(),1,19) as YXSJ_bd
+FROM dm_rkk_syrkkb_temp A INNER JOIN DM_RKK_YQFMYMBQB_TO_YXY b ON a.ZJHM =b.SFZ) 
+where datediff(YXSJ_bd,DEZJZSJ)>=180  and ZC='2' AND DEZJZSJ  is not null and GXBZ <> '删除';
+

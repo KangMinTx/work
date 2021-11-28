@@ -1,0 +1,345 @@
+黑名单（dwd_hmdxx）
+以std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd(区发展改革局_涉金融黑名单)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，通过公司名称、主体身份代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_aic_spaqhmd(区发展改革局_食品安全黑名单)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，通过公司名称、主体身份代码关联条件，补充信息
+union all
+std_qyjglj_blacklist(区应急管理局_黑名单企业)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，通过公司名称、主体身份代码关联条件，补充信息
+union all
+std_qfzggj_dm_lhjc_hhmd_ajzj_aqschmd(区发展改革局_安全生产黑名单)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，通过公司名称、主体身份代码关联条件，补充信息
+union all
+std_qfzggj_t_busi_ajj_black(区发展改革局_安全生产不良记录黑名单)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，通过公司名称、主体身份代码关联条件，补充信息
+union all
+std_qyjglj_blacklistmsgs(区应急管理局de黑名单信息提示)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，通过公司名称、主体身份代码关联条件，补充信息
+
+
+----------------------------------------------------------------------------黑名单---------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-11 11:01:19.84
+--所属主题:黑名单
+--内容描述:黑名单5张表,加工至dwd_hmdxx(黑名单信息)
+--			std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd(区发展改革局_涉金融黑名单)1
+--			std_qfzggj_t_busi_aic_spaqhmd(区发展改革局_食品安全黑名单)2
+--          std_qyjglj_blacklist(区应急管理局_黑名单企业)3	
+--			std_qfzggj_dm_lhjc_hhmd_ajzj_aqschmd(区发展改革局_安全生产黑名单)4
+--			std_qfzggj_t_busi_ajj_black(区发展改革局_安全生产不良记录黑名单)5
+--            std_qyjglj_blacklistmsgs(区应急管理局de黑名单信息提示)6
+
+--加载策略:全量
+--修改记录:1204 He 将每一个筛选最新分区的条件,放到里层 将join 改成 left join 
+--				   将逻辑替换为 关联法人基本信息 获取 法人相关信息
+--_********************************************************_
+--truncate table dwd_hmdxx;
+insert overwrite table dwd_hmdxx partition (dt='${DayBeforeStartTime}')
+
+select
+ ztsfdm     --主体身份代码
+ ,tyshxydm  --统一社会信用代码
+ ,zzjgdm    --组织机构代码
+ ,zch       --登记/注册号
+ ,gsmc        --公司名称
+ ,hmdlxdm   --黑名单类型代码
+ ,hmdlx     --黑名单类型
+ ,wsbh      --文书编号
+ ,rdbm      --认定部门
+ ,lrsy      --列入名单事由
+ ,lrrq      --列入日期
+ ,sjje      --涉及金额（元）
+ ,ztzjlx    --主体证件类型
+ ,ztzjhm    --主体证件号码
+ ,ztxm      --主体姓名
+ ,ztlxfs    --主体联系方式
+ ,lyb       --来源表
+ ,lyjg      --来源机构
+ ,yxsj      --运行时间
+ from 
+(
+/*std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd(区发展改革局_涉金融黑名单)1 */
+select  nvl(a.aicentcode,b.lgl_id) ztsfdm --主体身份代码 
+       ,nvl(b.tyshxydm,c.tyshxydm) tyshxydm --统一社会信用代码 
+       ,nvl(b.zzjgdm,c.zzjgdm) zzjgdm --组织机构代码 
+       ,nvl(nvl(a.regno,b.zch),c.zch) zch --登记/注册号 
+       ,nvl(a.sxzt,c.lgl_name) gsmc --公司名称 
+       ,case when a.hmdtype='涉金融经营异常名录' then 'a' 
+             when a.hmdtype='涉金融严重失信行为人' then 'b' 
+             when a.hmdtype='严重债务失信人' then 'c' 
+             when a.hmdtype='涉金融失信关联黑名单' then 'd' end hmdlxdm --黑名单类型代码 
+       ,a.hmdtype hmdlx --黑名单类型 
+       ,a.ah wsbh --文书编号 
+       ,a.zcpjjg rdbm --认定部门 
+       ,a.zm lrsy --列入名单事由 
+       ,to_date(a.topic_update_time)||' 00:00:00' as lrrq --列入日期 
+       ,round(a.saje,2) sjje --涉及金额（元） 
+       ,case when length(b.legal_person_card_no)=18 then '身份证件号' else null end ztzjlx --主体证件类型 
+       ,b.legal_person_card_no ztzjhm --主体证件号码 
+       ,nvl(b.legal_person_name,c.legal_person_name) ztxm --主体姓名 
+       ,null ztlxfs --主体联系方式 
+       ,'std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd' lyb --来源表 
+       ,a.lyjg lyjg --来源机构 
+       ,current_timestamp yxsj --运行时间
+from 
+(
+	select  *
+	from std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd
+	where dt=( 
+	select  max(dt)
+	from std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd) 
+)a
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( 
+	select  max(dt)
+	from dwd_jbxx_frjcxx)
+) b
+on trim(a.sxzt)=trim(b.lgl_name)
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( 
+	select  max(dt)
+	from dwd_jbxx_frjcxx)
+) c
+on trim(a.aicentcode)=trim(c.lgl_id)
+where isshow=1    
+ 
+union  all
+/*std_qfzggj_t_busi_aic_spaqhmd(区发展改革局_食品安全黑名单)2*/
+SELECT  nvl(a.aicentcode,b.lgl_id) ztsfdm --主体身份代码 
+       ,nvl(b.tyshxydm,c.tyshxydm) tyshxydm --统一社会信用代码 
+       ,nvl(b.zzjgdm,c.zzjgdm) zzjgdm --组织机构代码 
+       ,nvl(b.zch,c.zch) zch --登记/注册号 
+       ,nvl(a.entname,c.lgl_name) gsmc --公司名称 
+       ,null hmdlxdm --黑名单类型代码 
+       ,null hmdlx --黑名单类型 
+       ,CASE WHEN instr(cfqk,':') <> 0 AND instr(cfqk,'〕') <>0 THEN replace(split(cfqk,':')[0],'行政处罚','') ELSE null END wsbh --文书编号 
+       ,null rdbm --认定部门 
+       ,null lrsy --列入名单事由 
+       ,to_date(udate)||' 00:00:00' lrrq --列入日期 
+       ,null sjje --涉及金额（元） 
+       ,CASE WHEN length(b.legal_person_card_no)=18 THEN '身份证件号' ELSE null END ztzjlx --主体证件类型 
+       ,nvl(b.legal_person_card_no,c.legal_person_card_no) ztzjhm --主体证件号码 
+       ,nvl(b.legal_person_name,c.legal_person_name) ztxm --主体姓名 
+       ,null ztlxfs --主体联系方式 
+       ,'std_qfzggj_t_busi_aic_spaqhmd' lyb --来源表 
+       ,a.lyjg lyjg --来源机构 
+       ,current_timestamp yxsj --运行时间
+FROM (select * from std_qfzggj_t_busi_aic_spaqhmd where dt=(select max(dt) from std_qfzggj_t_busi_aic_spaqhmd)) a
+ left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=(select  max(dt) from dwd_jbxx_frjcxx)
+) b
+on trim(a.entname)=trim(b.lgl_name)
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx where dt=(  select  max(dt) from dwd_jbxx_frjcxx)
+) c
+on trim(a.aicentcode)=trim(c.lgl_id)
+ 
+union  all
+/*std_qyjglj_blacklist(区应急管理局_黑名单企业)3	*/
+select  b.lgl_id ztsfdm --主体身份代码 
+       ,b.tyshxydm tyshxydm --统一社会信用代码 
+       ,b.zzjgdm zzjgdm --组织机构代码 
+       ,b.zch zch --登记/注册号 
+       ,a.entpname gsmc --公司名称 
+       ,a.type hmdlxdm --黑名单类型代码 
+       ,'-' hmdlx --黑名单类型 
+       ,null wsbh --文书编号 
+       ,a.fillunit rdbm --认定部门 
+       ,a.badinformation_name lrsy --列入名单事由 
+       ,a.informdate lrrq --列入日期 
+       ,round(a.fineamount,2) sjje --涉及金额（元） 
+       ,case when length(b.legal_person_card_no)=18 then '身份证件号' else null end ztzjlx --主体证件类型 
+       ,b.legal_person_card_no ztzjhm --主体证件号码 
+       ,nvl(a.policyname,b.legal_person_name) ztxm --主体姓名 
+       ,a.policytel ztlxfs --主体联系方式 
+       ,'std_qyjglj_blacklist' lyb --来源表 
+       ,a.lyjg lyjg --来源机构 
+       ,current_timestamp yxsj --运行时间 
+	   from (select * from std_qyjglj_blacklist where dt=(select max(dt) from std_qyjglj_blacklist) )a
+ left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=(select  max(dt) from dwd_jbxx_frjcxx)
+) b
+on trim(a.entpname)=trim(b.lgl_name)
+
+union all
+/**/
+select  
+	null ztsfdm     --主体身份代码
+ 	,b.tyshxydm tyshxydm  --统一社会信用代码
+ 	,b.zzjgdm zzjgdm    --组织机构代码
+	,b.zch zch       --登记/注册号
+ 	,a.dxmc gsmc        --公司名称
+	,null hmdlxdm   --黑名单类型代码
+ 	,a.mdmc hmdlx     --黑名单类型
+ 	,a.wsh wsbh      --文书编号
+ 	,a.rdbm rdbm      --认定部门
+ 	,a.lysy lrsy      --列入名单事由
+ 	,replace(a.lrrq,'-','') lrrq      --列入日期
+ 	,round(a.sjje,2) sjje      --涉及金额（元）
+ 	,case when  length(b.legal_person_card_no)=18 then '身份证件号' else null end ztzjlx    --主体证件类型
+ 	,b.legal_person_card_no ztzjhm    --主体证件号码
+ 	,b.legal_person_name  ztxm      --主体姓名
+ 	,null ztlxfs    --主体联系方式
+ 	,'std_qfzggj_dm_lhjc_hhmd_rsb_tqnmggzhmd' lyb       --来源表
+ 	,a.lyjg lyjg      --来源机构
+ 	,current_timestamp yxsj      --运行时间
+from (select * from std_qfzggj_dm_lhjc_hhmd_rsb_tqnmggzhmd where dt=(select max(dt) from std_qfzggj_dm_lhjc_hhmd_rsb_tqnmggzhmd)) a
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=(select  max(dt) from dwd_jbxx_frjcxx)
+) b
+on trim(a.dxmc)=trim(b.lgl_name)
+  
+union all
+
+/*std_qfzggj_dm_lhjc_hhmd_ajzj_aqschmd(区发展改革局_安全生产黑名单)4
+  */
+  
+select  nvl(a.aicentcode,b.lgl_id) ztsfdm --主体身份代码 
+       ,nvl(nvl(b.tyshxydm,c.tyshxydm),d.tyshxydm) tyshxydm --统一社会信用代码 
+       ,nvl(nvl(b.zzjgdm,c.zzjgdm),d.zzjgdm) zzjgdm --组织机构代码 
+       ,nvl(nvl(b.zch,c.zch),d.zch) zch --登记/注册号 
+       ,nvl(a.dwmc,c.lgl_name) gsmc --公司名称 
+       ,null hmdlxdm --黑名单类型代码 
+       ,null hmdlx --黑名单类型 
+       ,null wsbh --文书编号 
+       ,a.xxbsjg rdbm --认定部门 
+       ,a.nrly lrsy --列入名单事由 
+       ,a.topic_update_time  lrrq --列入日期 
+       ,null sjje --涉及金额（元） 
+       ,case when length(b.legal_person_card_no)=18 then '身份证件号' else null end ztzjlx --主体证件类型 
+       ,b.legal_person_card_no ztzjhm --主体证件号码 
+       ,b.legal_person_name ztxm --主体姓名 
+       ,null ztlxfs --主体联系方式 
+       ,'std_qfzggj_dm_lhjc_hhmd_ajzj_aqschmd' lyb --来源表 
+       ,a.lyjg lyjg --来源机构 
+       ,current_timestamp yxsj --运行时间 
+from (select * from std_qfzggj_dm_lhjc_hhmd_ajzj_aqschmd where dt=(select max(dt) from std_qfzggj_dm_lhjc_hhmd_ajzj_aqschmd) )a
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=(select  max(dt) from dwd_jbxx_frjcxx)
+) b
+on trim(a.dwmc)=trim(b.lgl_name)
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( 
+	select  max(dt)
+	from dwd_jbxx_frjcxx)
+) c
+on trim(a.aicentcode)=trim(c.lgl_id)
+left join (select * from std_qzfw_view_qy_jcxx_d where dt=(select max(dt) from std_qzfw_view_qy_jcxx_d)) d
+on trim(a.dwmc)=trim(d.qymc)
+
+union all
+  /*std_qfzggj_t_busi_ajj_black(区发展改革局_安全生产不良记录黑名单)5*/
+select  
+	nvl(a.aicentcode,b.lgl_id) ztsfdm     --主体身份代码
+ 	,nvl(b.tyshxydm,c.tyshxydm) tyshxydm  --统一社会信用代码
+ 	,nvl(b.zzjgdm,c.zzjgdm) zzjgdm    --组织机构代码
+	,nvl(b.zch,c.zch) zch       --登记/注册号
+ 	,nvl(a.entpname,c.lgl_name) gsmc        --公司名称
+	,null hmdlxdm   --黑名单类型代码
+ 	,null hmdlx     --黑名单类型
+ 	,null wsbh      --文书编号
+ 	,a.lawunit rdbm      --认定部门
+ 	,a.illegalfact lrsy      --列入名单事由
+ 	,to_date(a.illegaldate)||' 00:00:00' lrrq      --列入日期
+ 	,null sjje      --涉及金额（元）
+ 	,case when  length(b.legal_person_card_no)=18 then '身份证件号' else null end ztzjlx    --主体证件类型
+ 	,b.legal_person_card_no ztzjhm    --主体证件号码
+ 	,b.legal_person_name  ztxm      --主体姓名
+ 	,null ztlxfs    --主体联系方式
+ 	,'std_qfzggj_t_busi_ajj_black' lyb       --来源表
+ 	,a.lyjg lyjg     --来源机构
+ 	,current_timestamp yxsj      --运行时间
+from (select * from std_qfzggj_t_busi_ajj_black where dt=(select max(dt) from std_qfzggj_t_busi_ajj_black)) a
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( 
+	select  max(dt)
+	from dwd_jbxx_frjcxx)
+) b
+on trim(a.entpname)=trim(b.lgl_name)
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( 
+	select  max(dt)
+	from dwd_jbxx_frjcxx)
+) c
+on trim(a.aicentcode)=trim(c.lgl_id)
+
+ union all
+  /*std_qyjglj_blacklistmsgs(区应急管理局de黑名单信息提示)5*/
+select  
+	b.lgl_id ztsfdm     --主体身份代码
+ 	,b.tyshxydm tyshxydm  --统一社会信用代码
+ 	,b.zzjgdm zzjgdm    --组织机构代码
+	,b.zch zch       --登记/注册号
+ 	,nvl(a.entpname,b.lgl_name) gsmc        --公司名称
+	,null hmdlxdm   --黑名单类型代码
+ 	,'生产经营单位安全生产不良记录' hmdlx     --黑名单类型
+ 	,null wsbh      --文书编号
+ 	,a.createby rdbm      --认定部门
+ 	,a.msg lrsy      --列入名单事由
+ 	,substr(a.createtime,1,19) lrrq      --列入日期
+ 	,null sjje      --涉及金额（元）
+ 	,case when  length(b.legal_person_card_no)=18 then '身份证件号' else null end ztzjlx    --主体证件类型
+ 	,b.legal_person_card_no ztzjhm    --主体证件号码
+ 	,b.legal_person_name  ztxm      --主体姓名
+ 	,null ztlxfs    --主体联系方式
+ 	,'std_qyjglj_blacklistmsgs' lyb       --来源表
+ 	,a.lyjg lyjg     --来源机构
+ 	,current_timestamp yxsj      --运行时间
+from (select * from std_qyjglj_blacklistmsgs where dt=(select max(dt) from std_qyjglj_blacklistmsgs)) a
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( 
+	select  max(dt)
+	from dwd_jbxx_frjcxx)
+) b
+on trim(a.entpname)=trim(b.lgl_name)
+
+ )
+  group by ztsfdm     --主体身份代码
+ 	,tyshxydm  --统一社会信用代码
+ 	,zzjgdm    --组织机构代码
+	,zch       --登记/注册号
+ 	,gsmc        --公司名称
+	,hmdlxdm   --黑名单类型代码
+ 	,hmdlx     --黑名单类型
+ 	,wsbh      --文书编号
+ 	,rdbm      --认定部门
+ 	,lrsy      --列入名单事由
+ 	,lrrq      --列入日期
+ 	,sjje      --涉及金额（元）
+ 	,ztzjlx    --主体证件类型
+ 	,ztzjhm    --主体证件号码
+ 	,ztxm      --主体姓名
+ 	,ztlxfs    --主体联系方式
+ 	,lyb       --来源表
+ 	,lyjg      --来源机构
+ 	,yxsj      --运行时间
+

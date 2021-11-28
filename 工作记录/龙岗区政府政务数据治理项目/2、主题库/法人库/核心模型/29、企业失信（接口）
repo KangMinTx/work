@@ -1,0 +1,45 @@
+企业失信（dm_jk_frfm_qysx）
+以失信企业信息(dwd_sxqyxx)为主表，左关联dwd_frdzxx（法人地址），左关联dwd_jbxx_frjcxx(法人基本信息)，取相应的字段
+
+------------------------------------------------------------------------DM企业失信---------------------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-15 10:48:16
+--修改记录:1204 He 由于导入mysqldate格式报错,修改 cffbsj 格式
+--		   1207 He to_date(cffbsj,'yyyymmdd')  改为 to_date(cffbsj,'yyyyMMdd')
+--		   1229 He 新增关联法人基本信息表,关键字段(企业名称,组织机构代码 以 法人基本信息表为主 原业务数据做补充)
+--		   0119 He 修改内容：新增两个字段 社区名称（sqmc），街道名称（jdmc） 取值来自于 法人地址信息表
+--_********************************************************_
+--修改日期：2021-03-17
+--统一cffbsj长度
+truncate TABLE dm_jk_frfm_qysx;
+
+INSERT INTO TABLE dm_jk_frfm_qysx  
+SELECT  uuid() agency_key --代理主键 
+       ,b1.xzcfjdwsh xzcfjdwsh --[主键]行政处罚决定书文号 
+       ,b1.tyshxydm tyshxydm --统一社会信用代码 
+       ,nvl(b3.zzjgdm,b1.zzjgdm) zzjgdm --组织机构代码 
+       ,nvl(b3.lgl_name,b1.gsmc) gsmc --法人名称/字号 
+       ,b1.cfmc cfmc --处罚名称 
+       ,b1.cflx cflx --处罚类型 
+       ,b1.cfsy cfsy --处罚事由 
+       ,b1.cfyj cfyj --处罚依据 
+       ,b1.cfjg cfjg --处罚结果 
+       ,CASE WHEN length(b1.cffbsj) = 8 THEN to_date(b1.cffbsj,'yyyyMMdd') || ' 00:00:00'
+             WHEN length(b1.cffbsj) = 10 THEN to_date(b1.cffbsj,'yyyy-MM-dd') ELSE b1.cffbsj END AS cffbsj --处罚发布时间 
+       ,b1.cfjig cfjig --处罚机关 
+       ,"企业失信" fmxxlb --负面信息类别 
+       ,b2.SQCODE sqdm --社区代码 
+	   ,b2.sqname as sqmc --社区名称
+       ,b2.JDBM jddm --街道代码 
+	   ,b2.jdmc as jdmc --街道名称
+       ,now() yxsj --运行时间
+       ,b1.lyjg lyjg --来源机构
+FROM (select * from dwd_sxqyxx WHERE dt=(SELECT  MAX(dt) FROM dwd_sxqyxx) AND  tyshxydm is not null and  xzcfjdwsh is not null)  b1
+LEFT JOIN 
+( SELECT  DISTINCT tyshxydm,sqcode,jdbm,sqname,jdmc FROM dwd_frdzxx WHERE dt=(SELECT  MAX(dt) FROM dwd_frdzxx)) b2
+ON b1.tyshxydm=b2.tyshxydm
+left join (SELECT  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,LEGAL_PERSON_NAME FROM dwd_jbxx_frjcxx WHERE dt=( SELECT  MAX(dt) FROM dwd_jbxx_frjcxx) ) b3
+on b1.tyshxydm=b3.tyshxydm 
+

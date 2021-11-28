@@ -1,0 +1,122 @@
+隐患信息（dwd_fxfm_yhxx）
+以政府挂牌督办重大火灾隐患单位（std_qfzggj_t_busi_xfj_hzyh）为主表，左关联dwd_jbxx_frjcxx(法人基本信息)，取相应的字段
+union 
+以stdn_qyjglj_yhxx(事故隐患STDN_区应急管理局_隐患信息)为主表，左关联dwd_jbxx_frjcxx(法人基本信息)，取相应的字段
+union 
+以stdn_qxawb_yhxx(事故隐患STDN_区消安委办_隐患信息)为主，左关联dwd_jbxx_frjcxx(法人基本信息)，取相应的字段
+
+----------------------------------------------------------------------隐患信息----------------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-07 09:01:19.84
+--所属主题:隐患信息
+--内容描述:隐患信息1张表,加工至dwd_fxfm_yhxx(隐患信息)
+--			std_qfzggj_t_busi_xfj_hzyh(区发展改革局_政府挂牌督办重大火灾隐患单位)1
+--			stdn_qxawb_yhxx(事故隐患STDN_区消安委办_隐患信息)
+--			stdn_qyjglj_yhxx(事故隐患STDN_区应急管理局_隐患信息)
+
+
+--加载策略:全量
+--1229 修改 法人名称优先从 法人基本信息表 中取值
+--_********************************************************_
+--truncate table dwd_fxfm_yhxx;
+insert overwrite table dwd_fxfm_yhxx partition (dt='${DayBeforeStartTime}')
+
+select
+	uuid() uuid		--主键
+	,ztsfdm		--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,swdjh 		 --税务登记号
+	,gsmc		--公司名称
+	,yhbh		--隐患编号
+	,yhlxdm		--隐患类型代码
+	,yhlx		--隐患类型
+	,yhnr		--隐患内容
+	,zgcs		 --整改措施
+	,clzt		--处理状态
+	,zgrq		--整改日期
+	,yhpcrq		--隐患排查日期
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+select
+	distinct
+	aicentcode ztsfdm		--主体身份代码
+	,b.tyshxydm	--统一社会信用代码
+	,b.zzjgdm		--组织机构代码
+	,b.zch		--登记/注册号
+	,null swdjh 		 --税务登记号
+	,b.lgl_name gsmc		--公司名称
+	,a.xh yhbh		--隐患编号
+	,'1' yhlxdm		--隐患类型代码
+	,'火灾隐患' yhlx		--隐患类型
+	,null yhnr		--隐患内容
+	,null zgcs		 --整改措施
+	,(case when to_date(zpdate) is not null then '摘牌' when to_date(xadate) is not null then '销案' when to_date(zgdate) is not null then '整改'
+	when to_date(gpdate) is not null then '挂牌' when to_date(ladate) is not null then '立案' else null end)	clzt		--处理状态
+	,zgdate zgrq		--整改日期
+	,ladate yhpcrq		--隐患排查日期
+	,'补充' xxlylx		--信息来源类型
+ 	,'std_qfzggj_t_busi_xfj_hzyh' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,current_timestamp yxsj      --运行时间
+ from std_qfzggj_t_busi_xfj_hzyh a
+ left join (select * from dwd_jbxx_frjcxx b where b.dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+ on trim(a.aicentcode)=trim(b.lgl_id)
+ where a.dt=(select max(dt) from std_qfzggj_t_busi_xfj_hzyh) 
+union
+  select
+	b.lgl_id ztsfdm      --主体身份代码
+	,b.tyshxydm    --统一社会信用代码
+	,b.zzjgdm      --组织机构代码
+	,b.zch		 --登记/注册号
+	,null swdjh 		 --税务登记号
+	,nvl(b.lgl_name,a.zh) gsmc			 --法人名称/字号
+	,a.yhbh		 --隐患编号
+	,cast(a.yhlxdm as int) yhlxdm		 --隐患类型代码
+	,replace(trim(a.yhlx),'一般隐患','黄色') yhlx		 --隐患类型
+	,a.yhnr		 --隐患内容
+	,a.zgcs		 --整改措施
+	,a.clzt		 --处理状态
+	,a.zgrq		 --整改日期
+	,a.yhpcrq		 --隐患排查日期
+	,a.xxlylx		 --信息来源类型
+	,'stdn_qyjglj_yhxx' lyb		 --来源表
+	,a.lyjg		 --来源机构
+	,current_timestamp yxsj		 --运行时间
+ from stdn_qyjglj_yhxx a
+ left join (select * from dwd_jbxx_frjcxx b where b.dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+ on trim(a.tyshxydm)=trim(b.tyshxydm)
+ where a.dt=(select max(dt) from stdn_qyjglj_yhxx) 
+union  
+select
+	b.lgl_id ztsfdm      --主体身份代码
+	,b.tyshxydm    --统一社会信用代码
+	,b.zzjgdm      --组织机构代码
+	,b.zch gsmc		 --登记/注册号
+	,null swdjh 		 --税务登记号
+	,nvl(b.lgl_name,a.zh)			 --法人名称/字号
+	,a.yhbh		 --隐患编号
+	,cast(a.yhlxdm as int) yhlxdm		 --隐患类型代码
+	,a.yhlx		 --隐患类型
+	,a.yhnr		 --隐患内容
+	,a.zgcs		 --整改措施
+	,a.clzt		 --处理状态
+	,a.zgrq		 --整改日期
+	,a.yhpcrq		 --隐患排查日期
+	,a.xxlylx		 --信息来源类型
+	,'stdn_qxawb_yhxx' lyb		 --来源表
+	,a.lyjg		 --来源机构
+	,current_timestamp yxsj		 --运行时间
+ from stdn_qxawb_yhxx a
+ left join (select * from dwd_jbxx_frjcxx b where b.dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+ on trim(a.tyshxydm)=trim(b.tyshxydm)
+ where a.dt=(select max(dt) from stdn_qxawb_yhxx) 
+ );
+

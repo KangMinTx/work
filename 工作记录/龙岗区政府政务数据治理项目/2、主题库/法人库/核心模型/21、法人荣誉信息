@@ -1,0 +1,62 @@
+法人荣誉信息（dwd_frry_frryxx）
+以机构环保荣誉信息（std_qfzggj_t_busi_hbj_jghbryxx）为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，补充相应的信息
+
+----------------------------------------------------------------法人荣誉信息-------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-26 11:01:19.84
+--所属主题:法人荣誉信息
+--内容描述:法人荣誉信息,加工至dwd_frry_frryxx(法人荣誉信息)
+
+
+
+--加载策略:全量
+--_********************************************************_
+
+truncate table dwd_frry_frryxx;
+insert overwrite table dwd_frry_frryxx partition (dt='${DayBeforeStartTime}')
+select
+	uuid		--主键
+	,tyshxydm	--统一社会信用代码
+	,zch		--注册号
+	,zzjgdm		--组织机构代码
+	,gsmc		--公司名称
+	,qymc		--企业名称
+	,fddbrxm		--法定代表人
+	,rywh		--荣誉文号
+	,rych		--荣誉称号
+	,ryjb		--荣誉级别
+	,rynr		--荣誉内容
+	,dw			--颁发单位组织机构代码
+	,xzqhdm		--颁发单位所在行政区划
+	,rdrq		--认定日期
+	,gsjsrq		--公示结束日期
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+	select
+		uuid() uuid		--主键
+		,b.tyshxydm	--统一社会信用代码
+		,b.zch		--注册号
+		,nvl(b.zzjgdm,a.zzjgdm) as zzjgdm		--组织机构代码
+		,a.dwmc gsmc		--公司名称
+		,nvl(b.lgl_name,a.qymc) qymc		--企业名称
+		,b.legal_person_name fddbrxm		--法定代表人
+		,a.rywh		--荣誉文号
+		,a.rych		--荣誉称号
+		,a.ryjb		--荣誉级别
+		,a.rynr		--荣誉内容
+		,dw dw			--颁发单位组织机构代码
+		,xzqhdm		--颁发单位所在行政区划
+		,rdrq		--认定日期
+		,gsjsrq		--公示结束日期
+		,'std_qfzggj_t_busi_hbj_jghbryxx' lyb		--来源表
+		,a.lyjg		--来源机构
+		,current_timestamp yxsj		--运行时间
+	from (select distinct zzjgdm,dwmc,qymc,rywh,rych,ryjb,rynr,dw,xzqhdm,rdrq,gsjsrq,lyjg from std_qfzggj_t_busi_hbj_jghbryxx a where a.dt=(select max(dt) from std_qfzggj_t_busi_hbj_jghbryxx)) a
+	left join (select * from dwd_jbxx_frjcxx b where b.dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+	on trim(a.zzjgdm)=trim(b.zzjgdm)
+ )

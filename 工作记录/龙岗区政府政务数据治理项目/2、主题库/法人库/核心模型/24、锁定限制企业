@@ -1,0 +1,68 @@
+锁定限制企业（dwd_fxfm_sdxzqy）
+以std_qfzggj_tdxzsdinfo1 (区发展改革局_锁定限制信息)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，补充相应的信息
+按照统一社会信用代码、主体身份代码、组织机构代码，注册号，限制状态、限制原因等分组，限制结束时间排序，取最新的一条数据。
+
+----------------------------------------------------------------------------------锁定限制企业---------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-03 17:49:37
+--table_name : dwd_fxfm_sdxzqy (锁定限制企业)
+--use_table  : std_qfzggj_tdxzsdinfo1 (区发展改革局_锁定限制信息)
+--			   dwd_jbxx_frjcxx (法人基本信息)
+--取数逻辑   : 以 std_qfzggj_tdxzsdinfo1 (区发展改革局_锁定限制信息) 通过主体身份代码 关联 dwd_jbxx_frjcxx (法人基本信息) 补充法人数据
+--去重逻辑	 : 根据统一社会信用代码,等法人信息,限制内容,限制开始日期,限制结束日期 去重
+--0316 He 修改 hzsj,xzkssj,xzjssj,jcsj 日期格式 YYYY-MM-DD hh24:mi:ss
+--_********************************************************_
+
+insert overwrite table dwd_fxfm_sdxzqy partition (dt='${DayBeforeStartTime}')
+select 
+uuid --主键
+,tyshxydm --统一社会信用代码
+,ztsfdm --主体身份代码
+,zzjgdm --组织机构代码
+,zch --登记/注册号
+,gsmc --公司名称
+,xzzt --限制状态
+,xzyy --限制原因
+,xznr --限制内容
+,xzlb --限制类别
+,hzsj --换证时间
+,xzry --限制人员
+,xzkssj --限制开始时间
+,xzjssj --限制结束时间
+,jcsj --解除时间
+,lyb --来源表
+,lyjg --来源机构
+,yxsj --运行时间
+from (
+select
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t1.entid as ztsfdm --主体身份代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,t2.lgl_name as gsmc --公司名称
+,t1.limitstate as xzzt --限制状态
+,t1.limityycode as xzyy --限制原因
+,t1.limitsm as xznr --限制内容
+,t1.xzlb as xzlb --限制类别
+,substr(t1.hztime,1,19) as hzsj --换证时间
+,t1.limituser as xzry --限制人员
+,substr(t1.limittimebegin,1,19) as xzkssj --限制开始时间
+,substr(t1.limittimeend,1,19) as xzjssj --限制结束时间
+,substr(t1.jctime,1,19) as jcsj --解除时间
+,'std_qfzggj_tdxzsdinfo1' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,substr(CURRENT_TIMESTAMP,1,19) as yxsj --运行时间
+,row_number() over(partition by t2.tyshxydm,t1.entid,t2.zzjgdm,t2.zch,t1.limitstate,t1.limityycode,t1.xzlb,substr(t1.limittimebegin,1,10),substr(t1.limittimeend,1,10) order by substr(t1.limittimeend,1,10) desc) rn
+from 
+(select entid,limitstate,limityycode,limitsm,xzlb,hztime,limituser,limittimebegin,limittimeend,jctime,lyjg 
+from  std_qfzggj_tdxzsdinfo1
+where dt=(select max(dt) from std_qfzggj_tdxzsdinfo1 )) t1
+left join 
+(select tyshxydm,lgl_id,zzjgdm,lgl_name,zch from dwd_jbxx_frjcxx 
+where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.entid=t2.lgl_id
+) 
+where rn =1 

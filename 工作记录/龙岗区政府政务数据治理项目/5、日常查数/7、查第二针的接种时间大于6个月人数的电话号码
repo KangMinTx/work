@@ -1,0 +1,16 @@
+--在大数据平台上查询
+SELECT a.SZZXM,a.sfz,b.phone FROM DM_RKK_YQFMYMBQB_TO_YXY a
+left join phone_temp_rk_0813_mk b 
+on a.sfz=b.cardno
+where datediff(CURRENT_DATE, dezjzsj)>=180
+AND dezjzsj IS NOT NULL AND zc='2';
+
+--但无法全部导出，所以需要创建表，推送到oracle，然后再导出
+create table dm_ym_20211118
+SELECT a.SZZXM,a.sfz,b.phone FROM DM_RKK_YQFMYMBQB_TO_YXY a
+left join phone_temp_rk_0813_mk b 
+on a.sfz=b.cardno
+where datediff(CURRENT_DATE, dezjzsj)>=180
+AND dezjzsj IS NOT NULL AND zc='2';
+
+

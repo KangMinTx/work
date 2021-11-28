@@ -1,0 +1,51 @@
+政府资助信息（dwd_zbzc_zfzzxx）
+以区发改局专利资助信息（std_qfzggj_t_busi_zscqj_patimburse）为主表，
+左关联法人基本信息(dwd_jbxx_frjcxx)表
+取相应的字段，得到政府资助信息（dwd_zbzc_zfzzxx）
+
+---------------------------------------------------------------------------政府资助信息------------------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-11-30 15:55:31
+--_********************************************************_
+--主键	UUID	STRING	
+--主体身份代码	ztsfdm	STRING	根据主体身份代码，与法人基本信息匹配
+--统一社会信用代码	tyshxydm	STRING	根据主体身份代码，与法人基本信息匹配
+--主体身份代码	ztsfdm	STRING	T_BUSI_ZSCQJ_PATIMBURSE主体身份代码
+--组织机构代码	zzjgdm	STRING	根据主体身份代码，与法人基本信息匹配
+--登记/注册号	dj/zch	STRING	根据主体身份代码，与法人基本信息匹配
+--公司名称	gsmc	STRING	T_BUSI_ZSCQJ_PATIMBURSE受理编号
+--资助编号	zzbh	STRING	
+--资助类别	zzlb	STRING	T_BUSI_ZSCQJ_PATIMBURSE资助类别
+--申请资助金额	sqzzje	DECIMAL	T_BUSI_ZSCQJ_PATIMBURSE申请资助金额
+--核定资助金额	hdzzje	DECIMAL	T_BUSI_ZSCQJ_PATIMBURSE核定资助金额
+--资助说明	zzsm	STRING	专利资助
+--资助时间	zzsj	DATE	
+--信息来源类型	xxlylx	STRING	补充
+--来源表	lyb	STRING	
+--来源机构	lyjg	STRING	
+--运行时间	yxsj	DATETIME	
+insert overwrite table dwd_zbzc_zfzzxx partition (dt = '${daybeforestarttime}')
+select
+uuid() uuid           ,--主键
+b2.lgl_id ztsfdm           ,--主体身份代码
+b2.tyshxydm tyshxydm           ,--统一社会信用代码
+--ztsfdm           ,--主体身份代码
+b2.zzjgdm zzjgdm           ,--组织机构代码
+b2.zch zch           ,--登记/注册号
+nvl(b2.lgl_name,b1.orgname) gsmc           ,--公司名称
+b1.ahacnum zzbh           ,--资助编号
+b1.imbtype zzlb           ,--资助类别
+b1.apppatamount sqzzje           ,--申请资助金额
+b1.chrpatamount hdzzje           ,--核定资助金额
+"专利资助" zzsm           ,--资助说明
+to_date(b1.accdate) zzsj           ,--资助时间
+"补充" xxlylx           ,--信息来源类型
+"std_qfzggj_t_busi_zscqj_patimburse  dwd_jbxx_frjcxx" lyb           ,--来源表
+b1.lyjg lyjg           ,--来源机构
+now() yxsj           --运行时间
+from (select distinct orgname,ahacnum,PATNAME,PATNUM,imbtype,apppatamount,chrpatamount,accdate,lyjg,aicentcode from std_qfzggj_t_busi_zscqj_patimburse b1 where b1.dt=(select max(dt) from std_qfzggj_t_busi_zscqj_patimburse)) b1
+left join(select distinct lgl_id,tyshxydm,zzjgdm,zch,lgl_name  from dwd_jbxx_frjcxx b2 where  b2.dt=(select max(dt) from dwd_jbxx_frjcxx)) b2
+on b1.aicentcode=b2.lgl_id
+

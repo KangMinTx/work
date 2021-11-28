@@ -1,0 +1,272 @@
+-------------------------先ctrl + shift + x 打开运行VBS 代码窗口-------------------------------
+---再运行下面的代码（文件的路程：Shift键，+右健）,excel文档有三个字段：Name\code\Data Type
+'开始
+Option Explicit
+
+Dim mdl ' the current model
+Set mdl = ActiveModel
+If (mdl Is Nothing) Then
+MsgBox "There is no Active Model"
+End If
+
+Dim HaveExcel
+Dim RQ
+RQ = vbYes 'MsgBox("Is  Excel Installed on your machine ?", vbYesNo + vbInformation, "Confirmation")
+If RQ = vbYes Then
+HaveExcel = True
+' Open & Create  Excel Document
+Dim x1 '
+Set x1 = CreateObject("Excel.Application")
+x1.Workbooks.Open "D:\龙岗区政府项目\测试12.xlsx"'指定 excel文档路径
+x1.Workbooks(1).Worksheets("Sheet1").Activate '指定要打开的sheet名称
+Else
+HaveExcel = False
+End If
+
+a x1, mdl
+
+sub a(x1, mdl)
+dim rwIndex 
+dim tableName
+dim colname
+dim table
+dim col
+dim count
+
+on error Resume Next
+
+set table = mdl.Tables.CreateNew '创建一个 表实体
+table.Name = "Sheet1" '指定 表名，如果在 Excel文档里有，也可以 .Cells(rwIndex, 3).Value 这样指定
+table.Code = "Sheet1" '指定 表名
+count = count + 1
+
+For rwIndex = 2 To 1000 '指定要遍历的 Excel行标 由于第1行是 表头， 从第2行开始
+With x1.Workbooks(1).Worksheets("Sheet1")
+If .Cells(rwIndex, 1).Value = "" Then
+Exit For
+End If
+
+set col = table.Columns.CreateNew '创建一列/字段
+'MsgBox .Cells(rwIndex, 1).Value, vbOK + vbInformation, "列"
+If .Cells(rwIndex, 1).Value = "" Then
+col.Name = .Cells(rwIndex, 1).Value '指定列名
+Else 
+col.Name = .Cells(rwIndex, 1).Value
+End If
+'MsgBox col.Name, vbOK + vbInformation, "列"
+col.Comment = .Cells(rwIndex, 1).Value '指定列说明
+col.Code = .Cells(rwIndex, 2).Value '指定列名
+col.DataType = .Cells(rwIndex, 3).Value '指定列数据类型
+If .Cells(rwIndex, 4).Value = "否" Then
+col.Mandatory = true '指定列是否可空 true 为不可空 
+End If
+If rwIndex = 2 Then
+col.Primary = true '指定主键
+End If
+End With
+Next
+MsgBox "生成数据 表结构共计 " + CStr(count), vbOK + vbInformation, " 表"
+
+Exit Sub
+End sub
+
+
+----------------------------生成一张表-----------------------------------
+
+
+---------PowerDesigner 批量修改表前缀
+Option Explicit
+ValidationMode = True
+InteractiveMode = im_Batch
+ 
+Dim mdl 'the current model
+ 
+'get the current active model
+Set mdl = ActiveModel
+If (mdl Is Nothing) Then
+MsgBox "There is no current Model"
+ElseIf Not mdl.IsKindOf(PdPDM.cls_Model) Then
+MsgBox "The current model is not an Physical Data model."
+Else
+   ProcessFolder mdl
+End If
+ 
+'This routine copy name into code for each table, each column
+'of the current folder
+Private sub ProcessFolder(folder)
+   Dim Tab 'running table
+   Dim NameStr , CodeStr
+   for each Tab in folder.tables       
+      '修改 Tab.name  与 Tab,code
+      Tab.name  = Replace( Tab.name , "OLD_" , "NEW_")
+      Tab.code  = Replace( Tab.code , "OLD_" , "NEW_")
+   next
+end sub
+
+
+------PowerDesigner 批量删除表字段
+Option Explicit
+ValidationMode = True
+InteractiveMode = im_Batch
+ 
+Dim mdl 'the current model
+ 
+'get the current active model
+Set mdl = ActiveModel
+If (mdl Is Nothing) Then
+MsgBox "There is no current Model"
+ElseIf Not mdl.IsKindOf(PdPDM.cls_Model) Then
+MsgBox "The current model is not an Physical Data model."
+Else
+ProcessFolder mdl
+End If
+ 
+'This routine copy name into code for each table, each column
+'of the current folder
+Private sub ProcessFolder(folder)
+Dim Tab 'running table
+for each Tab in folder.tables
+if not tab.isShortcut then
+Dim col 'running column
+for each col in tab.columns
+
+'删除公共字段字段 by Sinu
+
+if instr(col.code,"CJR")<>0 then
+   col.Delete
+end if
+
+if instr(col.code,"CJSJ")<>0 then
+   col.Delete
+end if
+
+if instr(col.code,"XGR")<>0 then
+   col.Delete
+end if
+
+if instr(col.code,"XGSJ")<>0 then
+   col.Delete
+end if
+
+next
+end if
+next
+MsgBox "success"
+
+end sub
+
+
+------PowerDesigner 批量添加表字段
+    Option Explicit
+     
+    Dim mdl ' the current model   
+    Set mdl = ActiveModel
+    Dim Tab 'running table   
+    Dim col_1
+    Dim col_2
+    Dim col_3
+    Dim col_4
+    	
+    ' 定义属性变量
+    for each Tab in ActiveModel.Tables
+    
+    	Set col_1 = Tab.Columns.CreateNew
+    	Set col_2 = Tab.Columns.CreateNew
+    	Set col_3 = Tab.Columns.CreateNew
+    	Set col_4 = Tab.Columns.CreateNew
+     
+    	'添加公共字段 by Sinu
+    
+    	col_1.name = "创建人"
+    	col_1.code = "CJR"
+    	col_1.DataType = "varchar(50)"
+    	col_1.comment= "创建人"
+    
+    	col_2.name = "创建时间"
+    	col_2.code = "CJSJ"
+    	col_2.DataType = "datetime"
+    	col_2.comment= "创建时间"
+    
+    	col_3.name = "修改人"
+    	col_3.code = "XGR"
+    	col_3.DataType = "varchar(50)"
+    	col_3.comment= "修改人"
+    
+    	col_4.name = "修改时间"
+    	col_4.code = "XGSJ"
+    	col_4.DataType = "datetime"
+    	col_4.comment= "修改时间"
+
+next
+MsgBox "success"
+
+
+
+-----------------------------------------------excel批量生成sql语句------------------------------------------
+'生成表目录
+Private Sub btn_shell_Click()
+For si = 2 To Workbooks(1).Sheets.Count '从第二张表开始,遍历每一张表
+        Set mysheet = Workbooks(1).Sheets(si) '表
+        Workbooks(1).Sheets(1).Range("D" & si).Value = mysheet.Name '中文名
+        Workbooks(1).Sheets(1).Range("C" & si).Value = mysheet.Range("A2").Value  '英文名
+Next si
+End Sub
+'生成建表hql
+Private Sub btnSql_Click()
+    Dim sql As String
+    Dim tableName As String
+    
+    For si = 2 To Workbooks(1).Sheets.Count '从第二张表开始,遍历每一张表
+
+        Set mysheet = Workbooks(1).Sheets(si) '表
+        tableName = mysheet.Range("A2").Value '英文表名
+        
+        
+        '如果数据库中已存在表，则删除表
+        'if exists (select * from sysobjects where name='tableName')
+        sql = sql & "if exists (select * from sysobjects where name='" & tableName & "') " & vbCrLf
+        
+        'drop table tableName
+        sql = sql & "   drop table [" & tableName & "] " & vbCrLf
+        sql = sql & "go " & vbCrLf
+        
+        '开始创建表
+        'create table tableName (
+        sql = sql & "create table [" & tableName & "] ( " & vbCrLf
+            
+        
+        For i = 2 To mysheet.UsedRange.Rows.Count '遍历所有的列
+            Dim nameStr As String
+            Dim typeStr As String
+        
+            nameStr = mysheet.Range("B" & i).Value '字段名
+            typeStr = mysheet.Range("D" & i).Value '数据类型
+            refStr = mysheet.Range("E" & i).Value '引用
+            commStr = mysheet.Range("C" & i).Value '中文注释'
+            If nameStr = "ID" Then
+                sql = sql & "   [id] varchar(44) primary key" '默认id为主键
+            Else
+                sql = sql & "   [" & nameStr & "] " & typeStr '非id列,则直接加入
+            End If
+            
+            If Len(commStr) > 0 Then
+                    comm = comm & vbCrLf & "comment on column " & tableName & "." & nameStr & "  is " & "'" & commStr & "';"
+            End If
+            
+            If i < mysheet.UsedRange.Rows.Count Then
+                sql = sql & "," '添加‘,’号
+            End If
+            
+            
+             sql = sql & vbCrLf
+        Next i
+        
+        '建表完成
+        sql = sql & ")" & vbCrLf
+        sql = sql & "go" & vbCrLf
+        sql = sql & "-----Create table [" & tableName & "] end." & vbCrLf & vbCrLf
+    
+    Next si
+    txtConsole.Value = sql '将值输出到console控件中
+End Sub
+

@@ -1,0 +1,3913 @@
+一、hadoop集群安装
+
+1、先安装vim 命令
+
+执行
+yum -y install vim*
+
+
+2、在虚拟机机中执行这两个命令
+sudo yum install -y epel-release
+
+sudo yum install -y psmisc nc net-tools rsync vim lrzsz ntp libzstd openssl-static tree iotop git
+
+3、修改ip 
+
+[chenbk@hadoop102 ~]$ vi /etc/sysconfig/network-scripts/ifcfg-ens33(vim ifcfg-eth0)
+
+TYPE="Ethernet"
+PROXY_METHOD="none"
+BROWSER_ONLY="no"
+BOOTPROTO="static"
+DEFROUTE="yes"
+IPV4_FAILURE_FATAL="no"
+IPV6INIT="yes"
+IPV6_AUTOCONF="yes"
+IPV6_DEFROUTE="yes"
+IPV6_FAILURE_FATAL="no"
+IPV6_ADDR_GEN_MODE="stable-privacy"
+NAME="ens33"
+UUID="d02890fe-365c-46de-8830-5145dd4bfe3b"
+DEVICE="ens33"
+ONBOOT="yes"
+IPADDR=192.168.250.102
+GATEWAY=192.168.250.1
+NETMASK=255.255.255.0
+DNS1=8.8.8.8
+DNS2=114.114.114.114
+
+
+4、重启网络配置
+[chenbk@hadoop102 ~]$ systemctl restart network
+
+5、修改主机名称（hadoop101）
+
+[chenbk@hadoop102 ~]$ vim /etc/hostname
+hadoop102
+
+
+6、测试网络
+[chenbk@hadoop102 ~]$ ping baidu.com
+
+PING baidu.com (220.181.38.148) 56(84) bytes of data.
+64 bytes from 220.181.38.148 (220.181.38.148): icmp_seq=1 ttl=52 time=37.9 ms
+64 bytes from 220.181.38.148 (220.181.38.148): icmp_seq=2 ttl=52 time=37.6 ms
+64 bytes from 220.181.38.148 (220.181.38.148): icmp_seq=3 ttl=52 time=37.8 ms
+^C
+7、修改hosts配置
+[chenbk@hadoop102 ~]$ vim /etc/hosts
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+192.168.250.102 hadoop102
+192.168.250.103 hadoop103
+192.168.250.104 hadoop104
+192.168.250.6   hadoop101
+~
+192.168.1.112 hadoop102
+192.168.1.113 hadoop103
+192.168.1.114 hadoop104
+192.168.1.111 hadoop101
+~
+~
+
+8、本地mac也要映射
+1、打开访达
+2、按住 shift +控制键+g
+3、前往  /etc/hosts
+4、修改为：
+##
+# Host Database
+#
+# localhost is used to configure the loopback interface
+# when the system is booting.  Do not change this entry.
+##
+127.0.0.1	localhost
+255.255.255.255	broadcasthost
+::1             localhost
+127.0.0.1 www.sublimetext.com
+127.0.0.1 license.sublimehq.com
+192.168.250.102 hadoop102
+192.168.250.103 hadoop103
+192.168.250.104 hadoop104
+
+9、在终端ping一下是否连通
+Ping hadoop102
+
+10、关闭防火墙
+sudo systemctl stop firewalld
+sudo systemctl disable firewalld
+
+11、创建用户并给予root权限
+（sudo ）useradd chenbk 
+（sudo ）passwd chenbk 
+或者直接在虚拟机上创建
+
+用Root执行：visudo 
+
+修改/etc/sudoers文件，找到下面一行（91行），在root下面添加一行，如下所示：
+     91 ## Allow root to run any commands anywhere
+     92 root    ALL=(ALL)       ALL
+     93 chenbk   ALL=(ALL)     ALL
+利用命令：
+：set nu 找到91行
+
+
+12、在/opt目录下创建文件夹
+（1）在/opt目录下创建module、software文件夹
+sudo mkdir module
+sudo mkdir software
+（2）修改module、software文件夹的所有者cd 
+sudo mkdir /opt/module /opt/software
+sudo chown chenbk:chenbk /opt/module /opt/software
+
+
+13、安装JDK和hadoop
+1、利用shell工具，把JDK和hadoop安装文件，导入到 /opt/software文件夹下面
+2、在Linux系统下的opt目录中查看软件包是否导入成功
+ls /opt/software/
+3、看到的内容
+hadoop-3.1.3.tar.gz  jdk-8u212-linux-x64.tar.g
+4、解压JDK到/opt/module目录下（hadoop也一样）
+tar -zxvf jdk-8u212-linux-x64.tar.gz -C /opt/module/
+tar -zxvf hadoop-3.1.3.tar.gz -C /opt/module/
+
+
+
+14、配置JDK和hadoop环境变量
+（1）新建/etc/profile.d/my_env.sh文件
+sudo vim /etc/profile.d/my_env.sh
+添加如下内容:
+
+#JAVA_HOME
+export JAVA_HOME=/opt/module/jdk1.8.0_212
+export PATH=$PATH:$JAVA_HOME/bin
+##HADOOP_HOME
+export HADOOP_HOME=/opt/module/hadoop-3.1.3
+export PATH=$PATH:$HADOOP_HOME/bin
+export PATH=$PATH:$HADOOP_HOME/sbin
+
+最新可添加以下
+#JAVA_HOME
+export JAVA_HOME=/opt/module/jdk1.8.0_212
+export PATH=$PATH:$JAVA_HOME/bin
+##HADOOP_HOME
+export HADOOP_HOME=/opt/module/hadoop-3.1.3
+export PATH=$PATH:$HADOOP_HOME/bin
+export PATH=$PATH:$HADOOP_HOME/sbin
+#HIVE_HOME
+export HIVE_HOME=/opt/module/hive
+export PATH=$PATH:$HIVE_HOME/bin
+#FLUME_HOME
+export FLUME_HOME=/opt/module/flume
+export PATH=$PATH:$FLUME_HOME/bin
+
+#KAFKA_HOME
+export KAFKA_HOME=/opt/module/kafka
+export PATH=$PATH:$KAFKA_HOME/bin
+
+#ZOOKEEPER_HOME
+export ZOOKEEPER_HOME=/opt/module/zookeeper
+export PATH=$PATH:$ZOOKEEPER_HOME/bin
+
+
+
+2）保存后退出
+3）重启xshell窗口，让环境变量生效
+4）让修改后的文件生效
+[chenbk@ hadoop101 hadoop-3.1.3]$ source /etc/profile
+
+
+15、测试JDK和hadoop是否安装成功
+[chenbk@hadoop102 ~]$ java -version
+如下：
+openjdk version "1.8.0_131"
+OpenJDK Runtime Environment (build 1.8.0_131-b12)
+OpenJDK 64-Bit Server VM (build 25.131-b12, mixed mode
+
+[chenbk@hadoop102 ~]$ hadoop version
+如下：
+Hadoop 3.1.3
+Source code repository https://gitbox.apache.org/repos/asf/hadoop.git -r ba631c436b806728f8ec2f54ab1e289526c90579
+Compiled by ztang on 2019-09-12T02:47Z
+Compiled with protoc 2.5.0
+From source with checksum ec785077c385118ac91aadde5ec9799
+This command was run using /opt/module/hadoop-3.1.3/share/hadoop/common/hadoop-common-3.1.3.jar
+
+
+再执行一下：
+[chenbk@hadoop102 ~]$ hadoop checknative
+如下：
+2021-03-16 04:25:39,727 INFO bzip2.Bzip2Factory: Successfully loaded & initialized native-bzip2 library system-native
+2021-03-16 04:25:39,735 INFO zlib.ZlibFactory: Successfully loaded & initialized native-zlib library
+2021-03-16 04:25:39,745 WARN erasurecode.ErasureCodeNative: ISA-L support is not available in your platform... using builtin-java codec where applicable
+Native library checking:
+hadoop:  true /opt/module/hadoop-3.1.3/lib/native/libhadoop.so.1.0.0
+zlib:    true /lib64/libz.so.1
+zstd  :  true /lib64/libzstd.so.1
+snappy:  true /lib64/libsnappy.so.1
+lz4:     true revision:10301
+bzip2:   true /lib64/libbz2.so.1
+openssl: true /lib64/libcrypto.so
+ISA-L:   false libhadoop was built without ISA-L support
+
+即安装完成
+
+
+16、ssh无密登录配置
+1、ssh-keygen -t rsa
+然后敲（y、三个回车），就会生成两个文件id_rsa（私钥）、id_rsa.pub（公钥）
+如下：
+Generating public/private rsa key pair.
+Enter file in which to save the key (/home/chenbk/.ssh/id_rsa): 
+/home/chenbk/.ssh/id_rsa already exists.
+Overwrite (y/n)? y
+Enter passphrase (empty for no passphrase): 
+Enter same passphrase again: 
+Your identification has been saved in /home/chenbk/.ssh/id_rsa.
+Your public key has been saved in /home/chenbk/.ssh/id_rsa.pub.
+The key fingerprint is:
+SHA256:982dO5krqPpHSY9dZK0jLXmto0zGWYvY2pfW2H1Q4lo chenbk@hadoop101
+The key's randomart image is:
++---[RSA 2048]----+
+|                .|
+|               o.|
+|             ooo |
+|           .+ B.o|
+|        S o+=O.* |
+|         ..=B=E..|
+|          .*o+oO=|
+|          .o=.=+*|
+|       .ooo  o.o+|
++----[SHA256]-----+
+
+
+2、敲命令查看：
+如下：
+[chenbk@hadoop102 ~]$ ll -a
+
+drwx------. 6 chenbk chenbk  188 3月  16 04:17 .
+drwxr-xr-x. 3 root   root     20 3月  12 23:48 ..
+-rw-------. 1 chenbk chenbk 7368 3月  15 07:25 .bash_history
+-rw-r--r--. 1 chenbk chenbk   18 8月   2 2017 .bash_logout
+-rw-r--r--. 1 chenbk chenbk  193 8月   2 2017 .bash_profile
+-rw-r--r--. 1 chenbk chenbk  231 8月   2 2017 .bashrc
+drwxrwxr-x. 3 chenbk chenbk   18 1月  13 06:28 .cache
+drwxrwxr-x. 3 chenbk chenbk   18 1月  13 06:28 .config
+drwxr-xr-x. 4 chenbk chenbk   39 1月  13 06:00 .mozilla
+drwx------. 2 chenbk chenbk   80 1月  14 04:44 .ssh
+-rw-------. 1 chenbk chenbk 6558 3月  16 04:17 .viminfo
+-rw-------. 1 chenbk chenbk  165 3月  13 18:51 .Xauthority
+-rw-rw-r--. 1 chenbk chenbk  480 1月  14 05:07 xsync
+
+
+3、敲命令查看密钥
+[chenbk@hadoop102 ~]$ cd .ssh
+[chenbk@hadoop102 .ssh]$ ll
+如下：
+总用量 16
+-rw-------. 1 chenbk chenbk  398 1月  14 04:19 authorized_keys（这个是已经发给自己的了）
+-rw-------. 1 chenbk chenbk 1679 1月  14 04:18 id_rsa
+-rw-r--r--. 1 chenbk chenbk  398 1月  14 04:18 id_rsa.pub
+-rw-r--r--. 1 chenbk chenbk  746 1月  14 04:44 known_hosts
+
+
+（id_rsa 私钥）、（id_rsa.pub 公钥）
+
+4、发送公钥到相应的集群（hadoop103、hadoop104）
+先发给自己（hadoop101）
+命令：ssh-copy-id hadoop102
+再查看，会出现： authorized_keys（发送成功）
+
+然后再发给（hadoop103、hadoop104）
+命令：ssh-copy-id hadoop103
+命令：ssh-copy-id hadoop104
+
+最后用hadoop101登录（hadoop102、hadoop103）
+ssh hadoop102
+ssh hadoop103
+发现不用密码就可以登录
+即成功！
+[chenbk@hadoop102 ~]$ ssh hadoop103
+Last login: Wed Mar 17 07:02:33 2021 from 192.168.250.102
+[chenbk@hadoop103 ~]$
+
+17、编辑xsync命令
+创建xsync 脚本
+[chenbk@hadoop102 ~]$ vim xsync
+添加脚本：
+
+#!/bin/bash
+#校验参数是否合法
+if(($#==0))
+then
+        echo 请输入要分发的文件!
+        exit;
+fi
+#获取分发文件的绝对路径
+dirpath=$(cd `dirname $1`; pwd -P)
+filename=`basename $1`
+
+echo 要分发的文件的路径是:$dirpath/$filename
+
+#循环执行rsync分发文件到集群的每条机器
+for((i=102;i<=104;i++))
+do
+        echo ---------------------hadoop$i---------------------
+        rsync -rvlt $dirpath/$filename  chenbk@hadoop$i:$dirpath
+done
+
+--注意：For里面的(101，102，103)是集群的最后三位
+
+另外，要群发的时候，需要
+bash xsync /opt/module
+bash xsync /opt/software/
+bash xsync /opt/module/hadoop-3.1.3/etc/hadoop/
+bash xsync /etc/profile.d/my_env.sh
+
+18、hadoop集群互通
+
+ 原理：把hadoop101中的.ssh文件，全部发送到（hadoop102.hadoop103）中
+
+命令：
+[chenbk@hadoop101 ~]$ xsync .ssh
+==================== hadoop101 ====================
+The authenticity of host 'hadoop101 (192.168.250.6)' can't be established.
+ECDSA key fingerprint is SHA256:cdWguy1YifkxYpCG5O8LKkzqg2VAEbKxavUjrmT0o3s.
+ECDSA key fingerprint is MD5:51:fd:bf:79:1e:c7:0f:f9:b8:4b:ea:13:4d:eb:d5:b2.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'hadoop101' (ECDSA) to the list of known hosts.
+chenbk@hadoop101's password: 
+chenbk@hadoop101's password: 
+sending incremental file list
+
+sent 179 bytes  received 17 bytes  17.04 bytes/sec
+total size is 3,535  speedup is 18.04
+==================== hadoop102 ====================
+/etc/bashrc: 第 84 行:.: /etc/profile.d/my_env.sh: 是一个目录
+/etc/bashrc: 第 84 行:.: /etc/profile.d/my_env.sh: 是一个目录
+sending incremental file list
+.ssh/
+.ssh/authorized_keys
+.ssh/id_rsa
+.ssh/id_rsa.pub
+.ssh/known_hosts
+
+sent 3,889 bytes  received 114 bytes  8,006.00 bytes/sec
+total size is 3,535  speedup is 0.88
+==================== hadoop103 ====================
+sending incremental file list
+.ssh/
+.ssh/authorized_keys
+.ssh/id_rsa
+.ssh/id_rsa.pub
+.ssh/known_hosts
+
+sent 3,889 bytes  received 138 bytes  8,054.00 bytes/sec
+total size is 3,535  speedup is 0.88
+
+
+19、配置集群
+先进入：[chenbk@hadoop102 ~]$ cd /opt/module/hadoop-3.1.3/etc/hadoop/
+再执行：[chenbk@hadoop102 hadoop]$ vim core-site.xml
+添加以下：
+<property>
+        <name>fs.defaultFS</name>
+        <value>hdfs://hadoop102:8020</value>
+    </property>
+    <property>
+        <name>hadoop.data.dir</name>
+        <value>/opt/module/hadoop-3.1.3/data</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.chenbk.hosts</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.proxyuser.chenbk.groups</name>
+        <value>*</value>
+    </property>
+    <property>
+        <name>hadoop.http.staticuser.user</name>
+        <value>chenbk</value>
+    </property>
+
+配置hdfs-site.xml
+[chenbk@hadoop102 hadoop]$ vim hdfs-site.xml
+
+添加以下：
+<property>
+     <name>dfs.namenode.name.dir</name>
+     <value>file://${hadoop.data.dir}/name</value>
+</property>
+<property>
+     <name>dfs.datanode.data.dir</name>
+     <value>file://${hadoop.data.dir}/date</value>
+</property>
+<property>
+     <name>dfs.namenode.checkpoint.dir</name>
+     <value>file://${hadoop.data.dir}/namesecondary</value>
+</property>
+<property>
+     <name>dfs.client.datanode-restart.timeout</name>
+     <value>30</value>
+</property>
+<property>
+     <name>dfs.namenode.secondary.http-address</name>
+     <value>hadoop104:8986</value>
+</property>
+
+
+YARN配置文件
+[chenbk@hadoop102 hadoop]$ vim yarn-site.xml
+
+添加以下：
+<property>
+        <name>yarn.nodemanager.aux-services</name>
+        <value>mapreduce_shuffle</value>
+    </property>
+    <property>
+        <name>yarn.resourcemanager.hostname</name>
+        <value>hadoop103</value>
+    </property>
+    <property>
+        <name>yarn.nodemanager.env-whitelist</name>
+        <value>JAVA_HOME,HADOOP_COMMON_HOME,HADOOP_HDFS_HOME,HADOOP_CONF_DIR,CLASSPATH_PREPEND_DISTCACHE,HADOOP_YARN_HOME,HADOOP_MAPRED_HOME</value>
+    </property>
+<property>
+    <name>yarn.log-aggregation-enable</name>
+    <value>true</value>
+</property>
+<property>
+    <name>yarn.log.server.url</name>
+    <value>http://hadoop102:19888/jobhistory/logs</value>
+</property>
+<property>
+    <name>yarn.log-aggregation.retain-seconds</name>
+    <value>604800</value>
+</property>
+
+
+MapReduce配置文件
+[chenbk@hadoop102 hadoop]$ vim mapred-site.xml
+添加以下：
+<property>
+        <name>mapreduce.framework.name</name>
+        <value>yarn</value>
+    </property>
+<!-- 历史服务器端地址 -->
+<property>
+    <name>mapreduce.jobhistory.address</name>
+    <value>hadoop102:10020</value>
+</property>
+
+<!-- 历史服务器web端地址 -->
+<property>
+    <name>mapreduce.jobhistory.webapp.address</name>
+    <value>hadoop102:19888</value>
+</property>
+
+
+配置workers
+[chenbk@hadoop102 ~]$ vim /opt/module/hadoop-3.1.3/etc/hadoop/workers
+添加以下：
+hadoop102
+hadoop103
+hadoop104
+
+
+20、集群群发
+
+[chenbk@hadoop102 ~]$ bash xsync /opt/module/hadoop-3.1.3/etc/hadoop/
+要分发的文件的路径是:/opt/module/hadoop-3.1.3/etc/hadoop
+
+---------------------hadoop102---------------------
+sending incremental file list
+
+sent 879 bytes  received 18 bytes  1,794.00 bytes/sec
+total size is 108,561  speedup is 121.03
+---------------------hadoop103---------------------
+sending incremental file list
+hadoop/
+hadoop/mapred-site.xml
+hadoop/yarn-site.xml
+
+sent 2,198 bytes  received 83 bytes  1,520.67 bytes/sec
+total size is 108,561  speedup is 47.59
+---------------------hadoop104---------------------
+sending incremental file list
+hadoop/
+hadoop/mapred-site.xml
+hadoop/yarn-site.xml
+
+
+21、启动集群
+（1）如果集群是第一次启动，需要在hadoop102节点格式化NameNode（注意格式化之前，一定要先停止上次启动的所有namenode和datanode进程，然后再删除data和log数据）
+ 执行：hdfs namenode -format
+
+[chenbk@hadoop102 hadoop-3.1.3]$ sbin/start-dfs.sh
+（2）启动HDFS
+sbin/start-dfs.sh
+由102启动
+（3）在配置了ResourceManager的节点（hadoop103）启动YARN
+sbin/start-yarn.sh
+由103启动
+
+3、启动历史记录
+mapred --daemon start historyserver
+[chenbk@hadoop102 hadoop-3.1.3]$ mapred --daemon start historyserver
+查看启动情况：jps
+停止集群：stop-dfs.sh
+		stop-yarn.sh
+查看： 192.168.250.102:9870/dfshealth.html#tab-overview
+http://192.168.250.103:8088/cluster/apps
+
+
+http://192.168.1.112:9870/dfshealth.html#tab-datanode-volume-failures
+http://192.168.1.113:8088/cluster/nodes
+
+22、查看运行状况，写jpsall 脚本
+先执行
+[chenbk@hadoop102 ~]$ vim jpsall
+写脚本
+#!/bin/bash
+for i in hadoop102 hadoop103 hadoop104
+do
+
+  echo "=====  $i   ====="
+  ssh $i "jps" | grep -v Jps
+done
+保存退出
+再执行
+[chenbk@hadoop102 ~]$ chmod +x jpsall
+最后执行 ./jpsall
+[chenbk@hadoop102 ~]$ vim jpsall 
+[chenbk@hadoop102 ~]$ vim jpsall 
+[chenbk@hadoop102 ~]$ chmod +x jpsall 
+[chenbk@hadoop102 ~]$ ./jpsall 
+=====  hadoop102   =====
+53826 DataNode
+54306 JobHistoryServer
+53720 NameNode
+54142 NodeManager
+=====  hadoop103   =====
+42277 DataNode
+42458 ResourceManager
+42589 NodeManager
+=====  hadoop104   =====
+40791 DataNode
+41000 NodeManager
+40894 SecondaryNameNode
+[chenbk@hadoop102 ~]$
+
+再移动文件到bin中
+执行[chenbk@hadoop102 ~]$ sudo mv jpsall /bin
+再执行：[chenbk@hadoop102 ~]$ jpsall
+[chenbk@hadoop102 ~]$ jpsall 
+=====  hadoop102   =====
+53826 DataNode
+54306 JobHistoryServer
+53720 NameNode
+54142 NodeManager
+=====  hadoop103   =====
+42277 DataNode
+42458 ResourceManager
+42589 NodeManager
+=====  hadoop104   =====
+40791 DataNode
+41000 NodeManager
+40894 SecondaryNameNode
+[chenbk@hadoop102 ~]$
+
+
+23、集群时间同步
+首先检查有没有ntp服务
+执行：rpm -qa | grep ntp
+[chenbk@hadoop102 ~]$ rpm -qa | grep ntp
+ntp-4.2.6p5-29.el7.centos.2.x86_64
+python-ntplib-0.3.2-1.el7.noarch
+ntpdate-4.2.6p5-29.el7.centos.2.x86_64
+fontpackages-filesystem-1.44-8.el7.noarch
+有ntp 
+查看有没有运行
+执行：[chenbk@hadoop102 ~]$ sudo systemctl status ntpd
+● ntpd.service - Network Time Service
+   Loaded: loaded (/usr/lib/systemd/system/ntpd.service; disabled; vendor preset: disabled)
+   Active: inactive (dead)
+出现dead（停止）为正常，所以三台都需要正常
+或执行：[chenbk@hadoop102 ~]$ sudo systemctl stop ntpd
+[chenbk@hadoop102 ~]$ sudo systemctl disable ntpd
+
+然后切换用户（全部为root）102为时间用户
+执行：[root@hadoop102 ~]# vim /etc/ntp.conf
+a）修改1（授权192.168.1.0-192.168.1.255网段上的所有机器可以从这台机器上查询和同步时间）其中192.168.1.0 这个1要看个人的网关
+#restrict 192.168.1.0 mask 255.255.255.0 nomodify notrap
+为restrict 192.168.1.0 mask 255.255.255.0 nomodify notrap
+	b）修改2（集群在局域网中，不使用其他互联网上的时间）
+server 0.centos.pool.ntp.org iburst
+server 1.centos.pool.ntp.org iburst
+server 2.centos.pool.ntp.org iburst
+server 3.centos.pool.ntp.org iburst
+为
+#server 0.centos.pool.ntp.org iburst
+#server 1.centos.pool.ntp.org iburst
+#server 2.centos.pool.ntp.org iburst
+#server 3.centos.pool.ntp.org iburst
+c）添加3（当该节点丢失网络连接，依然可以采用本地时间作为时间服务器为集群中的其他节点提供时间同步）
+server 127.127.1.0
+fudge 127.127.1.0 stratum 10
+
+完成后，如下：
+[root@hadoop102 ~]# vim /etc/ntp.conf
+
+# For more information about this file, see the man pages
+# ntp.conf(5), ntp_acc(5), ntp_auth(5), ntp_clock(5), ntp_misc(5), ntp_mon(5).
+
+driftfile /var/lib/ntp/drift
+
+# Permit time synchronization with our time source, but do not
+# permit the source to query or modify the service on this system.
+restrict default nomodify notrap nopeer noquery
+
+# Permit all access over the loopback interface.  This could
+# be tightened as well, but to do so would effect some of
+# the administrative functions.
+restrict 127.0.0.1
+restrict ::1
+
+# Hosts on local network are less restricted.
+restrict 192.168.1.0 mask 255.255.255.0 nomodify notrap
+
+# Use public servers from the pool.ntp.org project.
+# Please consider joining the pool (http://www.pool.ntp.org/join.html).
+#server 0.centos.pool.ntp.org iburst
+#server 1.centos.pool.ntp.org iburst
+#server 2.centos.pool.ntp.org iburst
+#server 3.centos.pool.ntp.org iburst
+server 127.127.1.0
+fudge 127.127.1.0 stratum 10
+
+#broadcast 192.168.1.255 autokey        # broadcast server
+#broadcastclient                        # broadcast client
+#broadcast 224.0.1.1 autokey            # multicast server
+-- 插入 --                                                 
+保存退出
+（3）修改/etc/sysconfig/ntpd 文件
+vim /etc/sysconfig/ntpd
+增加内容如下（让硬件时间与系统时间一起同步）
+SYNC_HWCLOCK=yes
+
+# Command line options for ntpd
+OPTIONS="-g"
+SYNC_HWCLOCK=yes
+~                                                                                                  
+~                 
+（4）重新启动ntpd服务
+systemctl start ntpd
+（5）设置ntpd服务开机启动
+systemctl enable ntpd
+
+再执行[root@hadoop102 ~]# systemctl status ntpd
+● ntpd.service - Network Time Service
+   Loaded: loaded (/usr/lib/systemd/system/ntpd.service; enabled; vendor preset: disabled)
+   Active: active (running) since 六 2021-01-16 07:15:44 PST; 1min 4s ago
+ Main PID: 59709 (ntpd)
+   CGroup: /system.slice/ntpd.service
+           └─59709 /usr/sbin/ntpd -u ntp:ntp -g
+
+1月 16 07:15:44 hadoop102 ntpd[59709]: Listen normally on 2 lo 127.0.0.1 UDP 123
+1月 16 07:15:44 hadoop102 ntpd[59709]: Listen normally on 3 ens33 192.168.250.102 UDP 123
+1月 16 07:15:44 hadoop102 ntpd[59709]: Listen normally on 4 virbr0 192.168.122.1 UDP 123
+1月 16 07:15:44 hadoop102 ntpd[59709]: Listen normally on 5 lo ::1 UDP 123
+1月 16 07:15:44 hadoop102 ntpd[59709]: Listen normally on 6 ens33 fe80::c45b:d118:167d:bbfd ...123
+1月 16 07:15:44 hadoop102 ntpd[59709]: Listening on routing socket on fd #23 for interface updates
+1月 16 07:15:44 hadoop102 ntpd[59709]: 0.0.0.0 c016 06 restart
+1月 16 07:15:44 hadoop102 ntpd[59709]: 0.0.0.0 c012 02 freq_set kernel 0.000 PPM
+1月 16 07:15:44 hadoop102 ntpd[59709]: 0.0.0.0 c011 01 freq_not_set
+1月 16 07:15:45 hadoop102 ntpd[59709]: 0.0.0.0 c514 04 freq_mode
+Hint: Some lines were ellipsized, use -l to show in full.
+
+成功
+
+然后在103上（root）
+执行如下
+[root@hadoop103 ~]# crontab -e
+插入
+*/3 * * * * /usr/sbin/ntpdate hadoop102
+
+保存退出
+然后在104上（root）
+执行如下
+[root@hadoop103 ~]# crontab -e
+插入
+*/3 * * * * /usr/sbin/ntpdate hadoop102
+
+保存退出
+
+测试
+修改任意一台设备的时间
+执行命令：
+[root@hadoop103 ~]# date -s "2017-9-11 11:11:11"
+2017年 09月 11日 星期一 11:11:11 PDT
+
+三分钟过后：
+[root@hadoop103 ~]# date
+2021年 01月 16日 星期六 07:28:19 PST
+您在 /var/spool/mail/root 中有新邮件
+[root@hadoop103 ~]#
+[root@hadoop103 ~]# date -s "2017-9-11 11:11:11"
+2017年 09月 11日 星期一 11:11:11 PDT
+[root@hadoop103 ~]# date
+2021年 01月 16日 星期六 07:28:19 PST
+您在 /var/spool/mail/root 中有新邮件
+[root@hadoop103 ~]#
+查看邮件：
+[root@hadoop104 ~]# cat $MAIL
+
+查看端口
+执行：[root@hadoop102 ~]# netstat -nltp
+查看端口数量：
+[root@hadoop102 ~]# netstat -nltp
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name    
+tcp        0      0 0.0.0.0:9867            0.0.0.0:*               LISTEN      53826/java          
+tcp        0      0 0.0.0.0:9870            0.0.0.0:*               LISTEN      53720/java          
+tcp        0      0 0.0.0.0:111             0.0.0.0:*               LISTEN      1/systemd           
+tcp        0      0 192.168.250.102:19888   0.0.0.0:*               LISTEN      54306/java          
+tcp        0      0 0.0.0.0:10033           0.0.0.0:*               LISTEN      54306/java          
+tcp        0      0 192.168.250.102:8020    0.0.0.0:*               LISTEN      53720/java          
+tcp        0      0 192.168.122.1:53        0.0.0.0:*               LISTEN      1241/dnsmasq        
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      865/sshd            
+tcp        0      0 127.0.0.1:631           0.0.0.0:*               LISTEN      862/cupsd           
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      1159/master         
+tcp        0      0 0.0.0.0:13562           0.0.0.0:*               LISTEN      54142/java          
+tcp        0      0 127.0.0.1:6011          0.0.0.0:*               LISTEN      58456/sshd: chenbk@ 
+tcp        0      0 0.0.0.0:33824           0.0.0.0:*               LISTEN      54142/java          
+tcp        0      0 192.168.250.102:10020   0.0.0.0:*               LISTEN      54306/java          
+tcp        0      0 127.0.0.1:34821         0.0.0.0:*               LISTEN      53826/java          
+tcp        0      0 0.0.0.0:8040            0.0.0.0:*               LISTEN      54142/java          
+tcp        0      0 0.0.0.0:9864            0.0.0.0:*               LISTEN      53826/java          
+tcp        0      0 0.0.0.0:8042            0.0.0.0:*               LISTEN      54142/java          
+tcp        0      0 0.0.0.0:9866            0.0.0.0:*               LISTEN      53826/java          
+tcp6       0      0 :::111                  :::*                    LISTEN      1/systemd           
+tcp6       0      0 :::22                   :::*                    LISTEN      865/sshd            
+tcp6       0      0 ::1:631                 :::*                    LISTEN      862/cupsd           
+tcp6       0      0 ::1:25                  :::*                    LISTEN      1159/master         
+tcp6       0      0 ::1:6011  
+
+查看程序：
+执行jps
+[root@hadoop102 ~]# jps
+53826 DataNode
+54306 JobHistoryServer
+59973 Jps
+53720 NameNode
+54142 NodeManager
+[root@hadoop102 ~]#
+查看53720 NameNode
+执行：netstat -nltp | grep 53720
+[root@hadoop102 ~]# netstat -nltp | grep 53720
+tcp        0      0 0.0.0.0:9870            0.0.0.0:*               LISTEN      53720/java          
+tcp        0      0 192.168.250.102:8020    0.0.0.0:*               LISTEN      53720/java          
+[root@hadoop102 ~]#
+
+安装tree
+执行：yum provides tree
+[root@hadoop102 ~]# yum provides tree
+安装 iotop
+执行：[root@hadoop102 ~]# yum provides iotop
+然后再执行：
+[root@hadoop102 ~]# yum install -y iotop tree
+不需要安装，前面已安装
+
+执行
+Tree 以🌲形的结构查看目录
+执行：[root@hadoop102 ~]# tree /opt/module/hadoop-3.1.3/etc/
+
+[root@hadoop102 ~]# tree /opt/module/hadoop-3.1.3/etc/
+/opt/module/hadoop-3.1.3/etc/
+└── hadoop
+    ├── capacity-scheduler.xml
+    ├── configuration.xsl
+    ├── container-executor.cfg
+    ├── core-site.xml
+    ├── hadoop-env.cmd
+    ├── hadoop-env.sh
+    ├── hadoop-metrics2.properties
+    ├── hadoop-policy.xml
+    ├── hadoop-user-functions.sh.example
+    ├── hdfs-site.xml
+    ├── httpfs-env.sh
+    ├── httpfs-log4j.properties
+    ├── httpfs-signature.secret
+    ├── httpfs-site.xml
+    ├── kms-acls.xml
+    ├── kms-env.sh
+    ├── kms-log4j.properties
+    ├── kms-site.xml
+    ├── log4j.properties
+    ├── mapred-env.cmd
+    ├── mapred-env.sh
+    ├── mapred-queues.xml.template
+    ├── mapred-site.xml
+    ├── shellprofile.d
+    │   └── example.sh
+    ├── ssl-client.xml.example
+    ├── ssl-server.xml.example
+    ├── user_ec_policies.xml.template
+    ├── workers
+    ├── yarn-env.cmd
+    ├── yarn-env.sh
+    ├── yarnservice-log4j.properties
+    └── yarn-site.xml
+
+2 directories, 32 files
+[root@hadoop102 ~]#
+
+
+
+top 查看系统进程
+[root@hadoop102 ~]# top
+top - 07:53:11 up  8:45,  3 users,  load average: 0.00, 0.01, 0.05
+Tasks: 185 total,   1 running, 184 sleeping,   0 stopped,   0 zombie
+%Cpu(s):  0.7 us,  0.7 sy,  0.0 ni, 98.6 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st
+KiB Mem :  3865284 total,   437536 free,  1364036 used,  2063712 buff/cache
+KiB Swap:  2097148 total,  2092112 free,     5036 used.  2120640 avail Mem
+
+free -h查看内存
+[root@hadoop102 ~]# free -h
+              total        used        free      shared  buff/cache   available
+Mem:           3.7G        1.3G        427M        7.6M        2.0G        2.0G
+Swap:          2.0G        4.9M        2.0G
+[root@hadoop102 ~]#
+
+df -h 查看存储
+[root@hadoop102 ~]# df -h
+文件系统        容量  已用  可用 已用% 挂载点
+/dev/sda3        18G  6.2G   12G   35% /
+devtmpfs        1.9G     0  1.9G    0% /dev
+tmpfs           1.9G     0  1.9G    0% /dev/shm
+tmpfs           1.9G  9.3M  1.9G    1% /run
+tmpfs           1.9G     0  1.9G    0% /sys/fs/cgroup
+/dev/sda1       297M  157M  141M   53% /boot
+tmpfs           378M  8.0K  378M    1% /run/user/42
+tmpfs           378M     0  378M    0% /run/user/1001
+tmpfs           378M   32K  378M    1% /run/user/0
+/dev/sr0        4.3G  4.3G     0  100% /run/media/root/CentOS 7 x86_64
+
+
+
+
+du 查看文件大小
+Iotop 查看磁盘读写性能
+[root@hadoop102 ~]# iotop
+
+History
+查历史敲过的命令
+[root@hadoop102 ~]# history
+1  vi /etc/sysconfig/network-scripts/ifcfg-ens33
+    2  systemctl restart network
+    3  ping baidu.com
+    4  vim /etc/hostname
+    5  vim /etc/hosts
+    6  vi /etc/sysconfig/network-scripts/ifcfg-ens33
+    7  systemctl restart network
+    8  ping baidu.com
+    9  sudo systemctl stop firewalls 
+   10  systemctl stop firewalls
+   11  reboot
+   12  sudo systemctl stop firewalld
+   13  sudo systemctl disable firewalld
+   14  ssh hadoop101
+   15  vim /etc/hosts
+   16  ssh hadoop101
+   17  sudo useradd chenbk
+   18  sudo passwd chenbk
+   19  vi sudo
+   20  cd /etc/sudoers.d/
+   21  vi sudo
+   22  cd
+   23  vi sudo
+   24  visudo
+   25  su - chenbk
+   26  su - chenbk
+   27  source /etc/profile
+   28  hadoop version
+   29  su - chenbk
+   30  vim /etc/ntp.conf
+   31  vim /etc/sysconfig/ntpd
+   32  systemctl start ntpd
+   33  systemctl enable ntpd
+   34  systemctl status ntpd
+   35  data
+   36  date
+   37  netstat -nltp
+   38  jps
+   39  netstat -nltp | grep 4380
+   40  netstat -nltp | grep 53720
+   41  yum provides tree
+   42  yum provides iotop
+   43  yum istall -y iotop tree
+   44  yum install -y iotop tree
+   45  tree /opt/module/hadoop-3.1.3/etc/
+   46  top
+   47  free -h
+   48  df -h
+   49  du /opt/module/hadoop-3.1.3/
+   50  iotop
+   51  history
+3．常用命令实操
+[root@hadoop102 ~]# hadoop fs -df -h
+2021-01-16 22:21:28,758 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+Filesystem               Size  Used  Available  Use%
+hdfs://hadoop102:8020  53.1 G  36 K     36.1 G    0%
+[root@hadoop102 ~]#
+从本地上传文件到hdfs
+执行：hadoop fs -put LICENSE.txt /
+[chenbk@hadoop102 hadoop-3.1.3]$ hadoop fs -put LICENSE.txt /
+2021-01-16 22:27:27,862 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+2021-01-16 22:27:28,484 INFO sasl.SaslDataTransferClient: SASL encryption trust check: localHostTrusted = false, remoteHostTrusted = false
+[chenbk@hadoop102 hadoop-3.1.3]$
+ 
+查看命令的帮忙信息（help）
+[chenbk@hadoop102 hadoop-3.1.3]$ hadoop fs -help put
+命令copyToLocal和put基本一致
+（4）-moveFromLocal：从本地剪切粘贴到HDFS
+（5）-appendToFile：追加一个文件到已经存在的文件末尾
+[chenbk@hadoop102 hadoop-3.1.3]$ hadoop fs -appendToFile LICENSE.txt /README.txt
+在hfds上追加字段
+执行：hadoop fs -appendToFile - /LICENSE.txt
+[chenbk@hadoop102 hadoop-3.1.3]$ hadoop fs -appendToFile - /LICENSE.txt
+2021-01-16 22:42:32,780 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+caddsc
+chenbk
+cehkbk
+124434353^[^H^[[3~^[[3~
+^C2021-01-16 22:43:24,936 INFO sasl.SaslDataTransferClient: SASL encryption trust check: localHostTrusted = false, remoteHostTrusted = false
+按ctrl+c 退出
+ p-
+从hdfs下载到本地
+执行：hadoop fs -get /LICENSE.txt ./
+[chenbk@hadoop102 hadoop-3.1.3]$ hadoop fs -get /LICENSE.txt ./
+（12）-get：等同于copyToLocal，就是从HDFS下载文件到本地
+[atguigu@hadoop102 hadoop-3.1.3]$ hadoop fs -get /sanguo/shuguo/kongming.txt ./
+
+（13）-getmerge：合并下载多个文件，比如HDFS的目录 /user/atguigu/test下有多个文件:log.1, log.2,log.3,...
+[atguigu@hadoop102 hadoop-3.1.3]$ hadoop fs -getmerge /user/atguigu/test/* ./zaiyiqi.txt
+
+
+package chenbk.hdfs;
+
+import org.junit.Test;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+
+public class HDFSClient {
+    @Test
+    public  void test() throws IOException,InterruptedException{
+        //1、新建HDFS对象
+        FileSystem fileSystem=FileSystem.get(URI.create())
+    }
+}
+
+
+package chenbk.hdfs;
+
+import org.junit.Test;
+
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.FileSystem;
+
+public class HDFSClient {
+    @Test
+    public  void test() throws IOException,InterruptedException{
+        //1、新建HDFS对象
+        FileSystem fileSystem=FileSystem.get(URI.create())
+    }
+}
+
+
+
+
+
+删除文件：
+Hadoop fs -rm -r /文件名
+[chenbk@hadoop102 ~]$ hadoop fs -rm -r /tmp
+2021-03-13 22:50:41,209 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+Deleted /tmp
+[chenbk@hadoop102 ~]$ hadoop fs -rm -r /OC引导背景图
+2021-03-13 22:51:11,684 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+Deleted /OC引导背景图
+[chenbk@hadoop102 ~]$
+
+扩展数据节点
+1、修改IP地址和主机名称
+2、修改IP地址和主机名称
+3、执行rsync 
+sudo rsync -av /opt/module hadoop101:/opt
+
+[chenbk@hadoop102 ~]$ sudo rsync -av /opt/module hadoop101:/opt
+root@hadoop101's password:
+sending incremental file list
+module/
+module/hadoop-3.1.3/
+module/hadoop-3.1.3/data/
+module/hadoop-3.1.3/data/date/
+module/hadoop-3.1.3/data/date/in_、、、、、、
+
+就是把102的配置拷贝到101中
+
+4、执行删除日志的命令
+rm -rf data logs edits.xml fsimage.xml
+[chenbk@hadoop102 hadoop-3.1.3]$ rm -rf data logs edits.xml fsimage.xml
+[chenbk@hadoop102 hadoop-3.1.3]$ ll
+5、把环境变量拷贝到105中
+sudo rsync -av /etc/profile.d hadoop101:/etc
+
+[chenbk@hadoop102 hadoop-3.1.3]$ sudo rsync -av /etc/profile.d hadoop101:/etc
+[sudo] chenbk 的密码：
+root@hadoop101's password:
+sending incremental file list
+profile.d/
+profile.d/my_env.sh
+sent 667 bytes  received 45 bytes  94.93 bytes/sec
+total size is 16,607  speedup is 23.32
+[chenbk@hadoop102 hadoop-3.1.3]$ jps
+6、在101中查看hadoop情况
+[chenbk@hadoop101 ~]$ hadoop version
+Hadoop 3.1.3
+Source code repository https://gitbox.apache.org/repos/asf/hadoop.git -r ba631c436b806728f8ec2f54ab1e289526c90579
+Compiled by ztang on 2019-09-12T02:47Z
+Compiled with protoc 2.5.0
+From source with checksum ec785077c385118ac91aadde5ec9799
+This command was run using /opt/module/hadoop-3.1.3/share/hadoop/common/hadoop-common-3.1.3.jar
+7、启动101集群
+[chenbk@hadoop101 ~]$ hdfs --daemon start datanode
+[chenbk@hadoop101 ~]$ jps
+9431 Jps
+9375 DataNode
+8、再执行启动命令
+[chenbk@hadoop101 ~]$ yarn --daemon start nodemanager
+[chenbk@hadoop101 ~]$ jps
+9573 Jps
+9511 NodeManager
+9375 DataNode
+[chenbk@hadoop101 ~]$
+
+
+
+
+
+
+Hive
+安装
+先上传文件至[chenbk@hadoop102 software]$ ll
+
+[chenbk@hadoop102 software]$ ll
+总用量 1340000
+-rw-rw-r--. 1 chenbk chenbk    318972 4月  30 11:09 01_mysql-community-common-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk   2596180 4月  30 11:09 02_mysql-community-libs-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk   1353080 4月  30 11:09 03_mysql-community-libs-compat-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk  27768112 4月  30 11:09 04_mysql-community-client-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk 183618644 4月  30 11:10 05_mysql-community-server-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk 278813748 4月  30 11:10 apache-hive-3.1.2-bin.tar.gz
+-rw-rw-r--. 1 chenbk chenbk  62945274 4月  30 11:10 apache-tez-0.9.2-bin.tar.gz
+-rw-rw-r--. 1 chenbk chenbk   9311744 4月  30 11:10 apache-zookeeper-3.5.7-bin.tar.gz
+-rw-rw-r--. 1 chenbk chenbk       396 4月  30 11:10 chenbk.sh
+-rw-rw-r--. 1 chenbk chenbk 338075860 4月  30 11:25 hadoop-3.1.3.tar.gz
+-rw-rw-r--. 1 chenbk chenbk 195013152 4月  30 11:25 jdk-8u212-linux-x64.tar.gz
+-rw-rw-r--. 1 chenbk chenbk  70159813 4月  30 11:10 kafka_2.11-2.4.1.tgz
+-rw-rw-r--. 1 chenbk chenbk   1006956 4月  30 11:10 mysql-connector-java-5.1.48.jar
+-rw-rw-r--. 1 chenbk chenbk       256 4月  30 11:10 remove_mysql.sh
+-rw-rw-r--. 1 chenbk chenbk 201142612 4月  30 11:10 spark-2.1.1-bin-hadoop2.7.tgz
+-rw-rw-r--. 1 chenbk chenbk       482 4月  30 11:11 xsync
+[chenbk@hadoop102 software]$
+
+卸载自带的Mysql-libs（如果之前安装过mysql，要全都卸载掉）
+先查看
+[chenbk@hadoop102 software]$ rpm -qa | grep -i -E mysql\|mariadb
+mariadb-libs-5.5.68-1.el7.x86_64
+
+再执行
+[chenbk@hadoop102 software]$ rpm -qa | grep -i -E mysql\|mariadb | xargs -n1 sudo rpm -e --nodeps
+进行卸载
+
+[chenbk@hadoop102 software]$ rpm -qa | grep -i -E mysql\|mariadb | xargs -n1 sudo rpm -e --nodeps
+[sudo] chenbk 的密码：
+[chenbk@hadoop102 software]$ rpm -qa | grep -i -E mysql\|mariadb
+[chenbk@hadoop102 software]$
+
+如果没有找到就一行（临时密码），需要执行或者直接执行：sudo rm -rf /var/lib/mysql
+[chenbk@hadoop102 software]$ sudo rm -rf /var/lib/mysql
+
+安装5个包
+[chenbk@hadoop102 software]$ ls *.rpm | xargs -n1 sudo rpm -ivh
+
+
+警告：01_mysql-community-common-5.7.29-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY
+准备中...                          ################################# [100%]
+正在升级/安装...
+   1:mysql-community-common-5.7.29-1.e################################# [100%]
+警告：02_mysql-community-libs-5.7.29-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY
+准备中...                          ################################# [100%]
+正在升级/安装...
+   1:mysql-community-libs-5.7.29-1.el7################################# [100%]
+警告：03_mysql-community-libs-compat-5.7.29-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY
+准备中...                          ################################# [100%]
+正在升级/安装...
+   1:mysql-community-libs-compat-5.7.2################################# [100%]
+警告：04_mysql-community-client-5.7.29-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY
+准备中...                          ################################# [100%]
+正在升级/安装...
+   1:mysql-community-client-5.7.29-1.e################################# [100%]
+警告：05_mysql-community-server-5.7.29-1.el7.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID 5072e1f5: NOKEY
+准备中...                          ################################# [100%]
+正在升级/安装...
+   1:mysql-community-server-5.7.29-1.e################################# [100%]
+[chenbk@hadoop102 software]$
+
+
+启动mysql
+[chenbk@hadoop102 software]$ sudo systemctl start mysqld
+[chenbk@hadoop102 software]$
+
+查看随机密码
+[chenbk@hadoop102 software]$ sudo cat /var/log/mysqld.log | grep password
+[chenbk@hadoop102 software]$ sudo cat /var/log/mysqld.log | grep password
+2021-04-30T16:17:58.946751Z 1 [Note] A temporary password is generated for root@localhost: QHjXsiWa0i.n
+2021-04-30T16:18:42.041883Z 2 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-04-30T16:21:06.417374Z 3 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-04-30T16:21:35.075057Z 4 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-04-30T16:21:40.213499Z 5 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-04-30T16:52:06.664195Z 0 [Note] Shutting down plugin 'validate_password'
+2021-04-30T16:52:10.538565Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-04-30T16:52:10.538582Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:04:06.967330Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:04:08.743080Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:04:08.743086Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:07:16.250258Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:07:18.029547Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:07:18.029553Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:20:14.907577Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:20:16.403600Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:20:16.403606Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:23:23.773211Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:23:25.705880Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:23:25.705887Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:44:57.084436Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:44:58.313913Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:44:58.313928Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:51:00.807486Z 2 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:52:22.478113Z 5 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:52:48.428016Z 6 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:53:06.758106Z 7 [Note] Access denied for user 'root'@'localhost' (using password: NO)
+2021-05-01T01:53:44.722286Z 8 [Note] Access denied for user 'root'@'localhost' (using password: NO)
+2021-05-01T01:53:59.593268Z 9 [Note] Access denied for user 'root'@'localhost' (using password: NO)
+2021-05-01T01:56:02.623383Z 11 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:57:57.677815Z 12 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:58:59.980612Z 13 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:59:33.127990Z 14 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T02:00:22.767703Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T02:00:24.196724Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T02:00:24.196732Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T02:05:10.546555Z 0 [Warning] Couldn't load plugin named 'validate_password' with soname 'validate_password.so'.
+2021-05-01T02:06:57.767835Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T02:06:57.767841Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T02:09:55.721847Z 1 [Note] A temporary password is generated for root@localhost: )y%CXj:QO1kC
+[chenbk@hadoop102 software]$ sudo cat /var/log/mysqld.log | grep password
+2021-04-30T16:17:58.946751Z 1 [Note] A temporary password is generated for root@localhost: QHjXsiWa0i.n
+2021-04-30T16:18:42.041883Z 2 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-04-30T16:21:06.417374Z 3 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-04-30T16:21:35.075057Z 4 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-04-30T16:21:40.213499Z 5 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-04-30T16:52:06.664195Z 0 [Note] Shutting down plugin 'validate_password'
+2021-04-30T16:52:10.538565Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-04-30T16:52:10.538582Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:04:06.967330Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:04:08.743080Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:04:08.743086Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:07:16.250258Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:07:18.029547Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:07:18.029553Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:20:14.907577Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:20:16.403600Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:20:16.403606Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:23:23.773211Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:23:25.705880Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:23:25.705887Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:44:57.084436Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T01:44:58.313913Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T01:44:58.313928Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T01:51:00.807486Z 2 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:52:22.478113Z 5 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:52:48.428016Z 6 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:53:06.758106Z 7 [Note] Access denied for user 'root'@'localhost' (using password: NO)
+2021-05-01T01:53:44.722286Z 8 [Note] Access denied for user 'root'@'localhost' (using password: NO)
+2021-05-01T01:53:59.593268Z 9 [Note] Access denied for user 'root'@'localhost' (using password: NO)
+2021-05-01T01:56:02.623383Z 11 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:57:57.677815Z 12 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:58:59.980612Z 13 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T01:59:33.127990Z 14 [Note] Access denied for user 'root'@'localhost' (using password: YES)
+2021-05-01T02:00:22.767703Z 0 [Note] Shutting down plugin 'validate_password'
+2021-05-01T02:00:24.196724Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T02:00:24.196732Z 0 [Note] Shutting down plugin 'mysql_native_password'
+2021-05-01T02:05:10.546555Z 0 [Warning] Couldn't load plugin named 'validate_password' with soname 'validate_password.so'.
+2021-05-01T02:06:57.767835Z 0 [Note] Shutting down plugin 'sha256_password'
+2021-05-01T02:06:57.767841Z 0 [Note] Shutting down plugin 'mysql_native_password'
+
+2021-05-01T02:09:55.721847Z 1 [Note] A temporary password is generated for root@localhost: )y%CXj:QO1kC
+进行登录
+注意是登录的日志，临时密码是2021-05-01T02:09:55.721847Z 1 [Note] A temporary password is generated for root@localhost: )y%CXj:QO1kC
+中的：y%CXj:QO1kC
+
+登录
+[chenbk@hadoop102 software]$ mysql -uroot -p')y%CXj:QO1kC'
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 3
+Server version: 5.7.29
+
+Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+
+mysql不允许设置简单密码，可以执行以下步骤
+
+先设置复杂的密码
+mysql> set password=password("Qs23=zs32");
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+再更改mysql密码策略
+mysql> set global validate_password_length=4;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> set global validate_password_policy=0;
+Query OK, 0 rows affected (0.00 sec)
+
+设置简单好记的密码
+mysql> set password=password("111111");
+Query OK, 0 rows affected, 1 warning (0.00 sec)
+
+进入msyql库
+mysql> use mysql
+Reading table information for completion of table and column names
+You can turn off this feature to get a quicker startup with -A
+
+Database changed
+
+查询user表
+mysql> select user, host from user;
++---------------+-----------+
+| user          | host      |
++---------------+-----------+
+| mysql.session | localhost |
+| mysql.sys     | localhost |
+| root          | localhost |
++---------------+-----------+
+3 rows in set (0.00 sec)
+
+修改user表，把Host表内容修改为%
+mysql> update user set host="%" where user="root";
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> select user, host from user;
++---------------+-----------+
+| user          | host      |
++---------------+-----------+
+| root          | %         |
+| mysql.session | localhost |
+| mysql.sys     | localhost |
++---------------+-----------+
+3 rows in set (0.00 sec)
+
+刷新权限
+mysql> flush privileges;
+Query OK, 0 rows affected (0.00 sec)
+
+退出
+mysql> quit;
+Bye
+
+mysql安装完成
+
+hive安装
+先删除之前安装过的目录及文件
+[chenbk@hadoop102 module]$ ll
+总用量 4
+drwxr-xr-x. 11 chenbk chenbk  173 4月  30 12:05 hadoop-3.1.3
+drwxrwxr-x. 11 chenbk chenbk  213 4月  30 12:36 hive
+drwxr-xr-x.  7 chenbk chenbk  245 4月   2 2019 jdk1.8.0_212
+drwxrwxr-x.  7 chenbk chenbk  101 4月  30 12:37 kafka
+drwxrwxr-x.  5 chenbk chenbk 4096 4月  30 12:36 tez
+drwxrwxr-x.  8 chenbk chenbk  160 4月  30 12:38 zookeeper
+
+删除
+[chenbk@hadoop102 module]$ rm -rf hive/
+[chenbk@hadoop102 module]$ rm -rf tez/
+
+[chenbk@hadoop102 module]$ ll
+总用量 0
+drwxr-xr-x. 11 chenbk chenbk 173 4月  30 12:05 hadoop-3.1.3
+drwxr-xr-x.  7 chenbk chenbk 245 4月   2 2019 jdk1.8.0_212
+drwxrwxr-x.  7 chenbk chenbk 101 4月  30 12:37 kafka
+drwxrwxr-x.  8 chenbk chenbk 160 4月  30 12:38 zookeeper
+
+
+先修改环境变量
+[chenbk@hadoop102 software]$ sudo vim /etc/profile.d/my_env.sh
+
+插入以下语句(之前已经全部配置完成)
+#JAVA_HOME
+export JAVA_HOME=/opt/module/jdk1.8.0_212
+export PATH=$PATH:$JAVA_HOME/bin
+##HADOOP_HOME
+export HADOOP_HOME=/opt/module/hadoop-3.1.3
+export PATH=$PATH:$HADOOP_HOME/bin
+export PATH=$PATH:$HADOOP_HOME/sbin
+#HIVE_HOME
+export HIVE_HOME=/opt/module/hive
+export PATH=$PATH:$HIVE_HOME/bin
+#FLUME_HOME
+export FLUME_HOME=/opt/module/flume
+export PATH=$PATH:$FLUME_HOME/bin
+
+#KAFKA_HOME
+export KAFKA_HOME=/opt/module/kafka
+export PATH=$PATH:$KAFKA_HOME/bin
+
+#ZOOKEEPER_HOME
+export ZOOKEEPER_HOME=/opt/module/zookeeper
+export PATH=$PATH:$ZOOKEEPER_HOME/bin
+
+创建Hive.sh 执行脚本
+[chenbk@hadoop102 software]$ vim Hive.sh
+插入以下语句
+#!/bin/bash
+HADOOP_HOME=/opt/module/hadoop-3.1.3
+HIVE_HOME=/opt/module/hive
+tar -zxvf /opt/software/apache-hive-3.1.2-bin.tar.gz -C /opt/module/
+mv /opt/module/apache-hive-3.1.2-bin /opt/module/hive
+cp $HADOOP_HOME/share/hadoop/common/lib/guava-27.0-jre.jar $HIVE_HOME/lib/
+rm $HIVE_HOME/lib/guava-19.0.jar
+mv $HIVE_HOME/lib/log4j-slf4j-impl-2.10.0.jar $HIVE_HOME/lib/log4j-slf4j-impl-2.10.0.bak
+
+执行[chenbk@hadoop102 software]$ sh Hive.sh
+apache-hive-3.1.2-bin/lib/accumulo-trace-1.7.3.jar
+apache-hive-3.1.2-bin/lib/hive-llap-ext-client-3.1.2.jar
+apache-hive-3.1.2-bin/lib/hive-hplsql-3.1.2.jar
+apache-hive-3.1.2-bin/lib/antlr4-runtime-4.5.jar
+apache-hive-3.1.2-bin/lib/org.abego.treelayout.core-1.0.1.jar
+apache-hive-3.1.2-bin/lib/hive-streaming-3.1.2.jar
+apache-hive-3.1.2-bin/lib/hive-kryo-registrator-3.1.2.jar
+apache-hive-3.1.2-bin/jdbc/hive-jdbc-3.1.2-standalone.jar
+apache-hive-3.1.2-bin/lib/hive-hcatalog-core-3.1.2.jar
+apache-hive-3.1.2-bin/lib/hive-hcatalog-server-extensions-3.1.2.jar
+apache-hive-3.1.2-bin/hcatalog/share/hcatalog/hive-hcatalog-streaming-3.1.2.jar
+apache-hive-3.1.2-bin/hcatalog/share/hcatalog/hive-hcatalog-core-3.1.2.jar
+apache-hive-3.1.2-bin/hcatalog/share/hcatalog/hive-hcatalog-pig-adapter-3.1.2.jar
+apache-hive-3.1.2-bin/hcatalog/share/hcatalog/hive-hcatalog-server-extensions-3.1.2.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/jersey-json-1.19.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/jaxb-impl-2.2.3-1.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/jackson-jaxrs-1.9.2.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/jackson-xc-1.9.2.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/jersey-core-1.19.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/jsr311-api-1.1.1.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/jersey-servlet-1.19.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/hive-webhcat-3.1.2.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/wadl-resourcedoc-doclet-1.4.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/xercesImpl-2.9.1.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/xml-apis-1.3.04.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/commons-exec-1.1.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/svr/lib/jul-to-slf4j-1.7.10.jar
+apache-hive-3.1.2-bin/hcatalog/share/webhcat/java-client/hive-webhcat-java-client-3.1.2.jar
+
+查看安装情况
+[chenbk@hadoop102 software]$ cd /opt/module/
+[chenbk@hadoop102 module]$ ll
+总用量 0
+drwxr-xr-x. 11 chenbk chenbk 173 4月  30 12:05 hadoop-3.1.3
+drwxrwxr-x. 10 chenbk chenbk 184 4月  30 22:42 hive
+drwxr-xr-x.  7 chenbk chenbk 245 4月   2 2019 jdk1.8.0_212
+drwxrwxr-x.  7 chenbk chenbk 101 4月  30 12:37 kafka
+drwxrwxr-x.  8 chenbk chenbk 160 4月  30 12:38 zookeeper
+
+Hive已安装完成，但还需要反把hive元数据配置到mysql中
+
+将MySQL的JDBC驱动拷贝到Hive的lib目录下
+cp /opt/software/mysql-connector-java-5.1.48.jar $HIVE_HOME/lib
+
+[chenbk@hadoop102 software]$ cp /opt/software/mysql-connector-java-5.1.48.jar $HIVE_HOME/lib
+[chenbk@hadoop102 software]$
+
+在$HIVE_HOME/conf目录下新建hive-site.xml文件
+vim $HIVE_HOME/conf/hive-site.xml
+
+在文件中添加以下内容
+
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+    <property>
+        <name>javax.jdo.option.ConnectionURL</name>
+        <value>jdbc:mysql://hadoop102:3306/metastore?useSSL=false</value>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionDriverName</name>
+        <value>com.mysql.jdbc.Driver</value>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionUserName</name>
+        <value>root</value>
+    </property>
+
+    <property>
+        <name>javax.jdo.option.ConnectionPassword</name>
+        <value>111111</value>
+    </property>
+
+    <property>
+        <name>hive.metastore.warehouse.dir</name>
+        <value>/user/hive/warehouse</value>
+    </property>
+
+    <property>
+        <name>hive.metastore.schema.verification</name>
+        <value>false</value>
+    </property>
+
+    <property>
+        <name>datanucleus.schema.autoCreateAll</name>
+        <value>true</value> 
+    </property>
+
+    <property>
+        <name>hive.metastore.uris</name>
+        <value>thrift://hadoop102:9083</value>
+    </property>
+
+    <property>
+    <name>hive.server2.thrift.port</name>
+    <value>10000</value>
+    </property>
+
+    <property>
+        <name>hive.server2.thrift.bind.host</name>
+        <value>hadoop102</value>
+    </property>
+
+    <property>
+        <name>hive.metastore.event.db.notification.api.auth</name>
+        <value>false</value>
+    </property>
+<property>
+    <name>hive.execution.engine</name>
+    <value>tez</value>
+</property>
+
+
+</configuration>
+
+
+安装Tez引擎
+将tez安装包拷贝到集群
+[chenbk@hadoop102 software]$ ll
+\总用量 1340004
+-rw-rw-r--. 1 chenbk chenbk    318972 4月  30 11:09 01_mysql-community-common-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk   2596180 4月  30 11:09 02_mysql-community-libs-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk   1353080 4月  30 11:09 03_mysql-community-libs-compat-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk  27768112 4月  30 11:09 04_mysql-community-client-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk 183618644 4月  30 11:10 05_mysql-community-server-5.7.29-1.el7.x86_64.rpm
+-rw-rw-r--. 1 chenbk chenbk 278813748 4月  30 11:10 apache-hive-3.1.2-bin.tar.gz
+-rw-rw-r--. 1 chenbk chenbk  62945274 4月  30 11:10 apache-tez-0.9.2-bin.tar.gz
+-rw-rw-r--. 1 chenbk chenbk   9311744 4月  30 11:10 apache-zookeeper-3.5.7-bin.tar.gz
+-rw-rw-r--. 1 chenbk chenbk       396 4月  30 11:10 chenbk.sh
+-rw-rw-r--. 1 chenbk chenbk 338075860 4月  30 11:25 hadoop-3.1.3.tar.gz
+-rw-rw-r--. 1 chenbk chenbk       396 4月  30 22:42 Hive.sh
+-rw-rw-r--. 1 chenbk chenbk 195013152 4月  30 11:25 jdk-8u212-linux-x64.tar.gz
+-rw-rw-r--. 1 chenbk chenbk  70159813 4月  30 11:10 kafka_2.11-2.4.1.tgz
+-rw-rw-r--. 1 chenbk chenbk   1006956 4月  30 11:10 mysql-connector-java-5.1.48.jar
+-rw-rw-r--. 1 chenbk chenbk       256 4月  30 11:10 remove_mysql.sh
+-rw-rw-r--. 1 chenbk chenbk 201142612 4月  30 11:10 spark-2.1.1-bin-hadoop2.7.tgz
+-rw-rw-r--. 1 chenbk chenbk       482 4月  30 11:11 xsync
+
+
+解压tar包
+tar -zxvf /opt/software/apache-tez-0.9.2-bin.tar.gz -C /opt/module
+[chenbk@hadoop102 software]$ tar -zxvf /opt/software/apache-tez-0.9.2-bin.tar.gz -C /opt/module
+
+查看解压情况
+[chenbk@hadoop102 module]$ ll
+总用量 4
+drwxr-xr-x.  5 chenbk chenbk 4096 3月  19 2019 apache-tez-0.9.2-bin
+drwxr-xr-x. 11 chenbk chenbk  173 4月  30 12:05 hadoop-3.1.3
+drwxrwxr-x. 10 chenbk chenbk  184 4月  30 22:42 hive
+drwxr-xr-x.  7 chenbk chenbk  245 4月   2 2019 jdk1.8.0_212
+drwxrwxr-x.  7 chenbk chenbk  101 4月  30 12:37 kafka
+drwxrwxr-x.  8 chenbk chenbk  160 4月  30 12:38 zookeeper
+
+重命名
+[chenbk@hadoop102 module]$ mv /opt/module/apache-tez-0.9.2-bin /opt/module/tez
+[chenbk@hadoop102 module]$ ll
+总用量 4
+drwxr-xr-x. 11 chenbk chenbk  173 4月  30 12:05 hadoop-3.1.3
+drwxrwxr-x. 10 chenbk chenbk  184 4月  30 22:42 hive
+drwxr-xr-x.  7 chenbk chenbk  245 4月   2 2019 jdk1.8.0_212
+drwxrwxr-x.  7 chenbk chenbk  101 4月  30 12:37 kafka
+drwxr-xr-x.  5 chenbk chenbk 4096 3月  19 2019 tez
+drwxrwxr-x.  8 chenbk chenbk  160 4月  30 12:38 zookeeper
+[chenbk@hadoop102 module]$
+
+上传tez依赖到HDFS
+先启动集群
+[chenbk@hadoop102 hadoop-3.1.3]$ sbin/start-dfs.sh
+Starting namenodes on [hadoop102]
+Starting datanodes
+Starting secondary namenodes [hadoop104]
+[chenbk@hadoop102 hadoop-3.1.3]$
+
+[chenbk@hadoop103 hadoop-3.1.3]$ sbin/start-yarn.sh
+Starting resourcemanager
+Starting nodemanagers
+
+查看状态
+[chenbk@hadoop102 ~]$ sh jpsall
+=====  hadoop102   =====
+2453 NameNode
+2582 DataNode
+2925 NodeManager
+=====  hadoop103   =====
+1620 NodeManager
+1335 DataNode
+1503 ResourceManager
+=====  hadoop104   =====
+1778 NodeManager
+1573 DataNode
+1642 SecondaryNameNode
+[chenbk@hadoop102 ~]$
+
+上传tez依赖到HDFS
+[chenbk@hadoop102 module]$ hadoop fs -mkdir /tez
+2021-04-30 23:04:24,401 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+mkdir: `/tez': File exists
+
+发现已经存在，就先删除先（在这删除所有文件），执行命令
+[chenbk@hadoop102 module]$ hadoop fs -rm -f hdfs://192.168.1.112:8020/*
+
+发现是个目录
+[chenbk@hadoop102 module]$ hadoop fs -rm -f hdfs://192.168.1.112:8020/*
+2021-04-30 23:05:58,031 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+rm: `hdfs://192.168.1.112:8020/tez': Is a directory
+
+执行以下语句
+[chenbk@hadoop102 module]$ hadoop fs -rm -r hdfs://192.168.1.112:8020/*
+2021-04-30 23:09:17,692 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+Deleted hdfs://192.168.1.112:8020/tez
+[chenbk@hadoop102 module]$
+
+在客户端查看，已经没有了这个文件（http://192.168.1.112:9870/explorer.html#/tez）
+
+再执行新建目录命令
+[chenbk@hadoop102 module]$ hadoop fs -mkdir /tez
+2021-04-30 23:12:59,820 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+[chenbk@hadoop102 module]$
+
+把tez.tar.gz上传到集群中
+路径：[chenbk@hadoop102 share]$ pwd
+/opt/module/tez/share
+
+执行上传命令
+[chenbk@hadoop102 share]$ hadoop fs -put /opt/module/tez/share/tez.tar.gz /tez
+2021-04-30 23:15:50,190 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+2021-04-30 23:15:51,272 INFO sasl.SaslDataTransferClient: SASL encryption trust check: localHostTrusted = false, remoteHostTrusted = false
+[chenbk@hadoop102 share]$
+
+在在客户端查看，有没有tez.tar.gz /tez这个文件
+
+新建tez-site.xml
+[chenbk@hadoop102 share]$ vim $HADOOP_HOME/etc/hadoop/tez-site.xml
+
+添加以下内容
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+<property>
+	<name>tez.lib.uris</name>
+    <value>${fs.defaultFS}/tez/tez.tar.gz</value>
+</property>
+<property>
+     <name>tez.use.cluster.hadoop-libs</name>
+     <value>false</value>
+</property>
+<property>
+     <name>tez.history.logging.service.class</name>
+     <value>org.apache.tez.dag.history.logging.ats.ATSHistoryLoggingService</value>
+</property></configuration>
+
+
+修改Hadoop环境变量
+[chenbk@hadoop102 share]$ vim $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+添加：export TEZ_CONF_DIR=$HADOOP_HOME/etc/hadoop
+     export TEZ_JARS=/opt/module/tez
+     export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:${TEZ_CONF_DIR}:${TEZ_JARS}/*:${TEZ_JARS}/lib/*
+
+ 如下：
+
+119 # An additional, custom CLASSPATH. Site-wide configs should be
+120 # handled via the shellprofile functionality, utilizing the
+121 # hadoop_add_classpath function for greater control and much
+122 # harder for apps/end-users to accidentally override.
+123 # Similarly, end users should utilize ${HOME}/.hadooprc .
+124 # This variable should ideally only be used as a short-cut,
+125 # interactive way for temporary additions on the command line.
+126 # export HADOOP_CLASSPATH="/some/cool/path/on/your/machine"
+127 export TEZ_CONF_DIR=$HADOOP_HOME/etc/hadoop
+128 export TEZ_JARS=/opt/module/tez
+129 export HADOOP_CLASSPATH=$HADOOP_CLASSPATH:${TEZ_CONF_DIR}:${TEZ_JARS}/*:${TEZ_JARS}/lib/*
+130
+
+修改Hive的计算引擎
+vim $HIVE_HOME/conf/hive-site.xml
+添加：
+<property>
+    <name>hive.execution.engine</name>
+    <value>tez</value>
+</property>
+
+防止日志冲突，解决日志Jar包冲突，执行以下命令
+[chenbk@hadoop102 share]$ rm /opt/module/tez/lib/slf4j-log4j12-1.7.10.jar
+[chenbk@hadoop102 share]$
+
+配置已经完成
+
+启动Hive
+先登陆MySQL
+mysql -uroot -p111111
+
+[chenbk@hadoop102 share]$ mysql -uroot -p111111
+mysql: [Warning] Using a password on the command line interface can be insecure.
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 4
+Server version: 5.7.29 MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql>
+
+新建Hive元数据库
+mysql> create database metastore;
+Query OK, 1 row affected (0.00 sec)
+
+mysql>
+
+退出quit;
+
+初始化Hive元数据库
+查看一下目录
+[chenbk@hadoop102 share]$ cd /opt/module/hive/bin
+[chenbk@hadoop102 bin]$ ll
+总用量 44
+-rwxr-xr-x. 1 chenbk chenbk   881 8月  22 2019 beeline
+drwxrwxr-x. 3 chenbk chenbk  4096 4月  30 22:42 ext
+-rwxr-xr-x. 1 chenbk chenbk 10158 8月  22 2019 hive
+-rwxr-xr-x. 1 chenbk chenbk  1900 8月  22 2019 hive-config.sh
+-rwxr-xr-x. 1 chenbk chenbk   885 8月  22 2019 hiveserver2
+-rwxr-xr-x. 1 chenbk chenbk   880 8月  22 2019 hplsql
+-rwxr-xr-x. 1 chenbk chenbk  3064 8月  22 2019 init-hive-dfs.sh
+-rwxr-xr-x. 1 chenbk chenbk   832 8月  22 2019 metatool
+-rwxr-xr-x. 1 chenbk chenbk   884 8月  22 2019 schematool
+
+执行初始化语句
+[chenbk@hadoop102 bin]$ schematool -initSchema -dbType mysql -verbose
+
+0: jdbc:mysql://hadoop102:3306/metastore> /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */
+No rows affected (0.001 seconds)
+0: jdbc:mysql://hadoop102:3306/metastore> /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */
+No rows affected (0.001 seconds)
+0: jdbc:mysql://hadoop102:3306/metastore> /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */
+No rows affected (0.001 seconds)
+0: jdbc:mysql://hadoop102:3306/metastore> /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */
+No rows affected (0.001 seconds)
+0: jdbc:mysql://hadoop102:3306/metastore> !closeall
+Closing: 0: jdbc:mysql://hadoop102:3306/metastore?useSSL=false
+beeline>
+beeline> Initialization script completed
+schemaTool completed
+
+初始化完成
+
+
+启动metastore和hiveserver2
+
+先编辑启动脚本
+[chenbk@hadoop102 bin]$ vim $HIVE_HOME/bin/hiveservices.sh
+
+添加以下内容
+#!/bin/bash
+HIVE_LOG_DIR=$HIVE_HOME/logs
+META_PID=/tmp/meta.pid
+SERVER_PID=/tmp/server.pid
+mkdir -p $HIVE_LOG_DIR
+
+function hive_start()
+{
+    nohup hive --service metastore >$HIVE_LOG_DIR/metastore.log 2>&1 &
+    echo $! > $META_PID
+    sleep 8
+    nohup hive --service hiveserver2 >$HIVE_LOG_DIR/hiveserver2.log 2>&1 &
+    echo $! > $SERVER_PID
+}
+
+function hive_stop()
+{
+    if [ -f $META_PID ]
+    then
+        cat $META_PID | xargs kill -9
+        rm $META_PID
+    else
+        echo "Meta PID文件丢失，请手动关闭服务"
+    fi
+    if [ -f $SERVER_PID ]
+    then
+        cat $SERVER_PID | xargs kill -9
+        rm $SERVER_PID
+    else
+        echo "Server2 PID文件丢失，请手动关闭服务"
+    fi
+
+}
+
+case $1 in
+"start")
+    hive_start
+    ;;
+"stop")
+    hive_stop
+    ;;
+"restart")
+    hive_stop
+    sleep 2
+    hive_start
+    ;;
+*)
+    echo Invalid Args!
+    echo 'Usage: '$(basename $0)' start|stop|restart'
+    ;;
+esac
+
+
+重名字
+hive-exec-log4j2.properties.template 
+路径：[chenbk@hadoop102 conf]$ pwd
+/opt/module/hive/conf
+
+执行命令
+[chenbk@hadoop102 conf]$ mv hive-log4j2.properties.template hive-log4j2.properties
+
+查看
+[chenbk@hadoop102 conf]$ ll
+总用量 336
+-rw-r--r--. 1 chenbk chenbk   1596 8月  22 2019 beeline-log4j2.properties.template
+-rw-r--r--. 1 chenbk chenbk 300482 8月  22 2019 hive-default.xml.template
+-rw-r--r--. 1 chenbk chenbk   2365 8月  22 2019 hive-env.sh.template
+-rw-r--r--. 1 chenbk chenbk   2274 8月  22 2019 hive-exec-log4j2.properties
+-rw-r--r--. 1 chenbk chenbk   3086 8月  22 2019 hive-log4j2.properties
+-rw-rw-r--. 1 chenbk chenbk   1552 4月  30 22:53 hive-site.xml
+-rw-r--r--. 1 chenbk chenbk   2060 8月  22 2019 ivysettings.xml
+-rw-r--r--. 1 chenbk chenbk   3558 8月  22 2019 llap-cli-log4j2.properties.template
+-rw-r--r--. 1 chenbk chenbk   7163 8月  22 2019 llap-daemon-log4j2.properties.template
+-rw-r--r--. 1 chenbk chenbk   2662 8月  22 2019 parquet-logging.properties
+[chenbk@hadoop102 conf]$
+
+执行修改命令
+[chenbk@hadoop102 conf]$ vim hive-log4j2.properties
+
+修改property.hive.log.dir = ${sys:java.io.tmpdir}/${sys:user.name}
+
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+status = INFO
+name = HiveLog4j2
+packages = org.apache.hadoop.hive.ql.log
+
+# list of properties
+property.hive.log.level = INFO
+property.hive.root.logger = DRFA
+property.hive.log.dir = ${sys:java.io.tmpdir}/${sys:user.name}
+property.hive.log.file = hive.log
+property.hive.perflogger.log.level = INFO
+
+
+修改为:property.hive.log.dir = /opt/module/hive/logs
+status = INFO
+name = HiveLog4j2
+packages = org.apache.hadoop.hive.ql.log
+
+# list of properties
+property.hive.log.level = INFO
+property.hive.root.logger = DRFA
+property.hive.log.dir = /opt/module/hive/logs
+property.hive.log.file = hive.log
+property.hive.perflogger.log.level = INFO
+
+添加执行权限
+
+[chenbk@hadoop102 conf]$ chmod +x $HIVE_HOME/bin/hiveservices.sh
+[chenbk@hadoop102 conf]$
+
+启动Hive后台服务
+[chenbk@hadoop102 bin]$ hiveservices.sh start
+[chenbk@hadoop102 bin]$
+这是成功的状态
+
+启动失败的状态如下：
+[chenbk@hadoop102 bin]$ hiveservices.sh start
+mkdir: 缺少操作数
+Try 'mkdir --help' for more information.
+/opt/module/hive/bin/hiveservices.sh:行7: /metastore.log: 权限不够
+/opt/module/hive/bin/hiveservices.sh:行10: /hiveserver2.log: 权限不够
+
+这是hiveservices.sh 没有配置好，需要重新配置，可能是词语少个字母
+
+[chenbk@hadoop102 bin]$ hiveservices.sh start
+/opt/module/hive/bin/hiveservices.sh:行8: /opt/module/hive/logs/metastore.log: 没有那个文件或目录
+/opt/module/hive/bin/hiveservices.sh:行11: /opt/module/hive/logs/hiveserver2.log: 没有那个文件或目录
+
+这是需要在配置hiveservices.sh，中添加：mkdir -p $HIVE_LOG_DIR
+正确配置：
+#!/bin/bash
+HIVE_LOG_DIR=$HIVE_HOME/logs
+META_PID=/tmp/meta.pid
+SERVER_PID=/tmp/server.pid
+mkdir -p $HIVE_LOG_DIR
+function hive_start()
+{
+    nohup hive --service metastore >$HIVE_LOG_DIR/metastore.log 2>&1 &
+echo $! > $META_PID
+sleep 8
+    nohup hive --service hiveserver2 >$HIVE_LOG_DIR/hiveserver2.log 2>&1 &
+    echo $! > $SERVER_PID
+}
+
+function hive_stop()
+{
+    if [ -f $META_PID ]
+    then
+        cat $META_PID | xargs kill -9
+        rm $META_PID
+    else
+        echo "Meta PID文件丢失，请手动关闭服务"
+    fi
+    if [ -f $SERVER_PID ]
+    then
+        cat $SERVER_PID | xargs kill -9
+        rm $SERVER_PID
+    else
+        echo "Server2 PID文件丢失，请手动关闭服务"
+    fi
+
+}
+
+case $1 in
+"start")
+    hive_start
+    ;;
+"stop")
+    hive_stop
+    ;;
+"restart")
+hive_stop
+sleep 2
+    hive_start
+    ;;
+*)
+    echo Invalid Args!
+    echo 'Usage: '$(basename $0)' start|stop|restart'
+    ;;
+esac
+
+启动完成后，查看启动状态
+[chenbk@hadoop102 ~]$ sh jpsall
+=====  hadoop102   =====
+3988 RunJar
+2453 NameNode
+2582 DataNode
+4137 RunJar
+2925 NodeManager
+=====  hadoop103   =====
+1620 NodeManager
+1335 DataNode
+1503 ResourceManager
+=====  hadoop104   =====
+1778 NodeManager
+1573 DataNode
+1642 SecondaryNameNode
+[chenbk@hadoop102 ~]$
+
+如果找到两个RunJar，基本启动成功
+查看端口状态
+[chenbk@hadoop102 ~]$ netstat -nltp | grep -E 3988\|4137
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+tcp6       0      0 :::10000                :::*                    LISTEN      4137/java
+tcp6       0      0 :::10002                :::*                    LISTEN      4137/java
+tcp6       0      0 :::9083                 :::*                    LISTEN      3988/java
+
+证明启动成功
+
+查看端口命令：
+[chenbk@hadoop102 ~]$ netstat -nltp
+
+(Not all processes could be identified, non-owned process info
+ will not be shown, you would have to be root to see it all.)
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 127.0.0.1:42439         0.0.0.0:*               LISTEN      2582/java
+tcp        0      0 0.0.0.0:8040            0.0.0.0:*               LISTEN      2925/java
+tcp        0      0 0.0.0.0:9864            0.0.0.0:*               LISTEN      2582/java
+tcp        0      0 0.0.0.0:8042            0.0.0.0:*               LISTEN      2925/java
+tcp        0      0 0.0.0.0:9866            0.0.0.0:*               LISTEN      2582/java
+tcp        0      0 0.0.0.0:9867            0.0.0.0:*               LISTEN      2582/java
+tcp        0      0 0.0.0.0:9870            0.0.0.0:*               LISTEN      2453/java
+tcp        0      0 192.168.1.112:8020      0.0.0.0:*               LISTEN      2453/java
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN      -
+tcp        0      0 127.0.0.1:25            0.0.0.0:*               LISTEN      -
+tcp        0      0 0.0.0.0:13562           0.0.0.0:*               LISTEN      2925/java
+tcp        0      0 0.0.0.0:35423           0.0.0.0:*               LISTEN      2925/java
+tcp6       0      0 :::3306                 :::*                    LISTEN      -
+tcp6       0      0 :::10000                :::*                    LISTEN      4137/java
+tcp6       0      0 :::10002                :::*                    LISTEN      4137/java
+tcp6       0      0 :::22                   :::*                    LISTEN      -
+tcp6       0      0 ::1:25                  :::*                    LISTEN      -
+tcp6       0      0 :::9083                 :::*                    LISTEN      3988/java
+[chenbk@hadoop102 ~]$
+
+启动beeline客户端
+
+beeline -u jdbc:hive2://hadoop102:10000 -n chenbk
+
+[chenbk@hadoop102 ~]$ beeline -u jdbc:hive2://hadoop102:10000 -n chenbk
+Connecting to jdbc:hive2://hadoop102:10000
+Connected to: Apache Hive (version 3.1.2)
+Driver: Hive JDBC (version 3.1.2)
+Transaction isolation: TRANSACTION_REPEATABLE_READ
+Beeline version 3.1.2 by Apache Hive
+0: jdbc:hive2://hadoop102:10000>
+
+启动成功
+
+查看表：
+0: jdbc:hive2://hadoop102:10000> show table;
+
+Error: Error while compiling statement: FAILED: ParseException line 1:10 mismatched input '<EOF>' expecting EXTENDED near 'table' in show statement (state=42000,code=40000)
+0: jdbc:hive2://hadoop102:10000> show tables;
+INFO  : Compiling command(queryId=chenbk_20210501002654_08dc33cb-784c-4711-a348-6c8556e79b8d): show tables
+INFO  : Concurrency mode is disabled, not creating a lock manager
+INFO  : Semantic Analysis Completed (retrial = false)
+INFO  : Returning Hive schema: Schema(fieldSchemas:[FieldSchema(name:tab_name, type:string, comment:from deserializer)], properties:null)
+INFO  : Completed compiling command(queryId=chenbk_20210501002654_08dc33cb-784c-4711-a348-6c8556e79b8d); Time taken: 0.268 seconds
+INFO  : Concurrency mode is disabled, not creating a lock manager
+INFO  : Executing command(queryId=chenbk_20210501002654_08dc33cb-784c-4711-a348-6c8556e79b8d): show tables
+INFO  : Starting task [Stage-0:DDL] in serial mode
+INFO  : Completed executing command(queryId=chenbk_20210501002654_08dc33cb-784c-4711-a348-6c8556e79b8d); Time taken: 0.055 seconds
+INFO  : OK
+INFO  : Concurrency mode is disabled, not creating a lock manager
++-----------+
+| tab_name  |
++-----------+
++-----------+
+No rows selected (0.621 seconds)
+0: jdbc:hive2://hadoop102:10000>
+
+创建表
+0: jdbc:hive2://hadoop102:10000> create table chenbk(id int,value string);
+INFO  : Compiling command(queryId=chenbk_20210501002918_edcf8a42-9fc4-43c9-84ec-7deba5413bcd): create table chenbk(id int,value string)
+INFO  : Concurrency mode is disabled, not creating a lock manager
+INFO  : Semantic Analysis Completed (retrial = false)
+INFO  : Returning Hive schema: Schema(fieldSchemas:null, properties:null)
+INFO  : Completed compiling command(queryId=chenbk_20210501002918_edcf8a42-9fc4-43c9-84ec-7deba5413bcd); Time taken: 0.125 seconds
+INFO  : Concurrency mode is disabled, not creating a lock manager
+INFO  : Executing command(queryId=chenbk_20210501002918_edcf8a42-9fc4-43c9-84ec-7deba5413bcd): create table chenbk(id int,value string)
+INFO  : Starting task [Stage-0:DDL] in serial mode
+INFO  : Completed executing command(queryId=chenbk_20210501002918_edcf8a42-9fc4-43c9-84ec-7deba5413bcd); Time taken: 1.267 seconds
+INFO  : OK
+INFO  : Concurrency mode is disabled, not creating a lock manager
+No rows affected (1.68 seconds)
+
+插入数据 
+0: jdbc:hive2://hadoop102:10000> insert into table chenbk values(1001,"kang");
+INFO  : Compiling command(queryId=chenbk_20210501003049_faacc8be-e937-4d07-ae2d-c7e4740b1413): insert into table chenbk values(1001,"kang")
+INFO  : Concurrency mode is disabled, not creating a lock manager
+INFO  : Semantic Analysis Completed (retrial = false)
+INFO  : Returning Hive schema: Schema(fieldSchemas:[FieldSchema(name:col1, type:int, comment:null), FieldSchema(name:col2, type:string, comment:null)], properties:null)
+INFO  : Completed compiling command(queryId=chenbk_20210501003049_faacc8be-e937-4d07-ae2d-c7e4740b1413); Time taken: 3.244 seconds
+INFO  : Concurrency mode is disabled, not creating a lock manager
+INFO  : Executing command(queryId=chenbk_20210501003049_faacc8be-e937-4d07-ae2d-c7e4740b1413): insert into table chenbk values(1001,"kang")
+INFO  : Query ID = chenbk_20210501003049_faacc8be-e937-4d07-ae2d-c7e4740b1413
+INFO  : Total jobs = 1
+INFO  : Launching Job 1 out of 1
+INFO  : Starting task [Stage-1:MAPRED] in serial mode
+INFO  : Subscribed to counters: [] for queryId: chenbk_20210501003049_faacc8be-e937-4d07-ae2d-c7e4740b1413
+INFO  : Tez session hasn't been created yet. Opening session
+INFO  : Dag name: insert into table chenbk values(1001,"kang") (Stage-1)
+INFO  : Status: Running (Executing on YARN cluster with App id application_1619838125334_0002)
+
+----------------------------------------------------------------------------------------------
+        VERTICES      MODE        STATUS  TOTAL  COMPLETED  RUNNING  PENDING  FAILED  KILLED
+----------------------------------------------------------------------------------------------
+Map 1 .......... container     SUCCEEDED      1          1        0        0       0       0
+Reducer 2 ...... container     SUCCEEDED      1          1        0        0       0       0
+----------------------------------------------------------------------------------------------
+VERTICES: 02/02  [==========================>>] 100%  ELAPSED TIME: 17.06 s
+----------------------------------------------------------------------------------------------
+INFO  : Starting task [Stage-2:DEPENDENCY_COLLECTION] in serial mode
+INFO  : Starting task [Stage-0:MOVE] in serial mode
+INFO  : Loading data to table default.chenbk from hdfs://hadoop102:8020/user/hive/warehouse/chenbk/.hive-staging_hive_2021-05-01_00-30-49_082_7775360843546126635-1/-ext-10000
+INFO  : Starting task [Stage-3:STATS] in serial mode
+INFO  : Completed executing command(queryId=chenbk_20210501003049_faacc8be-e937-4d07-ae2d-c7e4740b1413); Time taken: 28.01 seconds
+INFO  : OK
+INFO  : Concurrency mode is disabled, not creating a lock manager
+No rows affected (31.283 seconds)
+0: jdbc:hive2://hadoop102:10000>
+
+退出登录
+ctrl+c
+
+
+zookeeper 安装
+先上传文件到集群
+路径是：[chenbk@hadoop102 software]$ pwd
+/opt/software
+
+解压文件到module/
+[chenbk@hadoop102 software]$ tar -zvxf apache-zookeeper-3.5.7-bin.tar.gz -C /opt/module/
+
+
+重新命名
+[chenbk@hadoop102 module]$ mv apache-zookeeper-3.5.7-bin/ zookeeper
+
+配置环境变量
+[chenbk@hadoop102 module]$ vim /etc/profile.d/my_env.sh
+
+添加以下内容
+#ZOOKEEPER_HOME
+export ZOOKEEPER_HOME=/opt/module/zookeeper
+export PATH=$PATH:$ZOOKEEPER_HOME/bin
+
+共亨到其它集群
+sh xsync /etc/profile.d
+
+验证 z + 	tab键
+[chenbk@hadoop102 ~]$ z
+zcat             zdump            zforce           zless            znew
+zcmp             zegrep           zgrep            zlib_decompress  zramctl
+zdiff            zfgrep           zic              zmore            zsoelim
+[chenbk@hadoop102 ~]$
+
+
+配置文件
+zoo.cfg(重命名后)
+
+路径：[chenbk@hadoop102 conf]$ pwd
+/opt/module/zookeeper/conf
+
+[chenbk@hadoop102 conf]$ vim zoo.cfg
+
+
+把dataDir=，修改为：dataDir=/opt/module/zookeeper/zkData
+# the directory where the snapshot is stored.
+# do not use /tmp for storage, /tmp here is just
+# example sakes.
+dataDir=/opt/module/zookeeper/zkData
+
+在最后添加
+# Purge task interval in hours
+# Set to "0" to disable auto purge feature
+#autopurge.purgeInterval=1
+server.2=hadoop102:2888:3888
+server.3=hadoop103:2888:3888
+server.4=hadoop104:2888:3888
+
+
+启动单机模式
+[chenbk@hadoop102 zookeeper]$ zkServer.sh start
+-bash: /opt/module/zookeeper/bin/zkServer.sh: 权限不够
+当权限不够时
+执行以下语句[chenbk@hadoop102 bin]$ chmod +x zkServer.sh
+路径为：[chenbk@hadoop102 bin]$ pwd
+/opt/module/zookeeper/bin
+[chenbk@hadoop102 bin]$
+
+再执行
+[chenbk@hadoop102 bin]$ zkServer.sh start
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+
+再执行
+[chenbk@hadoop102 bin]$ zkServer.sh status
+
+[chenbk@hadoop102 ~]$ sh jpsall
+=====  hadoop102   =====
+3988 RunJar
+2453 NameNode
+2582 DataNode
+4137 RunJar
+2925 NodeManager
+5039 QuorumPeerMain
+=====  hadoop103   =====
+1620 NodeManager
+1335 DataNode
+1503 ResourceManager
+=====  hadoop104   =====
+1778 NodeManager
+1573 DataNode
+1642 SecondaryNameNode
+
+再执行
+[chenbk@hadoop102 ~]$ jps -l
+5168 sun.tools.jps.Jps
+3988 org.apache.hadoop.util.RunJar
+2453 org.apache.hadoop.hdfs.server.namenode.NameNode
+2582 org.apache.hadoop.hdfs.server.datanode.DataNode
+4137 org.apache.hadoop.util.RunJar
+2925 org.apache.hadoop.yarn.server.nodemanager.NodeManager
+5039 org.apache.zookeeper.server.quorum.QuorumPeerMain
+[chenbk@hadoop102 ~]$
+
+其中：5039 org.apache.zookeeper.server.quorum.QuorumPeerMain  
+安装成功
+
+单机模式少用，都为集群模式
+所以：先关闭
+[chenbk@hadoop102 zookeeper]$ zkServer.sh stop
+
+[chenbk@hadoop102 zookeeper]$ zkServer.sh stop
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Stopping zookeeper ... STOPPED
+
+
+查看是否已关闭
+[chenbk@hadoop102 zookeeper]$ jps
+5233 Jps
+3988 RunJar
+2453 NameNode
+2582 DataNode
+4137 RunJar
+2925 NodeManag
+
+
+删除zkData文件的内容
+[chenbk@hadoop102 zookeeper]$ rm -rf zkData/*
+
+在zkData 文件中新建一个文件
+[chenbk@hadoop102 zkData]$ vim myid
+添加的内容：2
+
+
+同步到其它集群
+执行命令
+[chenbk@hadoop102 ~]$ sh xsync /opt/module/zookeeper/
+
+在hadoop103/hadoop104中，修改myid
+
+[chenbk@hadoop103 zkData]$ vim myid
+[chenbk@hadoop103 zkData]$
+
+[chenbk@hadoop104 zkData]$ vim myid
+[chenbk@hadoop104 zkData]$
+
+
+分别改为：3 4
+
+可以运行以下命令修改
+[chenbk@hadoop102 zkData]$ echo 4 > $ZOOKEEPER_HOME/zkData/myid
+[chenbk@hadoop102 zkData]$ cat myid
+4
+[chenbk@hadoop102 zkData]$ echo 2 > $ZOOKEEPER_HOME/zkData/myid
+[chenbk@hadoop102 zkData]$ cat myid
+2
+[chenbk@hadoop102 zkData]$
+
+
+启动
+[chenbk@hadoop102 zookeeper]$ zkServer.sh start
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+
+再执行命令
+
+[chenbk@hadoop102 zookeeper]$ zkServer.sh status
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Client port found: 2181. Client address: localhost.
+Error contacting service. It is probably not running.
+[chenbk@hadoop102 zookeeper]$
+
+状态不对，显示出错
+Client port found: 2181. Client address: localhost.
+Error contacting service. It is probably not running.
+
+
+原因：最少需要两集群启动
+所以再启动hadoop103
+
+[chenbk@hadoop103 zkData]$ zkServer.sh start
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+[chenbk@hadoop103 zkData]$
+
+再执行命令
+
+[chenbk@hadoop102 zookeeper]$ zkServer.sh status
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Client port found: 2181. Client address: localhost.
+Mode: follower
+[chenbk@hadoop102 zookeeper]$
+
+显示成功
+
+删除进程 kill -9 5351
+[chenbk@hadoop102 zookeeper]$ jps
+5489 Jps
+3988 RunJar
+2453 NameNode
+2582 DataNode
+5351 QuorumPeerMain
+4137 RunJar
+2925 NodeManager
+[chenbk@hadoop102 zookeeper]$ kill -9 5351
+[chenbk@hadoop102 zookeeper]$
+
+
+查看
+[chenbk@hadoop102 zookeeper]$ jps
+3988 RunJar
+2453 NameNode
+2582 DataNode
+5511 Jps
+4137 RunJar
+2925 NodeManager
+[chenbk@hadoop102 zookeeper]$
+
+
+
+
+安装Flume
+
+上传文件到集群
+
+解压文件到/opt/module/
+[chenbk@hadoop102 software]$ tar -zvxf apache-flume-1.9.0-bin.tar -C /opt/module/
+
+gzip: stdin: not in gzip format
+tar: Child returned status 1
+tar: Error is not recoverable: exiting now
+
+发现解压不成功
+tar用tar -xf来解压
+[chenbk@hadoop102 software]$ tar -xf apache-flume-1.9.0-bin.tar -C /opt/module/
+
+查看
+[chenbk@hadoop102 software]$ tar -xf apache-flume-1.9.0-bin.tar -C /opt/module/
+[chenbk@hadoop102 software]$ cd /opt/module/
+[chenbk@hadoop102 module]$ ll
+总用量 4
+drwxrwxr-x.  7 chenbk chenbk  187 5月   1 02:41 apache-flume-1.9.0-bin
+drwxr-xr-x. 11 chenbk chenbk  173 4月  30 12:05 hadoop-3.1.3
+drwxrwxr-x. 11 chenbk chenbk  196 5月   1 00:12 hive
+drwxr-xr-x.  7 chenbk chenbk  245 4月   2 2019 jdk1.8.0_212
+drwxrwxr-x.  7 chenbk chenbk  101 4月  30 12:37 kafka
+drwxr-xr-x.  5 chenbk chenbk 4096 3月  19 2019 tez
+drwxrwxr-x.  8 chenbk chenbk  160 5月   1 02:03 zookeeper
+[chenbk@hadoop102 module]$
+
+修改名称
+[chenbk@hadoop102 module]$ mv apache-flume-1.9.0-bin flume
+
+因版本为1.9.0
+所以需要将lib文件下guava-11.0.2.jar删除，为了兼容Hadoop3.1.3
+
+执行以下命令
+[chenbk@hadoop102 module]$ rm /opt/module/flume/lib/guava-11.0.2.jar
+[chenbk@hadoop102 module]$
+
+配置环境变量
+[chenbk@hadoop102 conf]$ vim /etc/profile.d/my_env.sh
+
+添加以下内容
+
+#FLUME_HOME
+export FLUME_HOME=/opt/module/flume
+export PATH=$PATH:$FLUME_HOME/bin
+
+
+验证
+flume + tab
+[chenbk@hadoop102 module]$ flume
+flume         flume-ng      flume-ng.ps1
+[chenbk@hadoop102 module]$
+
+
+群发
+[chenbk@hadoop102 ~]$ sh xsync /opt/module/flume/
+
+执行一下
+[chenbk@hadoop102 ~]$ flume-ng
+
+Usage: /opt/module/flume/bin/flume-ng <command> [options]...
+
+commands:
+  help                      display this help text
+  agent                     run a Flume agent
+  avro-client               run an avro Flume client
+  version                   show Flume version info
+
+global options:
+  --conf,-c <conf>          use configs in <conf> directory
+  --classpath,-C <cp>       append to the classpath
+  --dryrun,-d               do not actually start Flume, just print the command
+  --plugins-path <dirs>     colon-separated list of plugins.d directories. See the
+                            plugins.d section in the user guide for more details.
+                            Default: $FLUME_HOME/plugins.d
+  -Dproperty=value          sets a Java system property value
+  -Xproperty=value          sets a Java -X option
+
+agent options:
+  --name,-n <name>          the name of this agent (required)
+  --conf-file,-f <file>     specify a config file (required if -z missing)
+  --zkConnString,-z <str>   specify the ZooKeeper connection to use (required if -f missing)
+  --zkBasePath,-p <path>    specify the base path in ZooKeeper for agent configs
+  --no-reload-conf          do not reload config file if changed
+  --help,-h                 display help text
+
+avro-client options:
+  --rpcProps,-P <file>   RPC client properties file with server connection params
+  --host,-H <host>       hostname to which events will be sent
+  --port,-p <port>       port of the avro source
+  --dirname <dir>        directory to stream to avro source
+  --filename,-F <file>   text file to stream to avro source (default: std input)
+  --headerFile,-R <file> File containing event headers as key/value pairs on each new line
+  --help,-h              display help text
+
+  Either --rpcProps or both --host and --port must be specified.
+
+Note that if <conf> directory is specified, then it is always included first
+in the classpath.
+
+
+安装完成
+
+
+安装kafka
+上传文件到集群
+
+解压
+[chenbk@hadoop102 software]$ tar -zxvf kafka_2.11-2.4.1.tgz -C /opt/module/
+
+重命名
+[chenbk@hadoop102 module]$ mv kafka_2.11-2.4.1 kafka
+
+配置环境变量
+
+[chenbk@hadoop102 module]$ vim /etc/profile.d/my_env.sh
+
+添加以下内容
+
+#KAFKA_HOME
+export KAFKA_HOME=/opt/module/kafka
+export PATH=$PATH:$KAFKA_HOME/bin
+
+
+验证 k+tab
+
+[chenbk@hadoop102 module]$ k
+kafka-acls.sh                        kafka-preferred-replica-election.sh  kbdrate
+kafka-broker-api-versions.sh         kafka-producer-perf-test.sh          kdumpctl
+kafka-configs.sh                     kafka-reassign-partitions.sh         kernel-install
+kafka-console-consumer.sh            kafka-replica-verification.sh        kexec
+kafka-console-producer.sh            kafka-run-class.sh                   keytool
+kafka-consumer-groups.sh             kafka-server-start.sh                kill
+kafka-consumer-perf-test.sh          kafka-server-stop.sh                 killall
+kafka-delegation-tokens.sh           kafka-streams-application-reset.sh   killall5
+kafka-delete-records.sh              kafka-topics.sh                      kmod
+kafka-dump-log.sh                    kafka-verifiable-consumer.sh         kms.sh
+kafka-leader-election.sh             kafka-verifiable-producer.sh         kpartx
+kafka-log-dirs.sh                    kbdinfo                              krb5-config
+kafka-mirror-maker.sh                kbd_mode
+[chenbk@hadoop102 module]$ k
+
+
+配置kafka
+
+[chenbk@hadoop102 config]$ vim server.properties
+
+查找内容：command + f
+修改的内容
+1、
+ 20 # The id of the broker. This must be set to a unique integer for each broker.
+ 21 broker.id=2
+ 22
+
+2、 
+ 58 # A comma separated list of directories under which to store log files
+ 59 log.dirs=/tmp/kafka-logs 
+修改为：
+ 58 # A comma separated list of directories under which to store log files
+ 59 log.dirs=/opt/module/kafka/logs
+
+3、
+117 # Zookeeper connection string (see zookeeper docs for details).
+118 # This is a comma separated host:port pairs, each corresponding to a zk
+119 # server. e.g. "127.0.0.1:3000,127.0.0.1:3001,127.0.0.1:3002".
+120 # You can also append an optional chroot string to the urls to specify the
+121 # root directory for all kafka znodes.
+122 zookeeper.connect=localhost:2181
+123
+
+修改为：
+120 # You can also append an optional chroot string to the urls to specify the
+121 # root directory for all kafka znodes.
+122 zookeeper.connect=192.168.1.112:2181,192.168.1.113:2181,192.168.1.114:2181
+123
+
+分发集群
+[chenbk@hadoop102 ~]$ sh xsync /opt/module/kafka/
+
+分发环境变量
+[chenbk@hadoop102 ~]$ sh xsync /etc/profile.d/
+
+
+先启动zookeeper
+[chenbk@hadoop102 ~]$ zkServer.sh start
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+
+[chenbk@hadoop102 ~]$ zkServer.sh status
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Client port found: 2181. Client address: localhost.
+Mode: follower
+[chenbk@hadoop102 ~]$
+
+启动集群
+[chenbk@hadoop102 kafka]$ kafka-server-start.sh -daemon $KAFKA_HOME/config/server.properties
+[chenbk@hadoop102 kafka]$
+
+
+
+集群重启后，需要执行的命令
+hadoop命令
+[chenbk@hadoop102 hadoop-3.1.3]$ sbin/start-dfs.sh
+Starting namenodes on [hadoop102]
+Starting datanodes
+Starting secondary namenodes [hadoop104]
+[chenbk@hadoop102 hadoop-3.1.3]$
+
+[chenbk@hadoop103 hadoop-3.1.3]$ sbin/start-yarn.sh
+Starting resourcemanager
+Starting nodemanagers
+[chenbk@hadoop103 hadoop-3.1.3]$
+
+
+启动zookeeper
+[chenbk@hadoop102 hadoop-3.1.3]$ sbin/start-dfs.sh
+Starting namenodes on [hadoop102]
+Starting datanodes
+Starting secondary namenodes [hadoop104]
+[chenbk@hadoop102 hadoop-3.1.3]$ zkServer.sh start
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+[chenbk@hadoop102 hadoop-3.1.3]$ zkServer.sh status
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Client port found: 2181. Client address: localhost.
+Mode: leader
+[chenbk@hadoop102 hadoop-3.1.3]$
+
+[chenbk@hadoop103 hadoop-3.1.3]$ sbin/start-yarn.sh
+Starting resourcemanager
+Starting nodemanagers
+[chenbk@hadoop103 hadoop-3.1.3]$ zkServer.sh start
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+[chenbk@hadoop103 hadoop-3.1.3]$ zkServer.sh status
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Client port found: 2181. Client address: localhost.
+Mode: follower
+[chenbk@hadoop103 hadoop-3.1.3]$
+
+
+[chenbk@hadoop104 ~]$ zkServer.sh start
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+[chenbk@hadoop104 ~]$ zkServer.sh status
+ZooKeeper JMX enabled by default
+Using config: /opt/module/zookeeper/bin/../conf/zoo.cfg
+Client port found: 2181. Client address: localhost.
+Mode: follower
+[chenbk@hadoop104 ~]$
+
+
+再启动kafa
+
+[chenbk@hadoop103 hadoop-3.1.3]$ kafka-server-start.sh -daemon $KAFKA_HOME/config/server.properties
+[chenbk@hadoop103 hadoop-3.1.3]$
+
+[chenbk@hadoop102 hadoop-3.1.3]$ kafka-server-start.sh -daemon $KAFKA_HOME/config/server.properties
+[chenbk@hadoop102 hadoop-3.1.3]$
+
+[chenbk@hadoop104 ~]$ kafka-server-start.sh -daemon $KAFKA_HOME/config/server.properties
+[chenbk@hadoop104 ~]$
+
+查看进程
+[chenbk@hadoop102 ~]$ sh jpsall
+=====  hadoop102   =====
+2433 QuorumPeerMain
+1922 DataNode
+2279 NodeManager
+2875 Kafka
+1790 NameNode
+=====  hadoop103   =====
+1953 QuorumPeerMain
+1462 ResourceManager
+1580 NodeManager
+1294 DataNode
+=====  hadoop104   =====
+2340 Kafka
+1911 QuorumPeerMain
+1768 NodeManager
+1561 DataNode
+1631 SecondaryNameNode
+[chenbk@hadoop102 ~]$
+
+
+查看节点
+
+/zookeeper/bin/../lib/commons-cli-1.2.jar:/opt/module/zookeeper/bin/../lib/audience-annotations-0.5.0.jar:/opt/module/zookeeper/bin/../zookeeper-*.jar:/opt/module/zookeeper/bin/../zookeeper-server/src/main/resources/lib/*.jar:/opt/module/zookeeper/bin/../conf:
+2021-05-01 04:05:39,529 [myid:] - INFO  [main:Environment@109] - Client environment:java.library.path=/usr/java/packages/lib/amd64:/usr/lib64:/lib64:/lib:/usr/lib
+2021-05-01 04:05:39,529 [myid:] - INFO  [main:Environment@109] - Client environment:java.io.tmpdir=/tmp
+2021-05-01 04:05:39,529 [myid:] - INFO  [main:Environment@109] - Client environment:java.compiler=<NA>
+2021-05-01 04:05:39,530 [myid:] - INFO  [main:Environment@109] - Client environment:os.name=Linux
+2021-05-01 04:05:39,530 [myid:] - INFO  [main:Environment@109] - Client environment:os.arch=amd64
+2021-05-01 04:05:39,530 [myid:] - INFO  [main:Environment@109] - Client environment:os.version=3.10.0-1160.el7.x86_64
+2021-05-01 04:05:39,530 [myid:] - INFO  [main:Environment@109] - Client environment:user.name=chenbk
+2021-05-01 04:05:39,530 [myid:] - INFO  [main:Environment@109] - Client environment:user.home=/home/chenbk
+2021-05-01 04:05:39,530 [myid:] - INFO  [main:Environment@109] - Client environment:user.dir=/opt/module/zookeeper/bin
+2021-05-01 04:05:39,531 [myid:] - INFO  [main:Environment@109] - Client environment:os.memory.free=52MB
+2021-05-01 04:05:39,533 [myid:] - INFO  [main:Environment@109] - Client environment:os.memory.max=228MB
+2021-05-01 04:05:39,533 [myid:] - INFO  [main:Environment@109] - Client environment:os.memory.total=57MB
+2021-05-01 04:05:39,538 [myid:] - INFO  [main:ZooKeeper@868] - Initiating client connection, connectString=localhost:2181 sessionTimeout=30000 watcher=org.apache.zookeeper.ZooKeeperMain$MyWatcher@5fcfe4b2
+2021-05-01 04:05:39,546 [myid:] - INFO  [main:X509Util@79] - Setting -D jdk.tls.rejectClientInitiatedRenegotiation=true to disable client-initiated TLS renegotiation
+2021-05-01 04:05:39,556 [myid:] - INFO  [main:ClientCnxnSocket@237] - jute.maxbuffer value is 4194304 Bytes
+2021-05-01 04:05:39,568 [myid:] - INFO  [main:ClientCnxn@1653] - zookeeper.request.timeout value is 0. feature enabled=
+Welcome to ZooKeeper!
+2021-05-01 04:05:39,594 [myid:localhost:2181] - INFO  [main-SendThread(localhost:2181):ClientCnxn$SendThread@1112] - Opening socket connection to server localhost/127.0.0.1:2181. Will not attempt to authenticate using SASL (unknown error)
+JLine support is enabled
+2021-05-01 04:05:39,686 [myid:localhost:2181] - INFO  [main-SendThread(localhost:2181):ClientCnxn$SendThread@959] - Socket connection established, initiating session, client: /127.0.0.1:48118, server: localhost/127.0.0.1:2181
+2021-05-01 04:05:39,756 [myid:localhost:2181] - INFO  [main-SendThread(localhost:2181):ClientCnxn$SendThread@1394] - Session establishment complete on server localhost/127.0.0.1:2181, sessionid = 0x200000431790000, negotiated timeout = 30000
+
+WATCHER::
+
+WatchedEvent state:SyncConnected type:None path:null
+
+执行语句
+[zk: localhost:2181(CONNECTED) 0] ls /
+
+[zk: localhost:2181(CONNECTED) 0] ls /
+[admin, brokers, cluster, config, consumers, controller, controller_epoch, isr_change_notification, latest_producer_id_block, log_dir_event_notification, zookeeper]
+
+查看语句
+[zk: localhost:2181(CONNECTED) 1] ls /brokers
+[ids, seqid, topics]
+
+[zk: localhost:2181(CONNECTED) 2] ls /brokers/ids
+[2, 4]
+[zk: localhost:2181(CONNECTED) 3]
+
+
+注意：103无法启动，暂时不用管
+已经安装完成
+
+
+安装spark
+
+解压到相应的文件中
+[chenbk@hadoop102 software]$ tar -zvxf spark-2.1.1-bin-hadoop2.7.tgz -C /opt/module/
+
+重命名
+[chenbk@hadoop102 bin]$ mv spark-2.1.1-bin-hadoop2.7 spark-local
+
+运行案例，求π
+执行命令
+
+[chenbk@hadoop102 spark-local]$ bin/spark-submit \
+> --class org.apache.spark.examples.SparkPi \
+> --master local[2] \
+> ./examples/jars/spark-examples_2.11-2.1.1.jar \
+> 10
+
+结果
+Pi is roughly 3.1424711424711425
+21/05/01 04:24:18 INFO SparkUI: Stopped Spark web UI at http://192.168.1.112:4040
+21/05/01 04:24:18 INFO MapOutputTrackerMasterEndpoint: MapOutputTrackerMasterEndpoint stopped!
+21/05/01 04:24:19 INFO MemoryStore: MemoryStore cleared
+21/05/01 04:24:19 INFO BlockManager: BlockManager stopped
+21/05/01 04:24:19 INFO BlockManagerMaster: BlockManagerMaster stopped
+21/05/01 04:24:19 INFO OutputCommitCoordinator$OutputCommitCoordinatorEndpoint: OutputCommitCoordinator stopped!
+21/05/01 04:24:19 INFO SparkContext: Successfully stopped SparkContext
+21/05/01 04:24:19 INFO ShutdownHookManager: Shutdown hook called
+21/05/01 04:24:19 INFO ShutdownHookManager: Deleting directory /tmp/spark-b16e979e-4ee0-415f-90d3-ae3d8df2e475
+[chenbk@hadoop102 spark-local]$
+
+官方WordCount案例
+
+启动spark-shell
+
+执行如下命令
+[chenbk@hadoop102 spark-local]$ bin/spark-shell
+得到结果
+
+[chenbk@hadoop102 spark-local]$ bin/spark-shell
+Using Spark's default log4j profile: org/apache/spark/log4j-defaults.properties
+Setting default log level to "WARN".
+To adjust logging level use sc.setLogLevel(newLevel). For SparkR, use setLogLevel(newLevel).
+21/05/01 04:28:56 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+21/05/01 04:29:11 WARN ObjectStore: Version information not found in metastore. hive.metastore.schema.verification is not enabled so recording the schema version 1.2.0
+21/05/01 04:29:12 WARN ObjectStore: Failed to get database default, returning NoSuchObjectException
+21/05/01 04:29:14 WARN ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://192.168.1.112:4040
+Spark context available as 'sc' (master = local[*], app id = local-1619857737121).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.1
+      /_/
+
+Using Scala version 2.11.8 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_212)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala>
+
+访问网址：http://192.168.1.112:4040
+可以访问其客户端
+
+
+
+[chenbk@hadoop102 spark-local]$ mkdir input
+
+在input下创建2个文件1.txt和2.txt
+
+添加以下内容
+hello chenbk
+hello chenbk
+hello hive
+hello kafka
+
+hello chenbk
+hello spark
+
+执行命令，查看结果 
+scala> sc.textFile("/opt/module/spark-local/input").flatMap(_.split(" ")).map((_,1)).reduceByKey(_+_).collect
+res6: Array[(String, Int)] = Array((chenbk,2), (kafka,1), (hello,5), (spark,1), (hive,1))
+
+scala>
+
+
+
+集群模式（重点）
+Standalone模式
+Yarn模式
+
+
+1、Standalone模式
+[chenbk@hadoop102 software]$ tar -zvxf spark-2.1.1-bin-hadoop2.7.tgz -C /opt/module/
+
+重命名
+[chenbk@hadoop102 module]$ mv spark-2.1.1-bin-hadoop2.7 spark-standalone
+
+进入
+[chenbk@hadoop102 conf]$ pwd
+/opt/module/spark-standalone/conf
+
+重命名
+[chenbk@hadoop102 conf]$ mv slaves.template slaves
+[chenbk@hadoop102 conf]$
+
+修改slave文件，添加work节点：
+[chenbk@hadoop102 conf]$ vim slaves
+
+添加以下内容
+hadoop102
+hadoop103
+hadoop104
+
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+# A Spark Worker will be started on each of the machines listed below.
+hadoop102
+hadoop103
+hadoop104
+
+
+修改spark-env.sh文件，添加master节点
+重命名
+[chenbk@hadoop102 conf]$ mv spark-env.sh.template spark-env.sh
+[chenbk@hadoop102 conf]$
+
+修改
+[chenbk@hadoop102 conf]$ vim spark-env.sh
+[chenbk@hadoop102 conf]$
+
+在最后添加如下内容
+# Generic options for the daemons used in the standalone deploy mode
+# - SPARK_CONF_DIR      Alternate conf dir. (Default: ${SPARK_HOME}/conf)
+# - SPARK_LOG_DIR       Where log files are stored.  (Default: ${SPARK_HOME}/logs)
+# - SPARK_PID_DIR       Where the pid file is stored. (Default: /tmp)
+# - SPARK_IDENT_STRING  A string representing this instance of spark. (Default: $USER)
+# - SPARK_NICENESS      The scheduling priority for daemons. (Default: 0)
+# - SPARK_NO_DAEMONIZE  Run the proposed command in the foreground. It will not output a PID file.
+SPARK_MASTER_HOST=hadoop102
+SPARK_MASTER_PORT=7077
+
+分发spark-standalone包
+[chenbk@hadoop102 ~]$ sh xsync /opt/module/spark-standalone/
+
+启动集群
+[chenbk@hadoop102 spark-standalone]$ sbin/start-all.sh
+
+starting org.apache.spark.deploy.master.Master, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.master.Master-1-hadoop102.out
+hadoop102: starting org.apache.spark.deploy.worker.Worker, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.worker.Worker-1-hadoop102.out
+hadoop103: starting org.apache.spark.deploy.worker.Worker, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.worker.Worker-1-hadoop103.out
+hadoop104: starting org.apache.spark.deploy.worker.Worker, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.worker.Worker-1-hadoop104.out
+[chenbk@hadoop102 spark-standalone]$
+
+查看启动情况
+
+[chenbk@hadoop102 ~]$ sh jpsall
+=====  hadoop102   =====
+3824 Worker
+2433 QuorumPeerMain
+1922 DataNode
+3250 SparkSubmit
+2279 NodeManager
+3703 Master
+2875 Kafka
+1790 NameNode
+=====  hadoop103   =====
+1953 QuorumPeerMain
+2884 Worker
+1462 ResourceManager
+1580 NodeManager
+1294 DataNode
+=====  hadoop104   =====
+2340 Kafka
+1911 QuorumPeerMain
+1768 NodeManager
+2696 Worker
+1561 DataNode
+1631 SecondaryNameNode
+[chenbk@hadoop102 ~]$
+
+
+当网址http://hadoop102:8080无法访问时
+报错原因
+Spark端口号和其他应用发生冲突
+
+解决方法
+[chenbk@hadoop102 sbin]$ pwd
+/opt/module/spark-standalone/sbin
+[chenbk@hadoop102 sbin]$ vim start-master.sh
+
+把8080修改为8081
+ORIGINAL_ARGS="$@"
+
+. "${SPARK_HOME}/sbin/spark-config.sh"
+
+. "${SPARK_HOME}/bin/load-spark-env.sh"
+
+if [ "$SPARK_MASTER_PORT" = "" ]; then
+  SPARK_MASTER_PORT=7077
+fi
+
+if [ "$SPARK_MASTER_HOST" = "" ]; then
+  case `uname` in
+      (SunOS)
+          SPARK_MASTER_HOST="`/usr/sbin/check-hostname | awk '{print $NF}'`"
+          ;;
+      (*)
+          SPARK_MASTER_HOST="`hostname -f`"
+          ;;
+  esac
+fi
+
+if [ "$SPARK_MASTER_WEBUI_PORT" = "" ]; then
+  SPARK_MASTER_WEBUI_PORT=8081
+fi
+
+先关闭spark集群
+[chenbk@hadoop102 spark-standalone]$ sbin/stop-all.sh
+hadoop104: stopping org.apache.spark.deploy.worker.Worker
+hadoop102: stopping org.apache.spark.deploy.worker.Worker
+hadoop103: stopping org.apache.spark.deploy.worker.Worker
+stopping org.apache.spark.deploy.master.Master
+[chenbk@hadoop102 spark-standalone]$ jps
+2433 QuorumPeerMain
+1922 DataNode
+3250 SparkSubmit
+2279 NodeManager
+4264 Jps
+2875 Kafka
+1790 NameNode
+
+再重启spark集群
+[chenbk@hadoop102 spark-standalone]$ sbin/start-all.sh
+
+进入http://hadoop102:8081,完成
+
+将看到如下内容
+
+2.1.1 Spark Master at spark://hadoop102:7077
+URL: spark://hadoop102:7077
+REST URL: spark://hadoop102:6066 (cluster mode)
+Alive Workers: 3
+Cores in use: 16 Total, 0 Used
+Memory in use: 4.7 GB Total, 0.0 B Used
+Applications: 0 Running, 0 Completed
+Drivers: 0 Running, 0 Completed
+Status: ALIVE
+Workers
+
+Worker Id	Address	State	Cores	Memory
+worker-20210501054113-192.168.1.112-35858	192.168.1.112:35858	ALIVE	8 (0 Used)	2.7 GB (0.0 B Used)
+worker-20210501054114-192.168.1.113-43213	192.168.1.113:43213	ALIVE	4 (0 Used)	1024.0 MB (0.0 B Used)
+worker-20210501054114-192.168.1.114-39093	192.168.1.114:39093	ALIVE	4 (0 Used)	1024.0 MB (0.0 B Used)
+
+配置历史服务
+
+修改名称
+[chenbk@hadoop102 conf]$ mv spark-defaults.conf.template spark-defaults.conf
+[chenbk@hadoop102 conf]$
+
+执行语句
+[chenbk@hadoop102 conf]$ vim spark-defaults.conf
+
+添加以下内容
+# spark.executor.extraJavaOptions  -XX:+PrintGCDetails -Dkey=value -Dnumbers="one two three"
+spark.eventLog.enabled          true
+spark.eventLog.dir               hdfs://hadoop102:8020/directory
+
+群发文件
+[chenbk@hadoop102 ~]$ sh xsync /opt/module/spark-standalone/conf/spark-defaults.conf
+要分发的文件的路径是:/opt/module/spark-standalone/conf/spark-defaults.conf
+---------------------hadoop102---------------------
+sending incremental file list
+
+sent 56 bytes  received 12 bytes  136.00 bytes/sec
+total size is 1,395  speedup is 20.51
+---------------------hadoop103---------------------
+sending incremental file list
+spark-defaults.conf
+
+sent 1,498 bytes  received 35 bytes  1,022.00 bytes/sec
+total size is 1,395  speedup is 0.91
+---------------------hadoop104---------------------
+sending incremental file list
+spark-defaults.conf
+
+sent 1,498 bytes  received 35 bytes  3,066.00 bytes/sec
+total size is 1,395  speedup is 0.91
+[chenbk@hadoop102 ~]$
+
+注意：需要启动Hadoop集群，HDFS上的目录需要提前存在。
+
+直接创建
+[chenbk@hadoop102 hadoop-3.1.3]$ hadoop fs -mkdir /directory
+2021-05-01 05:58:19,936 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+[chenbk@hadoop102 hadoop-3.1.3]$
+
+修改spark-env.sh文件，添加如下配置：
+[chenbk@hadoop102 conf]$ vim spark-env.sh
+
+添加以下内容
+export SPARK_HISTORY_OPTS="
+-Dspark.history.ui.port=18080 
+-Dspark.history.fs.logDirectory=hdfs://hadoop102:8020/directory 
+-Dspark.history.retainedApplications=30"
+
+
+群发文件
+[chenbk@hadoop102 ~]$ sh xsync /opt/module/spark-standalone/conf/spark-env.sh
+
+要分发的文件的路径是:/opt/module/spark-standalone/conf/spark-env.sh
+---------------------hadoop102---------------------
+sending incremental file list
+
+sent 49 bytes  received 12 bytes  122.00 bytes/sec
+total size is 4,178  speedup is 68.49
+---------------------hadoop103---------------------
+sending incremental file list
+spark-env.sh
+
+sent 794 bytes  received 71 bytes  576.67 bytes/sec
+total size is 4,178  speedup is 4.83
+---------------------hadoop104---------------------
+sending incremental file list
+spark-env.sh
+
+sent 794 bytes  received 71 bytes  576.67 bytes/sec
+total size is 4,178  speedup is 4.83
+[chenbk@hadoop102 ~]$
+
+启动历史服务
+[chenbk@hadoop102 ~]$ cd /opt/module/spark-standalone/
+[chenbk@hadoop102 spark-standalone]$ sbin/start-history-server.sh
+starting org.apache.spark.deploy.history.HistoryServer, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.history.HistoryServer-1-hadoop102.out
+[chenbk@hadoop102 spark-standalone]$
+
+再次执行任务
+[chenbk@hadoop102 spark-standalone]$ bin/spark-submit \
+> --class org.apache.spark.examples.SparkPi \
+> --master spark://hadoop102:7077 \
+> --executor-memory 1G \
+> --total-executor-cores 2 \
+> ./examples/jars/spark-examples_2.11-2.1.1.jar \
+>
+
+
+在网站上查看 http://hadoop102:18080/
+
+配置高可用
+停止集群
+[chenbk@hadoop102 spark-standalone]$ sbin/stop-all.sh
+hadoop104: stopping org.apache.spark.deploy.worker.Worker
+hadoop102: stopping org.apache.spark.deploy.worker.Worker
+hadoop103: stopping org.apache.spark.deploy.worker.Worker
+stopping org.apache.spark.deploy.master.Master
+
+修改spark-env.sh文件添加如下配置：
+[chenbk@hadoop102 conf]$ pwd
+/opt/module/spark-standalone/conf
+
+执行
+[chenbk@hadoop102 conf]$ vim spark-env.sh
+
+注释掉如下内容：
+#SPARK_MASTER_HOST=hadoop102
+#SPARK_MASTER_PORT=7077
+
+添加上如下内容。配置由Zookeeper管理Master，在Zookeeper节点中自动创建/spark目录，用于管理：
+
+export SPARK_DAEMON_JAVA_OPTS="
+-Dspark.deploy.recoveryMode=ZOOKEEPER 
+-Dspark.deploy.zookeeper.url=hadoop102,hadoop103,hadoop104 
+-Dspark.deploy.zookeeper.dir=/spark"
+
+注意：Zookeeper3.5的AdminServer默认端口是8080
+所以可以
+添加如下代码
+Zookeeper3.5的AdminServer默认端口是8080，和Spark的WebUI冲突
+export SPARK_MASTER_WEBUI_PORT=8081
+
+群发文件
+
+[chenbk@hadoop102 ~]$ sh xsync /opt/module/spark-standalone/conf/spark-env.sh
+要分发的文件的路径是:/opt/module/spark-standalone/conf/spark-env.sh
+---------------------hadoop102---------------------
+sending incremental file list
+
+sent 49 bytes  received 12 bytes  40.67 bytes/sec
+total size is 4,350  speedup is 71.31
+---------------------hadoop103---------------------
+sending incremental file list
+spark-env.sh
+
+sent 966 bytes  received 71 bytes  2,074.00 bytes/sec
+total size is 4,350  speedup is 4.19
+---------------------hadoop104---------------------
+sending incremental file list
+spark-env.sh
+
+sent 966 bytes  received 71 bytes  691.33 bytes/sec
+total size is 4,350  speedup is 4.19
+[chenbk@hadoop102 ~]$
+
+
+启动集群
+
+[chenbk@hadoop102 spark-standalone]$ sbin/start-all.sh
+starting org.apache.spark.deploy.master.Master, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.master.Master-1-hadoop102.out
+hadoop103: starting org.apache.spark.deploy.worker.Worker, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.worker.Worker-1-hadoop103.out
+hadoop102: starting org.apache.spark.deploy.worker.Worker, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.worker.Worker-1-hadoop102.out
+hadoop104: starting org.apache.spark.deploy.worker.Worker, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.worker.Worker-1-hadoop104.out
+[chenbk@hadoop102 spark-standalone]$ 
+
+103也启动sbin/start-master.sh
+[chenbk@hadoop103 spark-standalone]$ sbin/start-master.sh
+starting org.apache.spark.deploy.master.Master, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.master.Master-1-hadoop103.out
+[chenbk@hadoop103 spark-standalone]$
+
+
+查看
+[chenbk@hadoop102 ~]$ sh jpsall
+=====  hadoop102   =====
+2433 QuorumPeerMain
+1922 DataNode
+3250 SparkSubmit
+5333 Master
+5445 Worker
+2279 NodeManager
+2875 Kafka
+4669 HistoryServer
+1790 NameNode
+=====  hadoop103   =====
+1953 QuorumPeerMain
+1462 ResourceManager
+3305 Worker
+3401 Master
+1580 NodeManager
+1294 DataNode
+=====  hadoop104   =====
+3250 Worker
+2340 Kafka
+1911 QuorumPeerMain
+1768 NodeManager
+1561 DataNode
+1631 SecondaryNameNode
+[chenbk@hadoop102 ~]$
+
+
+在启动一个hadoop102窗口，将/opt/module/spark-local/input数据上传到hadoop集群的/input目录
+[chenbk@hadoop102 ~]$ hadoop fs -put /opt/module/spark-local/input/ /input
+2021-05-01 06:29:49,868 INFO Configuration.deprecation: No unit for dfs.client.datanode-restart.timeout(30) assuming SECONDS
+2021-05-01 06:29:51,124 INFO sasl.SaslDataTransferClient: SASL encryption trust check: localHostTrusted = false, remoteHostTrusted = false
+2021-05-01 06:29:51,631 INFO sasl.SaslDataTransferClient: SASL encryption trust check: localHostTrusted = false, remoteHostTrusted = false
+[chenbk@hadoop102 ~]$
+
+
+Spark HA集群访问
+[chenbk@hadoop102 ~]$ cd /opt/module/spark-standalone/
+[chenbk@hadoop102 spark-standalone]$ bin/spark-shell \
+> --master spark://hadoop102:7077,hadoop103:7077 \
+> --executor-memory 2g \
+> --total-executor-cores 2
+
+21/05/01 06:31:29 WARN ObjectStore: Failed to get database global_temp, returning NoSuchObjectException
+Spark context Web UI available at http://192.168.1.112:4041
+Spark context available as 'sc' (master = spark://hadoop102:7077,hadoop103:7077, app id = app-20210501063102-0000).
+Spark session available as 'spark'.
+Welcome to
+      ____              __
+     / __/__  ___ _____/ /__
+    _\ \/ _ \/ _ `/ __/  '_/
+   /___/ .__/\_,_/_/ /_/\_\   version 2.1.1
+      /_/
+
+Using Scala version 2.11.8 (Java HotSpot(TM) 64-Bit Server VM, Java 1.8.0_212)
+Type in expressions to have them evaluated.
+Type :help for more information.
+
+scala>
+
+
+执行WordCount程序
+scala> sc.textFile("hdfs://hadoop102:8020/input").flatMap(_.split(" ")).map((_,1)).reduceByKey(_+_).collect
+res0: Array[(String, Int)] = Array((chenbk,2), (kafka,1), (hello,5), (spark,1), (hive,1))
+
+scala>
+
+
+高可用测试
+
+Kill掉hadoop102的master进程，页面中观察http://hadoop103:8080/的状态是否切换为active。
+
+[chenbk@hadoop102 spark-standalone]$ jps
+2433 QuorumPeerMain
+1922 DataNode
+3250 SparkSubmit
+5333 Master
+5445 Worker
+6117 Jps
+2279 NodeManager
+2875 Kafka
+4669 HistoryServer
+1790 NameNode
+[chenbk@hadoop102 spark-standalone]$ kill -9 5333
+[chenbk@hadoop102 spark-standalone]$
+
+
+102已停用，103运行，测试成功
+
+再启动hadoop102的master进程
+[chenbk@hadoop102 spark-standalone]$ sbin/start-master.sh
+starting org.apache.spark.deploy.master.Master, logging to /opt/module/spark-standalone/logs/spark-chenbk-org.apache.spark.deploy.master.Master-1-hadoop102.out
+[chenbk@hadoop102 spark-standalone]$
+
+
+
+
+
+
+Linux 安装oracle
+先上传文件到服务器中
+[root@localhost ~]# ll
+总用量 2300456
+-rw-------. 1 root root       1335 5月   1 07:02 anaconda-ks.cfg
+-rw-r--r--. 1 root root    4976069 5月   1 11:48 CentOS7Oracle11gInstallHelper.zip
+-rw-r--r--. 1 root root 1239269270 5月   1 11:44 linux.x64_11gR2_database_1of2.zip
+-rw-r--r--. 1 root root 1111416131 5月   1 11:44 linux.x64_11gR2_database_2of2.zip
+[root@localhost ~]#
+
+先下载unzip工具
+[root@localhost ~]# yum install unzip
+事务概要
+======================================================================================================================
+安装  1 软件包
+
+总下载量：171 k
+安装大小：365 k
+Is this ok [y/d/N]: y
+
+unzip-6.0-21.el7.x86_64.rpm 的公钥尚未安装
+unzip-6.0-21.el7.x86_64.rpm                                                                    | 171 kB  00:00:00
+从 file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7 检索密钥
+导入 GPG key 0xF4A80EB5:
+ 用户ID     : "CentOS-7 Key (CentOS 7 Official Signing Key) <security@centos.org>"
+ 指纹       : 6341 ab27 53d7 8a78 a7c2 7bb1 24c6 a8a7 f4a8 0eb5
+ 软件包     : centos-release-7-9.2009.0.el7.centos.x86_64 (@anaconda)
+ 来自       : /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+是否继续？[y/N]：y
+已安装:
+  unzip.x86_64 0:6.0-21.el7
+
+完毕！
+[root@localhost ~]#
+
+解压
+[root@localhost ~]# unzip CentOS7Oracle11gInstallHelper.zip
+
+root@localhost ~]# unzip CentOS7Oracle11gInstallHelper.zip
+Archive:  CentOS7Oracle11gInstallHelper.zip
+   creating: CentOS7Oracle11gInstallHelper/
+  inflating: CentOS7Oracle11gInstallHelper/.DS_Store
+  inflating: __MACOSX/CentOS7Oracle11gInstallHelper/._.DS_Store
+  inflating: CentOS7Oracle11gInstallHelper/helper.sh
+  inflating: CentOS7Oracle11gInstallHelper/zysong.ttf
+  inflating: CentOS7Oracle11gInstallHelper/pdksh-5.2.14-37.el5_8.1.x86_64.rpm
+
+
+
+查看
+[root@localhost ~]# ll
+总用量 2300456
+-rw-------. 1 root root       1335 5月   1 07:02 anaconda-ks.cfg
+drwxr-xr-x. 2 root root        100 2月   2 20:45 CentOS7Oracle11gInstallHelper
+-rw-r--r--. 1 root root    4976069 5月   1 11:48 CentOS7Oracle11gInstallHelper.zip
+-rw-r--r--. 1 root root 1239269270 5月   1 11:44 linux.x64_11gR2_database_1of2.zip
+-rw-r--r--. 1 root root 1111416131 5月   1 11:44 linux.x64_11gR2_database_2of2.zip
+drwxr-xr-x. 3 root root         43 5月   1 11:53 __MACOSX
+[root@localhost ~]#
+
+给权限
+[root@localhost ~]# cd CentOS7Oracle11gInstallHelper
+[root@localhost CentOS7Oracle11gInstallHelper]# chmod +x helper.sh
+
+执行
+[root@localhost CentOS7Oracle11gInstallHelper]# ./helper.sh
+
+
+作为依赖被安装:
+  cpp.x86_64 0:4.8.5-44.el7                            glibc-headers.x86_64 0:2.17-324.el7_9
+  kernel-headers.x86_64 0:3.10.0-1160.25.1.el7         libmpc.x86_64 0:1.0.1-3.el7
+  libtool-ltdl.i686 0:2.4.2-22.el7_3                   lm_sensors-libs.x86_64 0:3.4.0-8.20160601gitf9185e5.el7
+  mpfr.x86_64 0:3.1.1-4.el7                            ncurses-libs.i686 0:5.9-14.20130511.el7_4
+  nss-softokn-freebl.i686 0:3.53.1-6.el7_9             readline.i686 0:6.2-11.el7
+  zlib-devel.x86_64 0:1.2.7-19.el7_9
+
+更新完毕:
+  glibc.x86_64 0:2.17-324.el7_9
+
+作为依赖被升级:
+  glibc-common.x86_64 0:2.17-324.el7_9   nspr.x86_64 0:4.25.0-2.el7_9   nss-softokn-freebl.x86_64 0:3.53.1-6.el7_9
+  nss-util.x86_64 0:3.53.1-1.el7_9       zlib.x86_64 0:1.2.7-19.el7_9
+
+完毕！
+-------------正在安装中易宋体18030-------------
+字体安装完成！
+zysong.ttf
+-------------正在尝试安装pdksh-5.2.14-------------
+尝试卸载冲突ksh-20120801-142.el7.x86_64
+警告：pdksh-5.2.14-37.el5_8.1.x86_64.rpm: 头V3 DSA/SHA1 Signature, 密钥 ID e8562897: NOKEY
+准备中...                          ################################# [100%]
+正在升级/安装...
+   1:pdksh-5.2.14-37.el5_8.1          ################################# [100%]
+查询是否安装成功：
+pdksh-5.2.14-37.el5_8.1.x86_64
+脚本执行完成！享受oracle安装吧!
+ 
+
+已完成依赖安装
+
+创建用户&开启VNC服务
+#创建database用户组
+#创建oracle用户并放入database组中
+#首次运行，生成~/.vnc/xstartup等配置文件
+[root@localhost CentOS7Oracle11gInstallHelper]# groupadd database
+[root@localhost CentOS7Oracle11gInstallHelper]# useradd oracle -g database
+[root@localhost CentOS7Oracle11gInstallHelper]# su oracle
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ vncserver :1 -geometry 1024x768
+
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ vncserver :1 -geometry 1024x768
+
+You will require a password to access your desktops.
+
+Password:
+Verify:
+Would you like to enter a view-only password (y/n)? n
+A view-only password is not used
+xauth:  file /home/oracle/.Xauthority does not exist
+
+New 'localhost.localdomain:1 (oracle)' desktop is localhost.localdomain:1
+
+Creating default startup script /home/oracle/.vnc/xstartup
+Creating default config /home/oracle/.vnc/config
+Starting applications specified in /home/oracle/.vnc/xstartup
+Log file is /home/oracle/.vnc/localhost.localdomain:1.log
+
+
+
+Password:
+Verify:
+密码都为：vnc@2021
+
+
+客户端连接VNC实现远程控制
+
+先执行
+#配置VNC默认启动openbox
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ echo "openbox-session &" > ~/.vnc/xstartup
+# 停止服务
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ vncserver -kill :1
+#重新开启vnc服务
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ vncserver :1 -geometry 1024x768
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ echo "openbox-session &" > ~/.vnc/xstartup
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ vncserver -kill :1
+Killing Xvnc process ID 16824
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ vncserver :1 -geometry 1024x768
+
+New 'localhost.localdomain:1 (oracle)' desktop is localhost.localdomain:1
+
+Starting applications specified in /home/oracle/.vnc/xstartup
+Log file is /home/oracle/.vnc/localhost.localdomain:1.log
+
+
+
+输入192.168.1.121:5901 连接成功
+
+如果报错（没有图形显示）
+
+先启动vnc
+
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ vncserver
+New 'localhost.localdomain:2 (oracle)' desktop is localhost.localdomain:2
+
+Starting applications specified in /home/oracle/.vnc/xstartup
+Log file is /home/oracle/.vnc/localhost.localdomain:2.log
+
+查看到 localhost.localdomain:2
+
+执行export DISPLAY=localhost.localdomain:2命令
+[oracle@localhost CentOS7Oracle11gInstallHelper]$  export DISPLAY=localhost.localdomain:2
+再执行xhost +
+[oracle@localhost CentOS7Oracle11gInstallHelper]$ xhost +
+access control disabled, clients can connect from any host
+
+重新连接
+
+上传并解压安装包
+[root@localhost ~]# mv linux.x64_11gR2_database_1of2.zip /home/oracle/
+[root@localhost ~]# mv linux.x64_11gR2_database_2of2.zip /home/oracle/
+[root@localhost ~]# su oracle
+[oracle@localhost root]$ cd /home/oracle/
+[oracle@localhost ~]$ ll
+总用量 2295592
+-rw-r--r--. 1 root root 1239269270 5月   1 11:44 linux.x64_11gR2_database_1of2.zip
+-rw-r--r--. 1 root root 1111416131 5月   1 11:44 linux.x64_11gR2_database_2of2.zip
+[oracle@localhost ~]$
+
+执行解压命令
+
+[oracle@localhost ~]$ unzip linux.x64_11gR2_database_1of2.zip
+[oracle@localhost ~]$ unzip linux.x64_11gR2_database_2of2.zip
+
+查看
+[oracle@localhost ~]$ ll
+总用量 2295592
+drwxr-xr-x. 8 oracle database        128 8月  20 2009 database
+-rw-r--r--. 1 root   root     1239269270 5月   1 11:44 linux.x64_11gR2_database_1of2.zip
+-rw-r--r--. 1 root   root     1111416131 5月   1 11:44 linux.x64_11gR2_database_2of2.zip
+[oracle@localhost ~]$
+
+
+安装oracle实战
+
+oracle用户登录vnc远程桌面。
+#进入安装目录
+cd ~/database/
+#运行安装程序
+./runInstaller
+
+[oracle@localhost ~]$ cd database/
+[oracle@localhost database]$ ./runInstaller 
+\u6b63\u5728\u542f\u52a8 Oracle Universal Installer...
+
+
+下载软件更新
+
+根据个人需要选择，我这里选择 跳过软件更新（S）。
+
+ orcl 密码为：Chenbk111
+
+
+如果执行修补并再次检查（F）有提示：
+执行下面语句
+[root@localhost oracle]# sh /tmp/CVU_11.2.0.1.0_oracle/runfixup.sh
+
+[root@localhost oracle]# sh /tmp/CVU_11.2.0.1.0_oracle/runfixup.sh
+Response file being used is :/tmp/CVU_11.2.0.1.0_oracle/fixup.response
+Enable file being used is :/tmp/CVU_11.2.0.1.0_oracle/fixup.enable
+Log file location: /tmp/CVU_11.2.0.1.0_oracle/orarun.log
+Setting Kernel Parameters...
+/tmp/CVU_11.2.0.1.0_oracle/orarun.sh: 第 244 行:[: 18446744073692774399: 期待整数表达式
+The value for shmmax in response file is not greater than value of shmmax for current session. Hence not changing it.
+/tmp/CVU_11.2.0.1.0_oracle/orarun.sh: 第 335 行:[: 18446744073692774399: 期待整数表达式
+The value for shmall in response file is not greater than value of shmall for current session. Hence not changing it.
+The value for semmni in response file is not greater than value of semmni for current session. Hence not changing it.
+kernel.sem = 250 32000 100 128
+fs.file-max = 6815744
+net.ipv4.ip_local_port_range = 9000 65500
+net.core.rmem_default = 262144
+net.core.wmem_default = 262144
+net.core.rmem_max = 4194304
+net.core.wmem_max = 1048576
+fs.aio-max-nr = 1048576
+uid=1000(oracle) gid=1000(database) 组=1000(database)
+[root@localhost oracle]#
+
+执行配置脚本
+
+[root@localhost ~]# sh  /home/oracle/app/oraInventory/orainstRoot.sh
+更改权限/home/oracle/app/oraInventory.
+添加组的读取和写入权限。
+删除全局的读取, 写入和执行权限。
+
+更改组名/home/oracle/app/oraInventory 到 database.
+脚本的执行已完成。
+[root@localhost ~]#
+
+
+[root@localhost ~]# sh /home/oracle/app/oracle/product/11.2.0/dbhome_1/root.sh
+Running Oracle 11g root.sh script...
+
+The following environment variables are set as:
+    ORACLE_OWNER= oracle
+    ORACLE_HOME=  /home/oracle/app/oracle/product/11.2.0/dbhome_1
+
+Enter the full pathname of the local bin directory: [/usr/local/bin]: bin
+Creating bin directory...
+   Copying dbhome to bin ...
+   Copying oraenv to bin ...
+   Copying coraenv to bin ...
+
+
+Creating /etc/oratab file...
+Entries will be added to the /etc/oratab file as needed by
+Database Configuration Assistant when a database is created
+Finished running generic part of root.sh script.
+Now product-specific root actions will be performed.
+Finished product-specific root actions.
+[root@localhost ~]#
+
+
+
+配置环境变量
+
+[root@localhost ~]# su oracle
+[oracle@localhost root]$ vi ~/.bash_profile
+[oracle@localhost root]$
+
+
+添加以下内容
+export ORACLE_HOME=/home/oracle/app/oracle/product/11.2.0/dbhome_1/
+export ORACLE_SID=orcl
+export PATH=$PATH:$ORACLE_HOME/bin
+
+使用配置文件立即生效。
+[oracle@localhost root]$ source ~/.bash_profile
+[oracle@localhost root]$
+
+
+启动oracle
+
+[oracle@localhost root]$ sqlplus /nolog
+
+SQL*Plus: Release 11.2.0.1.0 Production on Sat May 1 13:38:27 2021
+
+Copyright (c) 1982, 2009, Oracle.  All rights reserved.
+
+SQL>
+
+创建用户
+SQL> connect as sysdba
+Enter user-name: sys
+Enter password:
+Connected to an idle instance.
+SQL>
+
+SQL> select 1 from dual;
+select 1 from dual
+*
+ERROR at line 1:
+ORA-01034: ORACLE not available
+Process ID: 0
+Session ID: 0 Serial number: 0
+
+
+SQL>
+
+没有问题，说明oracle本地连接oracle成功。
+
+
+启动监听
+重启服务器后，进入oracle
+[root@localhost oracle]# su - oracle
+上一次登录：六 5月  1 13:48:03 EDT 2021pts/0 上
+
+注意事项
+第一：修改主机名称：oracle
+第二：修改hosts文件，在文件中添加：192.168.1.121 oracle
+第三：修改listener.ora
+[oracle@orcale admin]$ vim listener.ora
+
+修改以下文件：
+# listener.ora Network Configuration File: /home/oracle/app/oracle/product/11.2.0/dbhome_1/network/admin/listener.ora
+# Generated by Oracle configuration tools.
+LISTENER =
+  (DESCRIPTION_LIST =
+    (DESCRIPTION =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = oracle)(PORT = 1521))
+      (ADDRESS = (PROTOCOL = IPC)(KEY = EXTPROC1521))
+    )
+  )
+ADR_BASE_LISTENER = /home/oracle/app/oracle
+
+第四：tnsnames.ora
+[oracle@orcale admin]$ vim tnsnames.ora
+
+修改以下文件
+# tnsnames.ora Network Configuration File: /home/oracle/app/oracle/product/11.2.0/dbhome_1/network/admin/tnsnames.ora
+# Generated by Oracle configuration tools.
+
+ORCL =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = oracle)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl)
+    )
+  )
+
+第五：启动监听
+[oracle@orcale admin]$ lsnrctl start
+
+LSNRCTL for Linux: Version 11.2.0.1.0 - Production on 02-MAY-2021 02:08:31
+
+Copyright (c) 1991, 2009, Oracle.  All rights reserved.
+
+Starting /home/oracle/app/oracle/product/11.2.0/dbhome_1//bin/tnslsnr: please wait...
+
+TNSLSNR for Linux: Version 11.2.0.1.0 - Production
+System parameter file is /home/oracle/app/oracle/product/11.2.0/dbhome_1/network/admin/listener.ora
+Log messages written to /home/oracle/app/oracle/diag/tnslsnr/orcale/listener/alert/log.xml
+Listening on: (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=orcale)(PORT=1521)))
+Listening on: (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1521)))
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=oracle)(PORT=1521)))
+STATUS of the LISTENER
+------------------------
+Alias                     LISTENER
+Version                   TNSLSNR for Linux: Version 11.2.0.1.0 - Production
+Start Date                02-MAY-2021 02:08:41
+Uptime                    0 days 0 hr. 0 min. 35 sec
+Trace Level               off
+Security                  ON: Local OS Authentication
+SNMP                      OFF
+Listener Parameter File   /home/oracle/app/oracle/product/11.2.0/dbhome_1/network/admin/listener.ora
+Listener Log File         /home/oracle/app/oracle/diag/tnslsnr/orcale/listener/alert/log.xml
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=orcale)(PORT=1521)))
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1521)))
+The listener supports no services
+The command completed successfully
+
+第六：用sqlplus / as sysdba进入数据库
+[oracle@orcale admin]$ sqlplus / as sysdba
+
+SQL*Plus: Release 11.2.0.1.0 Production on Sun May 2 02:10:27 2021
+
+Copyright (c) 1982, 2009, Oracle.  All rights reserved.
+
+Connected to an idle instance.
+
+SQL> 
+
+如果出现，以下问题，就是数据库没有启动
+
+SQL> show parameter service_names
+ORA-01034: ORACLE not available
+Process ID: 0
+Session ID: 0 Serial number: 0
+
+第七：启动数据库
+SQL> startup
+ORACLE instance started.
+
+Total System Global Area  768294912 bytes
+Fixed Size		    2217304 bytes
+Variable Size		  473959080 bytes
+Database Buffers	  285212672 bytes
+Redo Buffers		    6905856 bytes
+Database mounted.
+Database opened.
+
+
+测试：
+
+SQL> show parameter service_names
+
+NAME				     TYPE	 VALUE
+------------------------------------ ----------- ------------------------------
+service_names
+
+
+SQL> select 1 from dual;
+
+	 1
+----------
+	 1
+
+SQL>
+
+
+
+
+问题汇总
+
+1、监听起不来
+LSNRCTL for Linux: Version 11.2.0.1.0 - Production on 01-MAY-2021 13:51:21
+
+Copyright (c) 1991, 2009, Oracle.  All rights reserved.
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=IPC)(KEY=EXTPROC1521)))
+TNS-12541: TNS:no listener
+ TNS-12560: TNS:protocol adapter error
+  TNS-00511: No listener
+   Linux Error: 111: Connection refused
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521)))
+TNS-12541: TNS:no listener
+ TNS-12560: TNS:protocol adapter error
+  TNS-00511: No listener
+   Linux Error: 111: Connection refused
+配置有问题
+修改：listener.ora及tnsnames.ora
+
+
+     
+问题2
+[oracle@localhost ~]$ sqlplus /nolog
+
+SQL*Plus: Release 11.2.0.1.0 Production on Sat May 1 13:51:39 2021
+
+Copyright (c) 1982, 2009, Oracle.  All rights reserved.
+
+SQL> connect / as sysdba
+Connected to an idle instance.
+SQL> startup
+
+数据库没有起来
+
+
+软件连接不成功
+执行以下命令
+[oracle@localhost admin]$ cat tnsnames.ora
+# tnsnames.ora Network Configuration File: /home/oracle/app/oracle/product/11.2.0/dbhome_1/network/admin/tnsnames.ora
+# Generated by Oracle configuration tools.
+
+ORCL =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl)
+    )
+  )
+
+[oracle@localhost admin]$ vi tnsnames.ora
+
+
+修改以下内容
+
+ORCL =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = orcale)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl)
+    )
+  )
+
+修改主机名：
+[root@localhost oracle]# vi /etc/hostname
+orcale
+
+
+在配置监听时，需要把格式对好
+格式出了问题
+[oracle@orcale admin]$ lsnrctl start
+
+LSNRCTL for Linux: Version 11.2.0.1.0 - Production on 01-MAY-2021 23:58:03
+
+Copyright (c) 1991, 2009, Oracle.  All rights reserved.
+
+Starting /home/oracle/app/oracle/product/11.2.0/dbhome_1//bin/tnslsnr: please wait...
+
+TNSLSNR for Linux: Version 11.2.0.1.0 - Production
+System parameter file is /home/oracle/app/oracle/product/11.2.0/dbhome_1/network/admin/listener.ora
+Log messages written to /home/oracle/app/oracle/product/11.2.0/dbhome_1/log/diag/tnslsnr/orcale/listener/alert/log.xml
+TNS-01150: The address of the specified listener name is incorrect
+
+Listener failed to start. See the error message(s) above...
+
+
+
+软件连接出现，以下错误
+
+
+IO 错误: The Network Adapter could not establish the connection
+  The Network Adapter could not establish the connection
+  The Network Adapter could not establish the connection
+    Connection refused, socket connect lapse 0 ms. /192.168.1.121 1521 0 1 true
+    Connection refused, socket connect lapse 0 ms. /192.168.1.121 1521 0 1 true
+      Connection refused
+      Connection refused
+这是监听没有起来
+
+启动监听
+[oracle@orcale ~]$ lsnrctl start
+
+LSNRCTL for Linux: Version 11.2.0.1.0 - Production on 02-MAY-2021 02:39:51
+
+Copyright (c) 1991, 2009, Oracle.  All rights reserved.
+
+Starting /home/oracle/app/oracle/product/11.2.0/dbhome_1//bin/tnslsnr: please wait...
+
+TNSLSNR for Linux: Version 11.2.0.1.0 - Production
+System parameter file is /home/oracle/app/oracle/product/11.2.0/dbhome_1/network/admin/listener.ora
+Log messages written to /home/oracle/app/oracle/diag/tnslsnr/orcale/listener/alert/log.xml
+Listening on: (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=orcale)(PORT=1521)))
+Listening on: (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1521)))
+
+Connecting to (DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=oracle)(PORT=1521)))
+STATUS of the LISTENER
+------------------------
+Alias                     LISTENER
+Version                   TNSLSNR for Linux: Version 11.2.0.1.0 - Production
+Start Date                02-MAY-2021 02:40:07
+Uptime                    0 days 0 hr. 0 min. 55 sec
+Trace Level               off
+Security                  ON: Local OS Authentication
+SNMP                      OFF
+Listener Parameter File   /home/oracle/app/oracle/product/11.2.0/dbhome_1/network/admin/listener.ora
+Listener Log File         /home/oracle/app/oracle/diag/tnslsnr/orcale/listener/alert/log.xml
+Listening Endpoints Summary...
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=tcp)(HOST=orcale)(PORT=1521)))
+  (DESCRIPTION=(ADDRESS=(PROTOCOL=ipc)(KEY=EXTPROC1521)))
+The listener supports no services
+The command completed successfully
+[oracle@orcale ~]$
+
+
+如果是以下错误
+
+Listener refused the connection with the following error:
+ORA-12514, TNS:listener does not currently know of service requested in connect descriptor
+ 
+Listener refused the connection with the following error:
+ORA-12514, TNS:listener does not currently know of service requested in connect descriptor
+ 
+数据库没有启动
+
+先启动数据库
+
+[oracle@orcale ~]$ sqlplus / as sysdba
+
+SQL*Plus: Release 11.2.0.1.0 Production on Sun May 2 02:42:46 2021
+
+Copyright (c) 1982, 2009, Oracle.  All rights reserved.
+
+Connected to an idle instance.
+
+SQL> startup
+ORACLE instance started.
+
+Total System Global Area  768294912 bytes
+Fixed Size		    2217304 bytes
+Variable Size		  473959080 bytes
+Database Buffers	  285212672 bytes
+Redo Buffers		    6905856 bytes
+Database mounted.
+Database opened.
+SQL> select 1 from dual;
+
+	 1
+----------
+	 1
+
+SQL>
+
+查看 监听动态
+lsnrctl status
+
+自动脚本启动
+
+修改以下内容
+[oracle@orcale ~]$ vim /etc/oratab
+
+# This file is used by ORACLE utilities.  It is created by root.sh
+# and updated by the Database Configuration Assistant when creating
+# a database.
+
+# A colon, ':', is used as the field terminator.  A new line terminates
+# the entry.  Lines beginning with a pound sign, '#', are comments.
+#
+# Entries are of the form:
+#   $ORACLE_SID:$ORACLE_HOME:<N|Y>:
+#
+# The first and second fields are the system identifier and home
+# directory of the database respectively.  The third filed indicates
+# to the dbstart utility that the database should , "Y", or should not,
+# "N", be brought up at system boot time.
+#
+# Multiple entries with the same $ORACLE_SID are not allowed.
+#
+#
+orcl:/home/oracle/app/oracle/product/11.2.0/dbhome_1:Y
+
+在 /etc/init.d/ 下创建文件oracle，内容如下：
+
+#!/bin/sh
+# chkconfig: 35 80 10
+# description: Oracle auto start-stop script.
+
+#
+# Set ORA_HOME to be equivalent to the $ORACLE_HOME
+# from which you wish to execute dbstart and dbshut;
+#
+# Set ORA_OWNER to the user id of the owner of the
+# Oracle database in ORA_HOME.
+ORA_HOME=/home/oracle/app/oracle/product/11.2.0/dbhome_1
+ORA_OWNER=oracle
+if [ ! -f $ORA_HOME/bin/dbstart ]
+then
+    echo "Oracle startup: cannot start"
+    exit
+fi
+case "$1" in
+'start')
+# Start the Oracle databases:
+echo "Starting Oracle Databases ... "
+echo "-------------------------------------------------" >> /var/log/oracle
+date +" %T %a %D : Starting Oracle Databases as part of system up." >> /var/log/oracle
+echo "-------------------------------------------------" >> /var/log/oracle
+su - $ORA_OWNER -c "$ORA_HOME/bin/dbstart" >>/var/log/oracle
+echo "Done"
+
+# Start the Listener:
+echo "Starting Oracle Listeners ... "
+echo "-------------------------------------------------" >> /var/log/oracle
+date +" %T %a %D : Starting Oracle Listeners as part of system up." >> /var/log/oracle
+echo "-------------------------------------------------" >> /var/log/oracle
+su - $ORA_OWNER -c "$ORA_HOME/bin/lsnrctl start" >>/var/log/oracle
+echo "Done."
+echo "-------------------------------------------------" >> /var/log/oracle
+date +" %T %a %D : Finished." >> /var/log/oracle
+echo "-------------------------------------------------" >> /var/log/oracle
+touch /var/lock/subsys/oracle
+;;
+
+'stop')
+# Stop the Oracle Listener:
+echo "Stoping Oracle Listeners ... "
+echo "-------------------------------------------------" >> /var/log/oracle
+date +" %T %a %D : Stoping Oracle Listener as part of system down." >> /var/log/oracle
+echo "-------------------------------------------------" >> /var/log/oracle
+su - $ORA_OWNER -c "$ORA_HOME/bin/lsnrctl stop" >>/var/log/oracle
+echo "Done."
+rm -f /var/lock/subsys/oracle
+
+# Stop the Oracle Database:
+echo "Stoping Oracle Databases ... "
+echo "-------------------------------------------------" >> /var/log/oracle
+date +" %T %a %D : Stoping Oracle Databases as part of system down." >> /var/log/oracle
+echo "-------------------------------------------------" >> /var/log/oracle
+su - $ORA_OWNER -c "$ORA_HOME/bin/dbshut" >>/var/log/oracle
+echo "Done."
+echo ""
+echo "-------------------------------------------------" >> /var/log/oracle
+date +" %T %a %D : Finished." >> /var/log/oracle
+echo "-------------------------------------------------" >> /var/log/oracle
+;;
+
+'restart')
+$0 stop
+$0 start
+;;
+esac
+
+
+保存退出
+改变文件权限
+[root@orcale ~]# chmod 755 /etc/init.d/oracle
+
+添加服务
+[root@orcale ~]# chkconfig --level 35 oracle on
+
+需要在关机或重启机器之前停止数据库，做一下操作
+# ln -s /etc/init.d/oracle /etc/rc0.d/K01oracle   //关机
+# ln -s /etc/init.d/oracle /etc/rc6.d/K01oracle   //重启 
+
+6. 使用方法
+# service oracle start        //启动oracle
+# service oracle stop        //关闭oracle
+# service oracle restart     //重启oracle
+
+开机自启动
+
+重新连接DBeaver 软件，测试成功
+
+
+
+
+[root@orcale init.d]# vim oracle
+[root@orcale init.d]# su - oracle
+Last login: Sun May  2 02:39:02 EDT 2021 on pts/0
+[oracle@orcale ~]$ chmod 755 /etc/init.d/oracle
+chmod: changing permissions of ‘/etc/init.d/oracle’: Operation not permitted
+[oracle@orcale ~]$ su root
+Password:
+[root@orcale oracle]# chmod 755 /etc/init.d/oracle
+[root@orcale oracle]# chkconfig --level 35 oracle on
+[root@orcale oracle]# service oracle stop
+Stoping Oracle Listeners ...
+Done.
+Stoping Oracle Databases ...
+Done.
+
+[root@orcale oracle]#

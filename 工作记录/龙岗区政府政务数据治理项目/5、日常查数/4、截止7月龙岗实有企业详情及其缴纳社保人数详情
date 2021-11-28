@@ -1,0 +1,45 @@
+select count(1) from dm_jbxx_frjcxx where ( ESTABLISH_DATE<='2021-07-31' and lgl_entstaus_no='存续(在营、开业、在册)'   or lgl_authdate>'2021-07-31' and lgl_entstaus_no !='存续(在营、开业、在册)')
+and ssztlx not like  '个体工商户%'  ; --截止到7月底 龙岗实有企业数  截止几月底,时间参数写几月
+
+
+select count( 1 ) from 
+(
+select tyshxydm from dwd_jbxx_frsbjc a where dt=(select max(dt) from dwd_jbxx_frsbjc) and accountdate='2021-06' --时间参数  社保缴纳时间  
+and (ic_flag='已缴纳' or lc_flag='已缴纳' or kc_flag='已缴纳' or jc_flag='已缴纳' or mc_flag='已缴纳') and account_flag='正常' and  exists
+(
+select 1 from 
+     (
+     select tyshxydm,zzjgdm from dm_jbxx_frjcxx
+ where ( (ESTABLISH_DATE<='2021-07-31' and lgl_entstaus_no='存续(在营、开业、在册)')   or ( lgl_authdate>'2021-07-31' and lgl_entstaus_no !='存续(在营、开业、在册)'))
+  and ssztlx not like  '个体工商户%' 
+   ) b
+    where a.tyshxydm=b.tyshxydm   -- 截止几月底,时间参数写几月
+)
+union 
+select tyshxydm from dwd_jbxx_frsbjc a where dt=(select max(dt) from dwd_jbxx_frsbjc) and accountdate='2021-06'   --时间参数  社保缴纳时间  
+and (ic_flag='已缴纳' or lc_flag='已缴纳' or kc_flag='已缴纳' or jc_flag='已缴纳' or mc_flag='已缴纳') and account_flag='正常' and  exists
+(
+select 1 from 
+     (
+     select tyshxydm,zzjgdm from dm_jbxx_frjcxx
+ where ( (ESTABLISH_DATE<='2021-07-31' and lgl_entstaus_no='存续(在营、开业、在册)')   or ( lgl_authdate>'2021-07-31' and lgl_entstaus_no !='存续(在营、开业、在册)'))
+  and ssztlx not like  '个体工商户%' 
+   ) b
+    where  a.zzjgdm=b.zzjgdm  -- 截止几月底,时间参数写几月
+)
+);--;在截止2021年7月底的龙岗实有企业中:2021年6月全区社保缴纳企业多少家  
+
+
+--需要在人口库执行这段sql
+select count(distinct zjhm) from std_srlzyhshbzj_grmycbqk20_110879 a 
+where dt=(select max(dt) from std_srlzyhshbzj_grmycbqk20_110879) and jfzt='已缴费' and (yljfqk='是' or ylxjfqk='是' or syjfqk='是' or gsjfqk='是' or syxjfqk='是')
+and yjny='202106'   --时间参数 应缴年月
+  and exists (select 1 from   (
+   select  unit_sno  from lgfrk.dwd_jbxx_frsbjc a where dt=20211012 and accountdate='2021-06'    --时间参数  社保缴纳时间  
+and (ic_flag='已缴纳' or lc_flag='已缴纳' or kc_flag='已缴纳' or jc_flag='已缴纳' or mc_flag='已缴纳') and account_flag='正常' and  exists(
+select 1 from (select tyshxydm from lgfrk.dm_jbxx_frjcxx
+where ( (ESTABLISH_DATE<='2021-07-31' and lgl_entstaus_no='存续(在营、开业、在册)')   or ( lgl_authdate>'2021-07-31' and lgl_entstaus_no !='存续(在营、开业、在册)'))
+and ssztlx not like  '个体工商户%' ) b where a.tyshxydm=b.tyshxydm   -- 截止几月底,时间参数写几月
+)
+        ) b where a.sbdwbh=b.unit_sno);
+--在截止2021年7月底的龙岗实有企业中2021年6月全区社保缴纳企业中缴纳社保的人数   

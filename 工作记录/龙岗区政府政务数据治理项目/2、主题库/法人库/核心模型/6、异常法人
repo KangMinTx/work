@@ -1,0 +1,198 @@
+异常法人（dwd_jbxx_ycfrxx）
+一、先创建一张集合表（temp_one），其取数逻辑：以std_qfzggj_aic_base(区发展改革局_登记备案信息)为主表，左关联区委政法委块数据企业信息（std_qzfw_view_qy_jcxx）
+左关联龙岗政法委法人数据（std_qzf_zfw_enterpriseinfomanage1），取相应的字段，得到集合表（temp_one）
+
+二、以集合表（temp_one）为主表，左关联市地方税务局de税务基本登记情况（std_sdfswj_t_swjbdjqk_10_20110527160713）表，
+左关联dwd_jbxx_frjcxx (法人基础信息)，且集合表（temp_one）的企业数据不存在（not exists）于std_schzljgw_sszt_jbxx110497 (市场和质量监管委_商事主体基本信息)
+union all
+以A表为主表（其中A表，以std_qfzggj_aic_base(区发展改革局_登记备案信息)为主表，左关联区委政法委块数据企业信息（std_qzfw_view_qy_jcxx_d），
+左关联龙岗区政法委法人数据 (std_qzf_zfw_enterpriseinfomanage1)，左关联std_schzljgw_sszt_jbxx110497 (市场和质量监管委_商事主体基本信息)，取相应的字段得到A表） 
+左关联B表（其中B表，以std_qfzggj_aic_base(区发展改革局_登记备案信息)为主表，左关联区委政法委块数据企业信息（std_qzfw_view_qy_jcxx_d），
+左关联龙岗区政法委法人数据 (std_qzf_zfw_enterpriseinfomanage1)，左关联std_schzljgw_sszt_jbxx110497 (市场和质量监管委_商事主体基本信息)，取相应的字段得到B表）
+左关联c表（其中C表，为市地方税务局de税务基本登记情况（std_sdfswj_t_swjbdjqk_10_20110527160713）表）
+左关联D表（其中D表，为std_qfzggj_aic_base(区发展改革局_登记备案信息)表）
+条件：where a.zzjgdm <> b.zzjgdm or  a.xm <> b.xm or a.qyzt <> b.qyzt  --组织机构代码  --法定代表人姓名  --企业状态
+union all 
+以A表为主表（其中A表，以区发展改革局de税务登记信息（std_qfzggj_t_busi_swj_reginfo），左关联std_qfzggj_aic_base(区发展改革局_登记备案信息)表，得到A表)
+左关联市地方税务局de税务基本登记情况（std_sdfswj_t_swjbdjqk_10_20110527160713）表
+左关联dwd_jbxx_frjcxx(法人基本信息)表，取相应的字段
+整合，得到异常法人（dwd_jbxx_ycfrxx）表
+
+--------------------------------------------------------------------------异常法人-----------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-03 17:01:19.84
+--所属主题:异常法人信息
+--内容描述:异常法人信息1张表,加工至dwd_jbxx_ycfrxx(异常法人信息)
+--加载策略:全量
+--修改记录：0107 He 对于临时表 中 std_qzf_zfw_enterpriseinfomanage1 表进行先根据企业名称，取业务时间最新一条记录，去重后，再做关联
+--2021-09-01
+--修改人:tzm 修改内容:纳税人识别号与税务局登记不一致异常信息修改关联条件公司名称,企业状态与市监局登记不一致公司名称有脏数据清洗下,法定代表人与市监局登记不一致,限制取最新一条后,身份证件号,证件类型不为空
+--_********************************************************_
+--truncate table dwd_jbxx_ycfrxx;
+with temp_one as(
+select
+		distinct
+		a.entsccode tyshxydm	--统一社会信用代码
+		,entorgcode zzjgdm		--组织机构代码
+		,a.entname gsmc		--公司名称
+		,a.entstatus qyzt		--企业状态
+		,c.cardtypeid zjlx		--法定代表人证件类型
+		,c.cardno   zjhm		--法定代表人证件号码
+		,c.legalname xm			--法定代表人姓名
+		,coalesce(a.lyjg,b.lyjg,c.lyjg)  frsjlybm	--法人数据来源部门
+	from std_qfzggj_aic_base a
+	left join (select distinct tyshxydm,lyjg from  std_qzfw_view_qy_jcxx where dt=(select max(dt) from std_qzfw_view_qy_jcxx)) b
+	on trim(a.entsccode)=trim(b.tyshxydm)
+	left join 
+  	(select * from 
+   (select enterprisename,cardtypeid,enterpriseno,cardno,legalname,lyjg,row_number() over(partition by enterpriseno order by addtime desc,cardtypeid,legalname,cardno nulls first) rn 
+				from  std_qzf_zfw_enterpriseinfomanage1  where dt=(select max(dt) from std_qzf_zfw_enterpriseinfomanage1) ) 
+              where rn=1) c
+	on trim(a.entsccode)=trim(c.enterpriseno)
+	where a.dt=(select max(dt) from std_qfzggj_aic_base) and a.entsccode is not null
+)
+
+insert overwrite table dwd_jbxx_ycfrxx partition (dt='${DayBeforeStartTime}')
+select
+	uuid() uuid		--主键
+	,tyshxydm	--统一社会信用代码
+	,nsrsbh		--纳税人识别号
+	,zzjgdm		--组织机构代码
+	,gsmc		--公司名称
+	,ycsm		--异常说明
+	,frsjlybm	--法人数据来源部门
+	,zjlx		--法定代表人证件类型
+	,zjhm		--法定代表人证件号码
+	,xm			--法定代表人姓名
+	,qyzt		--企业状态
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+	select
+		d.tyshxydm	--统一社会信用代码
+		,c.nsrsbh		--纳税人识别号
+		,nvl(d.zzjgdm,a.zzjgdm) as zzjgdm		--组织机构代码
+		,nvl(d.lgl_name,a.gsmc) as gsmc		--公司名称
+		,'市监局无该法人' ycsm		--异常说明
+		,a.frsjlybm	--法人数据来源部门
+		,d.legal_person_card_id zjlx		--法定代表人证件类型
+		,d.legal_person_card_no zjhm		--法定代表人证件号码
+		,d.legal_person_name xm			--法定代表人姓名
+		,a.qyzt qyzt		--企业状态
+		,'std_qfzggj_aic_base,std_qzfw_view_qy_jcxx,std_qzf_zfw_enterpriseinfomanage1,' lyb		--来源表
+		,c.lyjg lyjg		--来源机构
+		,substr(current_timestamp,1,19) as yxsj		--运行时间
+	from temp_one a
+  	left join (select distinct zzjgdm,lyjg ,nsrsbh  from  std_sdfswj_t_swjbdjqk_10_20110527160713 where dt=(select max(dt) from std_sdfswj_t_swjbdjqk_10_20110527160713) ) c
+	on trim(a.zzjgdm)=trim(c.zzjgdm)
+    left join (select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx) ) d
+	on trim(a.tyshxydm)=trim(d.tyshxydm)
+	where   not exists (select * from std_schzljgw_sszt_jbxx110497 b where  trim(a.tyshxydm)=trim(b.tyshxydm) and b.dt=(select max(dt) from std_schzljgw_sszt_jbxx110497))
+	union all
+	select
+		a.tyshxydm	--统一社会信用代码
+		,c.nsrsbh		--纳税人识别号
+		,a.zzjgdm		--组织机构代码
+		,a.gsmc		--公司名称
+		,case when a.zzjgdm <> b.zzjgdm then '组织机构代码与市监局登记不一致'
+				when a.xm <> b.xm then '法定代表人与市监局登记不一致'  
+				when a.qyzt <> b.qyzt then '企业状态与市监局登记不一致' 
+				else null end ycsm		--异常说明
+		,a.frsjlybm	--法人数据来源部门
+		,a.zjlx		--法定代表人证件类型
+		,a.zjhm		--法定代表人证件号码
+		,a.xm			--法定代表人姓名
+		,d.entstatus qyzt		--企业状态
+		,'std_qfzggj_aic_base,std_qzfw_view_qy_jcxx,std_qzf_zfw_enterpriseinfomanage1,std_schzljgw_sszt_jbxx110497' lyb		--来源表
+		,a.lyjg lyjg		--来源机构
+		,substr(current_timestamp,1,19) as yxsj		--运行时间
+	from 
+		(	select
+				distinct
+				a.entsccode tyshxydm	--统一社会信用代码
+				,d.zzjgdm zzjgdm		--组织机构代码
+				,replace(d.qymc,'_','') gsmc		--公司名称
+				,c.cardtypeid zjlx		--法定代表人证件类型
+				,c.cardno   zjhm		--法定代表人证件号码
+				,c.legalname xm			--法定代表人姓名
+				,d.yyzt qyzt 		--企业状态
+				,coalesce(a.lyjg,b.lyjg,c.lyjg,d.lyjg)  frsjlybm	--法人数据来源部门
+				,a.lyjg lyjg
+			from std_qfzggj_aic_base a
+			left join (select distinct tyshxydm,lyjg  from std_qzfw_view_qy_jcxx  where dt=(select max(dt) from std_qzfw_view_qy_jcxx)) b
+			on trim(a.entsccode)=trim(b.tyshxydm)
+			left join (
+            select * from 
+   			(select enterprisename,cardtypeid,enterpriseno,cardno,legalname,lyjg,row_number() over(partition by enterpriseno order by addtime desc,cardtypeid,legalname,cardno nulls first) rn 
+				from  std_qzf_zfw_enterpriseinfomanage1  where dt=(select max(dt) from std_qzf_zfw_enterpriseinfomanage1) ) 
+              where rn=1)  c
+			on trim(a.entsccode)=trim(c.enterpriseno)
+			left join (select * from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497))  d
+			on trim(a.entsccode)=trim(d.tyshxydm)
+			where a.dt=(select max(dt) from std_qfzggj_aic_base)    and a.entsccode is not null
+		) a
+	left join 
+	(	select
+			distinct
+			a.entsccode tyshxydm	--统一社会信用代码
+			,a.entorgcode zzjgdm		--组织机构代码
+			,c.legalname xm			--法定代表人姓名
+			,a.entstatuscode qyzt 		--企业状态
+		from std_qfzggj_aic_base a
+		left join (select distinct tyshxydm  from std_qzfw_view_qy_jcxx  where dt=(select max(dt) from std_qzfw_view_qy_jcxx)) b
+		on trim(a.entsccode)=trim(b.tyshxydm)
+		left join (select * from 
+   (select enterprisename,cardtypeid,cardno,legalname,lyjg,row_number() over(partition by enterprisename order by addtime desc) rn from  std_qzf_zfw_enterpriseinfomanage1  where dt=(select max(dt) from std_qzf_zfw_enterpriseinfomanage1) ) where rn=1)  c
+		on trim(a.entname)=trim(c.enterprisename)
+		left join (select * from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497))  d
+		on trim(a.entsccode)=trim(d.tyshxydm)
+		where a.dt=(select max(dt) from std_qfzggj_aic_base)    and a.entsccode is not null
+		) b
+	on trim(a.tyshxydm)=trim(b.tyshxydm)
+  	left join (select distinct zzjgdm,lyjg ,nsrsbh  from  std_sdfswj_t_swjbdjqk_10_20110527160713 where dt=(select max(dt) from std_sdfswj_t_swjbdjqk_10_20110527160713) ) c
+	on trim(a.zzjgdm)=trim(c.zzjgdm)
+	left join (select entstatus,entstatuscode from std_qfzggj_aic_base where dt=(select max(dt) from std_qfzggj_aic_base) group by entstatus,entstatuscode) d
+	on trim(a.qyzt)=trim(d.entstatuscode)
+	where a.zzjgdm <> b.zzjgdm or  a.xm <> b.xm or a.qyzt <> b.qyzt
+	union all
+	select
+		distinct
+		a.tyshxydm	--统一社会信用代码
+		,b.nsrsbh		--纳税人识别号
+		,c.zzjgdm		--组织机构代码
+		,nvl(c.lgl_name,a.gsmc) as gsmc		--公司名称
+		,'纳税人识别号与税务局登记不一致' ycsm		--异常说明
+		,'区发改' frsjlybm	--法人数据来源部门
+		,c.legal_person_card_id zjlx		--法定代表人证件类型
+		,c.legal_person_card_no zjhm		--法定代表人证件号码
+		,c.legal_person_name xm			--法定代表人姓名
+		,a.qyzt qyzt		--企业状态
+		,'std_qfzggj_aic_base,std_qfzggj_t_busi_swj_reginfo' lyb		--来源表
+		,b.lyjg lyjg		--来源机构
+		,substr(current_timestamp,1,19) as yxsj		--运行时间
+	from 
+	(
+		select
+			distinct
+			b.entsccode tyshxydm	--统一社会信用代码
+			,a.nsrsbh nsrsbh		--纳税人识别号
+			,b.entorgcode zzjgdm		--组织机构代码
+			,a.nsrmc gsmc		--公司名称
+			,b.entstatus qyzt 		--企业状态
+			,coalesce(a.lyjg,b.lyjg)  frsjlybm	--法人数据来源部门
+			,a.lyjg lyjg
+		from std_qfzggj_t_busi_swj_reginfo a
+		left join (select * from std_qfzggj_aic_base where dt=(select max(dt) from std_qfzggj_aic_base) ) b
+		on trim(a.aicentcode)=trim(b.entid) and trim(a.nsrmc)=trim(b.entname)
+		where a.dt=(select max(dt) from std_qfzggj_t_busi_swj_reginfo) and b.entsccode is not null
+	) a
+	left join (select distinct zzjgdm,lyjg ,nsrsbh  from  std_sdfswj_t_swjbdjqk_10_20110527160713 where dt=(select max(dt) from std_sdfswj_t_swjbdjqk_10_20110527160713) ) b
+	on trim(a.zzjgdm)=trim(b.zzjgdm)
+	left join (select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx) ) c
+	on trim(a.tyshxydm)=trim(c.tyshxydm)
+	where  a.nsrsbh <> b.nsrsbh
+ )

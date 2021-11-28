@@ -1,0 +1,121 @@
+商事主体基本信息_街道（dwd_jbxx_ssztjbxxjd）
+一、所用到的表： dwd_jbxx_frjcxx (法人基础信息)
+                 std_schzljgw_sszt_jbxx110497 （市场和质量监管委de商事主体基本信息）
+                 dwd_frdzxx （ 法人地址信息）
+                 std_qgyhxxhj_t_corporation （企业基本信息）
+                 std_qyjglj_pucentp_new （区应急管理局_企业基本信息）
+                 std_qyjglj_companies （区应急管理局_企业信息列表）
+                 std_qfzggj_fgj_projectenterpriseinfo （区发展改革局_项目单位信息）
+                 std_qfzggj_fgj_t_enterpriseinfo （区发展改革局_单位信息）
+
+二、以法人基本信息(dwd_jbxx_frjcxx)为主表，左关联std_schzljgw_sszt_jbxx110497 （市场和质量监管委de商事主体基本信息）
+左关联dwd_frdzxx （ 法人地址信息）
+左关联std_qgyhxxhj_t_corporation （企业基本信息）
+左关联std_qyjglj_pucentp_new （区应急管理局_企业基本信息）
+左关联std_qyjglj_companies （区应急管理局_企业信息列表）
+左关联std_qfzggj_fgj_projectenterpriseinfo （区发展改革局_项目单位信息）
+左关联std_qfzggj_fgj_t_enterpriseinfo （区发展改革局_单位信息）
+取相应的字段，得到商事主体基本信息_街道（dwd_jbxx_ssztjbxxjd）
+另：
+表与表之间关联时已进行了各表的去重
+
+-----------------------------------------------------------------------------商事主体基本信息_街道-----------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2021-01-13 10:59:57
+--table_name : dwd_jbxx_ssztjbxxjd (商事主体基本信息_街道)
+--use_tables : dwd_jbxx_frjcxx (法人基础信息)
+--			   std_schzljgw_sszt_jbxx110497 （市场和质量监管委de商事主体基本信息）
+--			   dwd_frdzxx （ 法人地址信息）
+--			   std_qgyhxxhj_t_corporation （企业基本信息）
+--			   std_qyjglj_pucentp_new （区应急管理局_企业基本信息）
+--			   std_qyjglj_companies （区应急管理局_企业信息列表）
+--	    	   std_qfzggj_fgj_projectenterpriseinfo （区发展改革局_项目单位信息）
+--			   std_qfzggj_fgj_t_enterpriseinfo （区发展改革局_单位信息）
+--取数逻辑  ： 以法人基础信息为主表左关联商事主体基本信息，取在龙岗区的法人，
+--			   从 std_schzljgw_sszt_jbxx110497 （市场和质量监管委de商事主体基本信息） 获取基本信息，用法人基本信息作为补充
+--			   从 dwd_frdzxx （ 法人地址信息）获取 地址信息
+--			   从 std_qgyhxxhj_t_corporation （企业基本信息）获取 主营产品pro_and_bus_intro
+--			   从 std_qyjglj_pucentp_new （区应急管理局_企业基本信息）  std_qyjglj_companies （区应急管理局_企业信息列表） 获取企业规模
+--			   从 std_qfzggj_fgj_projectenterpriseinfo （区发展改革局_项目单位信息）  std_qfzggj_fgj_t_enterpriseinfo （区发展改革局_单位信息） 获取 登记注册类型
+--去重逻辑  ： 关联时已进行了各表的去重
+--_********************************************************_
+--2021-03-16
+--修改时间格式与源表相同（修改清洗规则实现的）
+--2021-08-31
+--修改人:tzm,发现表里有重复数据,新加限制统一社会信用代码不为空,单位规模不为空,保证表数据不重复
+--_********************************************************_
+INSERT OVERWRITE TABLE dwd_jbxx_ssztjbxxjd PARTITION (dt = '${DayBeforeStartTime}')
+select 
+nvl(t2.jyfw,t1.business_scope) as jyfw --经营范围
+,t2.ZCZB as zczb --注册资本
+,t2.DJJGDH as djjgdh --登记机构代号
+,t2.RECORDID as recordid --唯一编码
+,nvl(t1.lgl_name,t2.qymc) as gsmc --企业名称
+,nvl(t2.hyml_name,t1.hyml) as hyml --行业门类
+,nvl(t2.LSQYMC,t1.LSQYMC) as lsqymc --隶属企业名称
+,nvl(t2.LSQYZCH,t1.LSQYZCH) as lsqyzch --隶属企业注册号
+,t2.FDDBR as fddbr --法定代表人/负责人
+,t2.SWZH as sfzh --身份证号
+,t2.SBSSZB as sbsszb --申报实收资本
+,t2.TYSHXYDM as tyshxydm --统一社会信用代码
+,t2.JYQXZ as jyqxz --经营期限止
+,t2.JYQXQ as jyqxq --经营期限起
+,t2.HZRQ as hzrq --核准/备案日期
+,t2.BYZD2 as byzd2 --备用字段2
+,t2.BYZD3 as byzd3 --备用字段3
+,t2.hydm_name as hydm --行业代码
+,t2.bizhong_name as bizhong --币种
+,nvl(t1.zzjgdm,t2.zzjgdm) as zzjgdm --组织机构代码
+,t2.JYCS as jycs --经营场所
+,t2.NJQK as njqk --年检情况
+,t2.CLRQ as clrq --成立日期
+,nvl(t1.zch,t2.zch) as zch --注册号
+,t2.BZ as bz --备注
+,t2.BYZD1 as byzd1 --备用字段1
+,t2.NDBGXX as ndbgxx --年度报告信息
+,t2.ssztlx_name as ssztlx --商事主体类型
+,t2.YYZT as yyzt --企业状态
+,t3.jycs as jydz --经营地地址
+,t3.sqname as jyszsq --经营地所在社区
+,t4.pro_and_bus_intro as jyywhd --主要业务活动(或主要产品)
+,nvl(t5.ENTPSIZE,t6.ENTPSIZE) as dwgm --单位规模
+,nvl(t7.pei_enterprisetype,t8.ENTERPRISEPROPERTY) as zclx --登记注册类型
+,'dwd_jbxx_frjcxx' as lyb --来源表
+,nvl(t2.lyjg,t1.lyjg) as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t1
+left join 
+(select * from 
+(select tyshxydm,jyfw,ZCZB,DJJGDH,RECORDID,qymc,hyml_name,HYML,LSQYMC,LSQYZCH,FDDBR,SWZH,SBSSZB,JYQXZ,JYQXQ
+,HZRQ,BYZD2,BYZD3,HYDM,hydm_name,bizhong_name,bizhong,zzjgdm,JYCS,NJQK,CLRQ,zch,BZ,BYZD1,NDBGXX,SSZTLX,ssztlx_name,YYZT,lyjg,row_number() over(partition by tyshxydm order by timeflag desc) rn  from std_schzljgw_sszt_jbxx110497
+where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) 
+where rn=1 ) t2
+on t1.tyshxydm=t2.tyshxydm
+left join 
+(select * from dwd_frdzxx where dt=(select max(dt) from dwd_frdzxx)) t3 
+on t1.tyshxydm=t3.tyshxydm
+/*取主要产品*/
+left join 
+(select distinct pro_and_bus_intro,fullname from std_qgyhxxhj_t_corporation where dt=(select max(dt) from std_qgyhxxhj_t_corporation)) t4
+on t1.lgl_name=t4.fullname
+/*取单位规模*/
+left join 
+(select distinct  ENTPSIZE,entpcode from std_qyjglj_pucentp_new where dt=(select max(dt) from std_qyjglj_pucentp_new) and ENTPSIZE is not null) t5
+on t1.tyshxydm=t5.entpcode
+left join 
+(select distinct ENTPSIZE,entpcode from std_qyjglj_companies where dt=(select max(dt) from std_qyjglj_companies) and  deleteflag !='1' and ENTPSIZE is not null) t6
+on t1.tyshxydm=t6.entpcode
+/*取 登记注册类型*/
+left join 
+ (select * from  
+(select pei_code,pei_enterprisetype,row_number() over(partition by pei_code order by PEI_APPLYLASTUPDATEDTIME desc ) rn from std_qfzggj_fgj_projectenterpriseinfo 
+ where dt=(select max(dt) from std_qfzggj_fgj_projectenterpriseinfo))
+ where rn=1)t7
+on t1.zzjgdm=t7.pei_code
+left join 
+ (select code,ENTERPRISEPROPERTY from std_qfzggj_fgj_t_enterpriseinfo where dt=(select max(dt) from std_qfzggj_fgj_t_enterpriseinfo)) t8
+ on t1.zzjgdm=t8.code
+ where t2.TYSHXYDM is not null

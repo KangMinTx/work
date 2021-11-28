@@ -1,0 +1,193 @@
+行政强制信息（dwd_xzqzxx）
+取std_qfzggj_xylg_gaj_administrationqzinfo(区发展改革局_行政强制信息)的相应字段
+union all 
+以std_qyjglj_anbookpunishapprovalone(区应急管理局_行政强制审批表1)为主表，左关联std_qyjglj_anbookpunishapprovaltwo(区应急管理局_行政强制审批表2)
+左关联std_qyjglj_anbookpunishapprovalthree(区应急管理局_行政强制审批表3)，取相应的字段
+union all 
+std_qyjglj_anbookforcenotice(区应急管理局_行政强制执行事先催告书)内关联std_qzfw_view_qy_jcxx（区委政法委块数据企业信息），取相应的字段
+得到行政强制信息（dwd_xzqzxx）
+
+----------------------------------------------------------------------------------------行政强制-----------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--作者: HE
+--创建时间: 2020-11-05 15:02:14
+--所属主题:行政强制
+--内容描述:行政强制5张表,加工至dwd_xzqzxx(行政强制信息)
+--			std_qfzggj_xylg_gaj_administrationqzinfo(区发展改革局_行政强制信息)
+--			std_qyjglj_anbookpunishapprovalone(区应急管理局_行政强制审批表1)
+--			std_qyjglj_anbookpunishapprovaltwo(区应急管理局_行政强制审批表2)
+--          std_qyjglj_anbookpunishapprovalthree(区应急管理局_行政强制审批表3)
+--			std_qyjglj_anbookforcenotice(区应急管理局_行政强制执行事先催告书)	
+--			其中 行政审批表123从数据中发现三张表存在线性关系,遂关联后进行逻辑处理
+--加载策略:全量
+--_********************************************************_
+--truncate table std_qfzggj_xylg_gaj_administrationqzinfo;
+insert overwrite table dwd_xzqzxx partition (dt='${DayBeforeStartTime}')
+select 
+	b1.recordid,
+    b1.ztsfdm,
+    nvl(b2.tyshxydm,b1.tyshxydm) tyshxydm,
+    nvl(b2.zzjgdm,b1.zzjgdm) zzjgdm,
+    nvl(b2.zch,b1.zch) zch,
+    b1.swdjh,
+    b1.zh gsmc,
+    b1.xzqzjdwsbh,
+    b1.xzqzsxmc,
+    b1.xzqzyj,
+    b1.xzqzzxqk,
+    b1.xzqzrq,
+    b1.xzqzjg,
+    b1.xzqz_lscsrq,
+    b1.xzqz_jclsrq,
+    b1.xzqz_wh,
+    b1.xzqz_lsnr,
+    b1.xzqz_jcwh,
+    b1.xzqz_jcrq,
+    b1.xxlylx,
+    b1.lyb,
+    b1.lyjg,
+    b1.yxsj       
+from 
+(select 
+	   concat_ws('',orgcode,RECORDID,replace(current_date(),'-','')) recordid, --统一社会信用代码+主键+列入时间
+       null ztsfdm,                                               		   	    --主体身份代码
+       orgcode  tyshxydm,                                                 		--统一社会信用代码
+       null zzjgdm,                                                       		--组织机构代码
+       null zch,                                                          		--登记/注册号
+       null swdjh,                                                        		--税务登记号
+       entname zh,                                                        		--法人名称/字号
+       qznum xzqzjdwsbh,                                                  		--行政强制决定文书编号
+       qzmattername xzqzsxmc,                                             		--行政强制事项名称
+       qzbasis xzqzyj,                                                    		--行政强制依据
+       replace(qzexecinfo,' ','') xzqzzxqk,                                     --行政强制执行情况
+       to_date(
+   	   replace(
+       trim(substring(substring(trim(substring(qzdate,instr(qzdate,' ')+1)),instr(trim(substring(qzdate,instr(qzdate,' ')+1)),' ')+1),1,instr(substring(trim(substring(qzdate,instr(qzdate,' ')+1)),instr(trim(substring(qzdate,instr(qzdate,' ')+1)),' ')+1),' ')))
+       ||'-'||
+       trim(substring(qzdate,1,instr(qzdate,' ')))
+       ||'-'||trim(substring(trim(substring(qzdate,instr(qzdate,' ')+1)),1,instr(trim(substring(qzdate,instr(qzdate,' ')+1)),' '))),'--','')) xzqzrq,                                                     --行政强制日期
+       qzname xzqzjg,                                                     		--行政强制机关
+       null xzqz_lscsrq,                                                  		--临时措施开始时间
+       null xzqz_jclsrq,                                                  		--解除临时措施时间
+       null xzqz_wh,                                                      		--临时措施/解除临时措施文号
+       null xzqz_lsnr,                                                    		--临时措施执行内容
+       null xzqz_jcwh,                                                    		--解除强制执行文号
+       null xzqz_jcrq,                                                    		--解除强制执行时间                                                    
+       '补充' xxlylx,                                                     	  --信息来源类型
+       'std_qfzggj_xylg_gaj_administrationqzinfo' lyb,                    		--来源表
+       '区发展改革局' lyjg,                                               	  --来源机构
+       current_date yxsj                                                  	   --运行时间
+ from std_qfzggj_xylg_gaj_administrationqzinfo
+ where astatus=1 and dt=(select max(dt) from std_qfzggj_xylg_gaj_administrationqzinfo)
+ 
+ union ALL
+ 
+  select 
+	   concat_ws('','',id,replace(current_date(),'-',''))recordid,            --统一社会信用代码+主键+列入时间
+       null ztsfdm,                                               		       --主体身份代码
+       null  tyshxydm,                                                         --统一社会信用代码
+       null zzjgdm,                                                            --组织机构代码
+       null zch,                                                               --登记/注册号
+       null swdjh,                                                             --税务登记号
+       legalman zh,                                                       	   --法人名称/字号
+       null xzqzjdwsbh,                                                   	   --行政强制决定文书编号
+       casename xzqzsxmc,                                                 	   --行政强制事项名称
+       null xzqzyj,                                                            --行政强制依据
+       undertakeradvice_1 xzqzzxqk,                                       	   --行政强制执行情况
+       to_date(undertakedate) xzqzrq,                                          --行政强制日期
+       null xzqzjg,                                                            --行政强制机关
+       lskssj xzqz_lscsrq,                                                     --临时措施开始时间
+       null xzqz_jclsrq,                                                       --解除临时措施时间
+       null xzqz_wh,                                                           --临时措施/解除临时措施文号
+       lsjd xzqz_lsnr,                                                         --临时措施执行内容
+       null xzqz_jcwh,                                                         --解除强制执行文号
+       jcqzsj xzqz_jcrq,                                                       --解除强制执行时间                                                    
+       '权威' xxlylx,                                                          --信息来源类型
+       lyb lyb,                                                                --来源表
+       '区应急管理局' lyjg,                                                    --来源机构
+       current_date yxsj                                                       --运行时间
+from (
+select 
+     case when t3.sourcebookid is not null 
+               then t3.id
+          when t2.sourcebookid is not null
+               then t2.id
+          when t1.sourcebookid is not null
+               then t1.id
+          else null
+          end as id,                                                                         --id 
+     nvl(nvl(t1.legalman,t2.legalman),t3.legalman) legalman,                                 --企业名称
+     nvl(nvl(t1.casename,t2.casename),t3.casename) casename,                                 --案件编号
+     case when t3.sourcebookid is not null then 'std_qyjglj_anbookpunishapprovalthree'
+          when t2.sourcebookid is not null then 'std_qyjglj_anbookpunishapprovaltwo'
+          when t1.sourcebookid is not null then 'std_qyjglj_anbookpunishapprovalone'
+          else null 
+          end lyb,                                                                           --来源表   
+     t1.undertakedate,                                                                       --行政强制日期
+     t1.undertakeradvice undertakeradvice_1,
+     t2.undertakeradvice undertakeradvice_2,
+     t3.undertakeradvice undertakeradvice_3,
+     case when t3.sourcebookid is not null and t2.sourcebookid is not null 
+               then t2.undertakeradvice 
+          else null 
+          end as lsjd,                                                                        --临时决定
+     case when t3.sourcebookid is  not null then t3.undertakeradvice 
+          when t3.sourcebookid is null and t2.sourcebookid is not null 
+               then t2.undertakeradvice 
+          else null 
+          end as zzjd,                                                                        --最终决定
+     case when t3.sourcebookid is not null and t2.sourcebookid is not null
+               then t2.undertakedate 
+          else null 
+          end as lskssj,                                                                      --临时开始时间
+     case when t3.sourcebookid is not null 
+               then t3.undertakedate 
+          when t3.sourcebookid is null and t2.sourcebookid is not null 
+               then t2.undertakedate 
+          else null 
+          end as jcqzsj                                                                       --解除强制时间
+from std_qyjglj_anbookpunishapprovalone t1
+    left join 
+  		(select 
+     		* 
+     	from  std_qyjglj_anbookpunishapprovaltwo 
+   	 	where dt=(select max(dt) from std_qyjglj_anbookpunishapprovaltwo)) t2 
+  	on t1.sourcebookid=t2.sourcebookid and t2.deleteflag=0 
+    left join
+  		(select 
+     		*
+     	from std_qyjglj_anbookpunishapprovalthree
+     	where dt=(select max(dt) from std_qyjglj_anbookpunishapprovalthree)) t3 
+  	on t1.sourcebookid=t3.sourcebookid and t3.deleteflag=0 
+where t1.deleteflag=0 and t1.dt=(select max(dt) from std_qyjglj_anbookpunishapprovalone)
+)
+
+union ALL
+select 
+	  concat_ws('','',id,replace(current_date(),'-','')) recordid,   					 --统一社会信用代码+主键+列入时间
+      null as ztsfdm,																	  --主体身份代码
+      null as tyshxydm,																	  --统一社会信用代码
+      null as zzjgdm,																	  --组织机构代码
+      null as zch,																		  --登记/注册号
+      null as swdjh,																	  --税务登记号
+      entpname as zh,																	  --法人名称/字号
+      question as xzqzjdwsbh,															  --行政强制决定文书编号
+      null as xzqzsxmc,																	  --行政强制事项名称
+      null as xzqzyj,																	  --行政强制依据
+      decision as xzqzzxqk,																  --行政强制执行情况
+      to_date(noticedate) as xzqzrq,													  --行政强制日期
+      null as xzqzjg,																	  --行政强制机关
+      null as xzqz_lscsrq,																  --临时措施开始时间
+      null as xzqz_jclsrq,																  --解除临时措施时间
+      null as xzqz_wh,																	  --临时措施/解除临时措施文号
+      null as xzqz_lsnr,																  --临时措施执行内容
+      null xzqz_jcwh,																	  --解除强制执行文号
+      null as xzqz_jcrq,																  --解除强制执行时间
+      '权威' as xxlylx,																	--信息来源类型
+      'std_qyjglj_anbookforcenotice' as lyb,											  --来源表
+      '区应急管理局' as lyjg,																--来源机构
+      current_date as yxsj																 --运行时间
+from std_qyjglj_anbookforcenotice where deleteflag=0 and dt=(select max(dt) from std_qyjglj_anbookforcenotice )
+
+) b1 inner join (select * from std_qzfw_view_qy_jcxx where dt=(select max(dt) from std_qzfw_view_qy_jcxx)) b2 on b1.zh=b2.qymc

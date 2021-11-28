@@ -1,0 +1,132 @@
+dwd_xzcfxx（行政处罚信息）
+取数逻辑：多表union一起，然后左关联区委政法委块数据企业信息表，补充相应字段
+(
+STDN_lgjjdd_xzcf      --龙岗交警大队_行政处罚
+union all 
+STDN_qczj_xzcf        --区财政局_行政处罚
+union all
+STDN_qcghzhzfj_xzcf   --区城管和综合执法局_行政处罚
+union all
+STDN_qfzggj_xzcf      --区发展改革局_行政处罚
+union all
+STDN_qgyhxxhj_xzcf    --区工业和信息化局_行政处罚
+union all
+STDN_qmzj_xzcf        --区民政局_民政局_行政处罚
+union all
+STDN_qswj_xzcf        --区水务局_行政处罚
+union all
+STDN_qwsjkj_xzcf      --区卫生健康局_行政处罚
+union all
+STDN_qwhgdlytyj_xzcf  --区文化广电旅游体育局_行政处罚
+union all
+STDN_qyjglj_axzcf     --区应急管理局_安行政处罚
+union all
+stdn_qzfjsj_xzcf      --区住房建设局_城管局_行政处罚
+union all
+stdn_qzwfwsjglj_xzcf  --区政务服务数据管理局_行政处罚
+union all
+STDN_sczwyh_xzcf      --市财政委员会_行政处罚 
+union all 
+STDN_schzljgw_xzcf    --市场和质量监管委_城管局_行政处罚
+union all
+STDN_scsglj_xzcf      --市城市管理局_城管局_行政处罚
+union all
+STDN_sghhgtzywyh_xzcf --市规划和国土资源委员会_行政处罚 
+union all 
+STDN_sjtyswyh_xzcf    --市交通运输委员会_行政处罚  
+union all
+STDN_sjyj_xzcf        --市教育局_行政处罚
+union all
+STDN_smzj_xzcf        --市民政局_行政处罚
+union all
+STDN_srjhjwyh_xzcf    --市人居环境委员会_行政处罚  
+union all 
+STDN_srlzyhshbzj_rsj_xzcf --市人力资源和社会保障局_行政处罚
+union all
+STDN_ssthjjlgglj_xzcf   --市生态环境局龙岗管理局_行政处罚 
+union all
+STDN_sswj_swj_xzcf      --市水务局_水务局_行政处罚
+union all
+STDN_sypjdglj_xzcf      --市药品监督管理局_行政处罚
+union all
+STDN_szfhjsj_xzcf       --市住房和建设局_行政处罚
+)b1 
+left join (select * from std_qzfw_view_qy_jcxx_d where dt=(select max(dt) from std_qzfw_view_qy_jcxx_d))b2  --区委政法委块数据企业信息
+on b1.zh=b2.qymc;
+
+
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-11 19:41:51
+--_********************************************************_
+--ALTER TABLE dwd_xzcfxx DROP PARTITION( dt='${DayBeforeStartTime}');
+insert overwrite table dwd_xzcfxx partition (dt='${DayBeforeStartTime}')
+select
+DISTINCT
+CONCAT_WS("",nvl(b1.tyshxydm,b2.tyshxydm),b1.xzcfjdwsh,b1.cfsxq) key,
+b1.ztsfdm,
+nvl(b1.tyshxydm,b2.tyshxydm)  tyshxydm,
+b1.zzjgdm,
+nvl(b1.zch,b2.zch) zch,
+b1.swdjh,
+b1.zh gsmc,
+b1.fddbrzjlx,
+b1.fddbrzjhm,
+nvl(b2.fddbr,b1.fddbrxm) fddbrxm,
+b1.xzcfjdwsh,
+b1.cflb,
+b1.sxbm,
+b1.cfyj,
+b1.cfsy,
+b1.cfnr,
+b1.fkje,
+case when b1.fkje is not null or length(b1.fkje) <> 0 then  '罚款' || b1.fkje else null end  cfjg,
+b1.cfsxq,
+b1.cfjzq,
+b1.gsqx,
+b1.dqzt,
+b1.cfjguan,
+b1.xxlylx,
+b1.lyb,
+b1.lyjg,
+b1.yxsj
+from 
+(
+          select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_lgjjdd_xzcf           where dt=(select max(dt) from STDN_lgjjdd_xzcf         )
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_qczj_xzcf             where dt=(select max(dt) from STDN_qczj_xzcf           )  
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_qcghzhzfj_xzcf        where dt=(select max(dt) from STDN_qcghzhzfj_xzcf      )      
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_qfzggj_xzcf           where dt=(select max(dt) from STDN_qfzggj_xzcf         )       
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_qgyhxxhj_xzcf         where dt=(select max(dt) from STDN_qgyhxxhj_xzcf       ) 
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_qmzj_xzcf             where dt=(select max(dt) from STDN_qmzj_xzcf           )         
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_qswj_xzcf             where dt=(select max(dt) from STDN_qswj_xzcf           )
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_qwsjkj_xzcf           where dt=(select max(dt) from STDN_qwsjkj_xzcf         ) 
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_qwhgdlytyj_xzcf       where dt=(select max(dt) from STDN_qwhgdlytyj_xzcf     )
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_qyjglj_axzcf          where dt=(select max(dt) from STDN_qyjglj_axzcf        )  
+union all 
+ /*1209 
+  政数局 和 住建局 两个结果 全连接 (full join) 补充相关信息
+  */
+select * from (select  concat_ws("",nvl(t1.tyshxydm,t2.tyshxydm),nvl(t1.xzcfjdwsh,t2.xzcfjdwsh),nvl(t1.cfsxq,t2.cfsxq)) as key  ,nvl(t1.ztsfdm,t2.ztsfdm)  as ztsfdm  ,nvl(t1.tyshxydm,t2.tyshxydm)   as tyshxydm  ,nvl(t1.zzjgdm,t2.zzjgdm)   as zzjgdm  ,nvl(t1.zch,t2.zch)   as zch  ,nvl(t1.swdjh,t2.swdjh) as swdjh  ,nvl(t1.zh,t2.zh) as zh  ,nvl(t1.fddbrzjlx,t2.fddbrzjlx) as fddbrzjlx  ,nvl(t1.fddbrzjhm,t2.fddbrzjhm) as fddbrzjhm  ,nvl(t1.fddbrxm,t2.fddbrxm) as fddbrxm  ,nvl(t1.xzcfjdwsh,t2.xzcfjdwsh) as xzcfjdwsh  ,nvl(t1.cflb,t2.cflb) as cflb  ,nvl(t1.sxbm,t2.sxbm) as sxbm  ,nvl(t1.cfyj,t2.cfyj) as cfyj  ,nvl(t1.cfsy,t2.cfsy) as cfsy  ,nvl(t1.cfnr,t2.cfnr) as cfnr  ,nvl(t1.fkje,t2.fkje) as fkje  ,nvl(t1.cfjg,t2.cfjg) as cfjg  ,nvl(t1.cfsxq,t2.cfsxq) as cfsxq  ,nvl(t1.cfjzq,t2.cfjzq) as cfjzq  ,nvl(t1.gsqx,t2.gsqx) as gsqx  ,nvl(t1.dqzt,t2.dqzt) as dqzt  ,nvl(t1.cfjguan,t2.cfjguan) as cfjguan  ,nvl(t1.xxlylx,t2.xxlylx) as xxlylx  ,nvl(t1.lyb,t2.lyb) as lyb  ,nvl(t1.lyjg,t2.lyjg) as lyjg  ,nvl(t1.yxsj,t2.yxsj) as yxsj  
+  from  (select * from stdn_qzfjsj_xzcf  where dt=(select max(dt) from stdn_qzfjsj_xzcf   )) t1  full join  (select * from stdn_qzwfwsjglj_xzcf where dt=(select max(dt) from stdn_qzwfwsjglj_xzcf  )) t2  on t1.tyshxydm=t2.tyshxydm and t1.xzcfjdwsh=t2.xzcfjdwsh)    
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_sczwyh_xzcf           where dt=(select max(dt) from STDN_sczwyh_xzcf         )
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_schzljgw_xzcf         where dt=(select max(dt) from STDN_schzljgw_xzcf       )   
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_scsglj_xzcf           where dt=(select max(dt) from STDN_scsglj_xzcf         )  
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_sghhgtzywyh_xzcf      where dt=(select max(dt) from STDN_sghhgtzywyh_xzcf    )
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_sjtyswyh_xzcf         where dt=(select max(dt) from STDN_sjtyswyh_xzcf       )    
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_sjyj_xzcf             where dt=(select max(dt) from STDN_sjyj_xzcf           )     
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_smzj_xzcf             where dt=(select max(dt) from STDN_smzj_xzcf           ) 
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_srjhjwyh_xzcf         where dt=(select max(dt) from STDN_srjhjwyh_xzcf       )       
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_srlzyhshbzj_rsj_xzcf  where dt=(select max(dt) from STDN_srlzyhshbzj_rsj_xzcf)        
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_ssthjjlgglj_xzcf      where dt=(select max(dt) from STDN_ssthjjlgglj_xzcf    )        
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_sswj_swj_xzcf         where dt=(select max(dt) from STDN_sswj_swj_xzcf       )      
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_sypjdglj_xzcf         where dt=(select max(dt) from STDN_sypjdglj_xzcf       )    
+union all select CONCAT_WS("",tyshxydm,xzcfjdwsh,cfsxq) key,ztsfdm,tyshxydm,zzjgdm,zch,swdjh,zh,fddbrzjlx,fddbrzjhm,fddbrxm,xzcfjdwsh,cflb,sxbm,cfyj,cfsy,cfnr,fkje,cfjg,cfsxq,cfjzq,gsqx,dqzt,cfjguan,xxlylx,lyb,lyjg,yxsj from STDN_szfhjsj_xzcf          where dt=(select max(dt) from STDN_szfhjsj_xzcf        )    
+)b1 
+left join (select * from std_qzfw_view_qy_jcxx_d where dt=(select max(dt) from std_qzfw_view_qy_jcxx_d))b2 
+on b1.zh=b2.qymc;
+
+ 
+
+
+

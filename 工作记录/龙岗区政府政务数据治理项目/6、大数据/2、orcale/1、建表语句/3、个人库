@@ -1,0 +1,477 @@
+1、创建表分区
+
+CREATE TABLE DM_YQ_HSJCJG_1027 
+   (ID VARCHAR2(255 CHAR), 
+	RECEIVE_TIME VARCHAR2(255 CHAR), 
+	REAL_NAME VARCHAR2(255 CHAR), 
+	SPECIMEN_CODE VARCHAR2(255 CHAR), 
+	GENDER VARCHAR2(255 CHAR), 
+	AGE VARCHAR2(255 CHAR), 
+	PHONE VARCHAR2(255 CHAR), 
+	SPECIMEN_TYPE VARCHAR2(255 CHAR), 
+	COLLECTION_TIME DATE, 
+	REPORT_TIME VARCHAR2(255 CHAR), 
+	ID_CARD_NO VARCHAR2(255 CHAR), 
+	COOPERATIVE_INSTITUTION VARCHAR2(255 CHAR), 
+	CHECK_RESULT VARCHAR2(255 CHAR), 
+	IMPORT_BATCH VARCHAR2(255 CHAR), 
+	CREATER VARCHAR2(255 CHAR), 
+	CREATE_TIME VARCHAR2(255 CHAR), 
+	TIMEFLAG TIMESTAMP (0), 
+	BZ VARCHAR2(255 CHAR), 
+	WYBS VARCHAR2(255 CHAR), 
+	YXSJ DATE
+   ) 
+  PARTITION BY RANGE (COLLECTION_TIME) 
+ (PARTITION PT_202105  VALUES LESS THAN (TO_DATE(' 2021-06-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS')) ,
+  PARTITION PT_202106  VALUES LESS THAN (TO_DATE(' 2021-07-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS')) , 
+  PARTITION PT_202107  VALUES LESS THAN (TO_DATE(' 2021-08-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS')) ,
+  PARTITION PT_202108  VALUES LESS THAN (TO_DATE(' 2021-09-01 00:00:00', 'SYYYY-MM-DD HH24:MI:SS')));
+2、创建日志表
+
+CREATE TABLE CHENBK.DM_RKK_LOG 
+   (	ERROR_ID VARCHAR2(255), 
+	DATA_DT VARCHAR2(255), 
+	WORK_NAME VARCHAR2(255), 
+	WORK_STEP VARCHAR2(255), 
+	START_DT_TIME VARCHAR2(255), 
+	END_DT_TIME VARCHAR2(255), 
+	V_SQLSTATE VARCHAR2(255), 
+	V_SQLCODE VARCHAR2(255), 
+	V_ERRORTEXT VARCHAR2(255), 
+	TAB_CONUTS VARCHAR2(255), 
+	V_DES VARCHAR2(255)
+   ) ;
+3、创建存储过程
+
+
+CREATE OR REPLACE PROCEDURE CHENBK.P_DM_RKK_HS (etl_date varchar2)
+IS 
+v_proceduce_name varchar2(18);
+v_error_id varchar2(8);
+v_work_step varchar(2512);
+v_sqlcode   NUMBER;
+v_sqlcode NUMBER;
+start_dt_time  varchar2(32);
+V_TAB_CONUTS NUMBER;
+BEGIN
+  
+  /*
+   创建人：陈保康
+   创建日期：2021-11-15
+   版本：V_1.0
+   描述：为了方便跟踪核酸数据，以存储过程的方式运行，借鉴大数据平台的sql
+   所用到的表：
+   1、ods_YQFKTHREECOMHD   
+   2、ods_YQFKHSCJCOLLECTION  核酸采集表
+   3、ods_NEW_CROWN_VIRUS_CHECK_RESULT  核酸结果表
+   4、ods_HSCYXX102957
+   5、ODS_HSJCXX_JGFH20210606_BF
+   6、ods_YQFK_HSCYXX_BF
+   7、ods_YQFK_YHS_FH20210816_BF
+   8、ods_GDWJ_NCOV_SHARE_NO_RESULT
+   */
+  /*
+   * 存储过程的名称
+   */
+  v_proceduce_name:='P_DM_RKK_HS';
+  /*
+   * 开始时间
+   */
+SELECT TO_CHAR(SYSDATE,'yyyy-mm-dd hh24:mi:ss') INTO start_dt_time FROM dual;
+/*
+ * sql步骤编号
+ */
+v_error_id:='1';
+/*
+ * sql步骤
+ */
+v_work_step:='1-融合8张表';
+--清空表
+​
+execute IMMEDIATE 'TRUNCATE TABLE dm_rkk_hs_zl';
+​
+--------------------------------------1、核酸结果表(ods_NEW_CROWN_CHECK_RESULT)---------------------------------------    
+INSERT INTO dm_rkk_hs_zl
+select 
+ID --主键ID
+,RECEIVE_TIME --接收日期
+,REAL_NAME --姓名
+,SPECIMEN_CODE --标本编码
+,GENDER --性别
+,AGE --年龄
+,PHONE --手机
+,SPECIMEN_TYPE --标本类型
+,COLLECTION_TIME --采集日期
+,REPORT_TIME --报告日期
+,ID_CARD_NO --证件号码
+,COOPERATIVE_INSTITUTION --合作机构
+,CHECK_RESULT --检验结果
+,IMPORT_BATCH --导入批次
+,CREATER --创建者
+,CREATE_TIME --创建日期
+,TIMEFLAG --
+,'new_crown_virus_check_result' as Bz --是否采样表新增
+,ID_CARD_NO||REAL_NAME||substr(COLLECTION_TIME,1,10)||COOPERATIVE_INSTITUTION as wybs        
+from ods_NEW_CROWN_CHECK_RESULT
+​
+---------------------------------------2、核酸采集表(ods_YQFKHSCJCOLLECTION)----------------------------------------------               
+union all
+select 
+ID --主键ID
+,NULL as RECEIVE_TIME --接收日期
+,NAME as REAL_NAME --姓名
+,CYTM as SPECIMEN_CODE --标本编码
+,SEX as GENDER --性别
+,AGE as AGE --年龄
+,MOBILEPHONE as PHONE --手机
+,NULL as SPECIMEN_TYPE --标本类型
+,CJTIME as COLLECTION_TIME --采集日期
+,NULL as REPORT_TIME --报告日期
+,CARDNO as ID_CARD_NO --证件号码
+,JCJGMC as COOPERATIVE_INSTITUTION --合作机构
+,RESULT as CHECK_RESULT --检验结果
+,NULL as IMPORT_BATCH --导入批次
+,NULL as CREATER --创建者
+,NULL as CREATE_TIME --创建日期
+,NULL  as TIMEFLAG 
+,'yqfkhscjcollection' as BZ 
+,CARDNO||NAME||substr(CJTIME,1,10)||JCJGMC as wybs
+from ods_YQFKHSCJCOLLECTION
+​
+----------------------------------3、ODS_HSJCXX_JGFH20210606_BF------------------------
+  union all
+  select 
+    a.id as ID --主键ID
+    ,jssj as RECEIVE_TIME --接收日期
+    ,null as REAL_NAME --姓名
+    ,null as SPECIMEN_CODE --标本编码
+    ,null as GENDER --性别
+    ,null as AGE --年龄
+    ,null as PHONE --手机
+    ,null as SPECIMEN_TYPE --标本类型
+    ,cysj as COLLECTION_TIME --采集日期
+    ,jcsj as REPORT_TIME --报告日期
+    ,a.zjhm as ID_CARD_NO --证件号码
+    ,jcjgmc as COOPERATIVE_INSTITUTION --合作机构
+    ,jcjg as CHECK_RESULT --检验结果
+    ,null as IMPORT_BATCH --导入批次
+    ,null as CREATER --创建者
+    ,a.create_time as CREATE_TIME --创建日期
+    ,null as TIMEFLAG 
+    ,'hsjcxx_jgfh20210606_BF' as BZ 
+    ,a.zjhm||substr(cysj,1,10)||jcjgmc as wybs
+  from ODS_HSJCXX_JGFH20210606_BF  a
+-----------------------------------------4、新增的表：ods_YQFK_YHS_FH20210816_BF--------------------------------------------------------------
+  union all 
+  select 
+      a.id as ID --主键ID
+    ,null as RECEIVE_TIME --接收日期
+    ,a.xm as REAL_NAME --姓名
+    ,null as SPECIMEN_CODE --标本编码
+    ,xb  GENDER --性别
+    ,nl  AGE --年龄
+    ,SJHM as PHONE --手机
+    ,null as SPECIMEN_TYPE --标本类型
+    ,cyrq as COLLECTION_TIME --采集日期
+    ,null as REPORT_TIME --报告日期
+    ,a.zjhm as ID_CARD_NO --证件号码
+    ,cyjgmc as COOPERATIVE_INSTITUTION --合作机构
+    ,jcjg1 as CHECK_RESULT --检验结果
+    ,null as IMPORT_BATCH --导入批次
+    ,null as CREATER --创建者
+    ,null as CREATE_TIME --创建日期
+    ,null as TIMEFLAG 
+    ,'yhs_fh20210816_bf' as BZ 
+    ,a.zjhm||a.xm||substr(cyrq,1,10)||cyjgmc as wybs
+    from ods_YQFK_YHS_FH20210816_BF A 
+    
+----------------------------------------------------5、新增的表：ods_GDWJ_NCOV_SHARE_NO_RESULT-----------------------------------------------------------------
+    union all 
+   select 
+      kfgd_id as ID --主键ID
+    ,null as RECEIVE_TIME --接收日期
+    ,xm as REAL_NAME --姓名
+    ,null as SPECIMEN_CODE --标本编码
+    ,xb  GENDER --性别
+    ,nl  AGE --年龄
+    ,sjhm as PHONE --手机
+    ,bblx as SPECIMEN_TYPE --标本类型
+    ,cyrq as COLLECTION_TIME --采集日期
+    ,null as REPORT_TIME --报告日期
+    ,zjhm as ID_CARD_NO --证件号码
+    ,jcjg as COOPERATIVE_INSTITUTION --合作机构
+    ,jcjieguo as CHECK_RESULT --检验结果
+    ,null as IMPORT_BATCH --导入批次
+    ,null as CREATER --创建者
+    ,null as CREATE_TIME --创建日期
+    ,null as TIMEFLAG 
+    ,'gdwj_ncov_share_no_result' as BZ 
+    ,zjhm||xm||substr(cyrq,1,10)||jcjg as wybs
+    from ods_GDWJ_NCOV_SHARE_NO_RESULT 
+  
+  ------------------------------------------------------------6、ods_YQFKTHREECOMHD   市检测结果表------------------------------------------
+union all
+select 
+ID as ID --主键ID
+,null as RECEIVE_TIME --接收日期
+,NAME as REAL_NAME --姓名
+,null as SPECIMEN_CODE --标本编码
+,SEX as GENDER --性别
+,AGE as AGE --年龄
+,phone as PHONE --手机
+,bblx as SPECIMEN_TYPE --标本类型
+,substr(cytime,1,19) as COLLECTION_TIME --采集日期
+,substr(jctime,1,19) as REPORT_TIME --报告日期
+,cardno as ID_CARD_NO --证件号码
+,jcjg as COOPERATIVE_INSTITUTION --合作机构
+,jcresult as CHECK_RESULT --检验结果
+,null as IMPORT_BATCH --导入批次
+,null as CREATER --创建者
+,null as CREATE_TIME --创建日期
+,null as TIMEFLAG 
+,'yqfkthreecomhd' as BZ 
+,CARDNO||NAME||substr(cytime,1,10)||jcjg as wybs
+from  ods_YQFKTHREECOMHD;
+/*
+ * sql记录娄数
+ */
+V_TAB_CONUTS:=SQL%rowcount;
+COMMIT;
+--记录日志
+ chenbk.p_dm_rkk_log(
+v_error_id,
+etl_date,
+v_proceduce_name,
+v_work_step,
+start_dt_time,
+'1',
+'成功',
+'SUCCESSFUL',
+V_TAB_CONUTS,
+''
+);
+--步骤序号
+v_error_id:='2';
+/*
+ * sql步骤
+ */
+v_work_step:='找到修改的数据';
+--清空表
+execute IMMEDIATE 'TRUNCATE TABLE dm_rkk_hs_xg';
+​
+INSERT INTO dm_rkk_hs_xg
+select a.*,'修改人员' from  dm_rkk_hs_zl a
+left join dm_rkk_lsqlb b
+on nvl(a.REAL_NAME,'1') = nvl(b.REAL_NAME,'1')
+and nvl(a.ID_CARD_NO,'1') = nvl(b.ID_CARD_NO,'1')
+and nvl(substr(a.COLLECTION_TIME,1,10),'1')=nvl(substr(b.COLLECTION_TIME,1,10),'1')
+where b.id is null or(a.CHECK_RESULT is not null and b.CHECK_RESULT is null);
+/*
+ * sql记录娄数
+ */
+V_TAB_CONUTS:=SQL%rowcount;
+COMMIT;
+--记录日志
+ p_dm_rkk_log(
+v_error_id,
+etl_date,
+v_proceduce_name,
+v_work_step,
+start_dt_time,
+'2',
+'成功',
+'SUCCESSFUL',
+V_TAB_CONUTS,
+''
+);
+​
+--步骤序号
+v_error_id:='3';
+/*
+ * sql步骤
+ */
+v_work_step:='保留上一次的历史全量表';
+--清空表
+execute IMMEDIATE 'TRUNCATE TABLE dm_rkk_lsqlb_temp';
+​
+INSERT INTO  dm_rkk_lsqlb_temp select * from dm_rkk_lsqlb;
+/*
+ * sql记录娄数
+ */
+V_TAB_CONUTS:=SQL%rowcount;
+COMMIT;
+--记录日志
+ p_dm_rkk_log(
+v_error_id,
+etl_date,
+v_proceduce_name,
+v_work_step,
+start_dt_time,
+'3',
+'成功',
+'SUCCESSFUL',
+V_TAB_CONUTS,
+''
+);
+--步骤序号
+v_error_id:='4';
+/*
+ * sql步骤
+ */
+v_work_step:='把当前的数据插回到全量的表';
+--清空表
+execute IMMEDIATE 'TRUNCATE TABLE dm_rkk_lsqlb';
+​
+INSERT into  dm_rkk_lsqlb
+select a.* from dm_rkk_lsqlb_temp  a
+left join dm_rkk_hs_xg b
+on nvl(a.REAL_NAME,'1') = nvl(b.REAL_NAME,'1')
+and nvl(a.ID_CARD_NO,'1') = nvl(b.ID_CARD_NO,'1')
+and nvl(substr(a.COLLECTION_TIME,1,10),'1')=nvl(substr(b.COLLECTION_TIME,1,10),'1')
+where b.id is NULL
+union ALL
+select 
+ID --主键ID
+,RECEIVE_TIME --接收日期
+,REAL_NAME --姓名
+,SPECIMEN_CODE --标本编码
+,GENDER --性别
+,AGE --年龄
+,PHONE --手机
+,SPECIMEN_TYPE --标本类型
+,COLLECTION_TIME --采集日期
+,REPORT_TIME --报告日期
+,ID_CARD_NO --证件号码
+,COOPERATIVE_INSTITUTION --合作机构
+,CHECK_RESULT --检验结果
+,IMPORT_BATCH --导入批次
+,CREATER --创建者
+,CREATE_TIME --创建日期
+,TIMEFLAG --
+, Bz --是否采样表新增
+,wybs
+ from (
+ select a.*,row_number()over (PARTITION by REAL_NAME,ID_CARD_NO,substr(COLLECTION_TIME,1,10) order by  RECEIVE_TIME desc ) as rn
+ from dm_rkk_hs_xg a ) where rn=1;
+/*
+ * sql记录娄数
+ */
+V_TAB_CONUTS:=SQL%rowcount;
+COMMIT;
+--记录日志
+p_dm_rkk_log
+(
+v_error_id,
+etl_date,
+v_proceduce_name,
+v_work_step,
+start_dt_time,
+'4',
+'成功',
+'SUCCESSFUL',
+V_TAB_CONUTS,
+'');
+​
+--步骤序号
+v_error_id:='5';
+/*
+ * sql步骤
+ */
+v_work_step:='tota增量(历史增量)';
+--清空表
+execute IMMEDIATE 'TRUNCATE TABLE dm_rkk_hs_lszl';
+​
+INSERT INTO dm_rkk_hs_lszl
+select
+ID --主键ID
+,RECEIVE_TIME --接收日期
+,REAL_NAME --姓名
+,SPECIMEN_CODE --标本编码
+,GENDER --性别
+,AGE --年龄
+,PHONE --手机
+,SPECIMEN_TYPE --标本类型
+,COLLECTION_TIME --采集日期
+,REPORT_TIME --报告日期
+,ID_CARD_NO --证件号码
+,COOPERATIVE_INSTITUTION --合作机构
+,CHECK_RESULT --检验结果
+,IMPORT_BATCH --导入批次
+,CREATER --创建者
+,CREATE_TIME --创建日期
+,TIMEFLAG --
+, Bz --是否采样表新增
+,wybs
+from dm_rkk_hs_xg;
+/*
+ * sql记录娄数
+ */
+V_TAB_CONUTS:=SQL%rowcount;
+COMMIT;
+--记录日志
+ chenbk.p_dm_rkk_log(
+v_error_id,
+etl_date,
+v_proceduce_name,
+v_work_step,
+start_dt_time,
+'5',
+'成功',
+'SUCCESSFUL',
+V_TAB_CONUTS,
+''
+);
+--步骤序号
+v_error_id:='6';
+/*
+ * sql步骤
+ */
+v_work_step:='找到最新的增量数据,并推到14物理机中';
+--清空表
+execute IMMEDIATE 'TRUNCATE TABLE dm_rkk_hs_to_zl';
+​
+INSERT INTO dm_rkk_hs_to_zl
+select 
+ID --主键ID
+,RECEIVE_TIME --接收日期
+,REAL_NAME --姓名
+,SPECIMEN_CODE --标本编码
+,GENDER --性别
+,AGE --年龄
+,PHONE --手机
+,SPECIMEN_TYPE --标本类型
+,COLLECTION_TIME --采集日期
+,REPORT_TIME --报告日期
+,ID_CARD_NO --证件号码
+,COOPERATIVE_INSTITUTION --合作机构
+,CHECK_RESULT --检验结果
+,IMPORT_BATCH --导入批次
+,CREATER --创建者
+,CREATE_TIME --创建日期
+,TIMEFLAG --
+, Bz --是否采样表新增
+,wybs
+ from (
+ select a.*,row_number()over (PARTITION by REAL_NAME,ID_CARD_NO,substr(COLLECTION_TIME,1,10) order by  RECEIVE_TIME desc ) as rn
+ from dm_rkk_hs_xg a ) where rn=1;
+/*
+ * sql记录娄数
+ */
+V_TAB_CONUTS:=SQL%rowcount;
+COMMIT;
+--记录日志
+ p_dm_rkk_log(
+v_error_id,
+etl_date,
+v_proceduce_name,
+v_work_step,
+start_dt_time,
+'6',
+'成功',
+'SUCCESSFUL',
+V_TAB_CONUTS,
+''
+);
+COMMIT;
+END;

@@ -1,0 +1,127 @@
+住房公积金缴存数据（dwd_jbxx_zfgjjjc）
+以住房公积金缴存数据（std_szfhjsj_zfgjjjcsj102153）为主表，左关联法人基本信息(dwd_jbxx_frjcxx)，取相应的字段
+union all 
+以住房公积金缴存数据表（std_qfzggj_t_busi_zfgjj_jcsj）为主表，左关联法人基本信息(dwd_jbxx_frjcxx)，取相应的字段
+得住房公积金缴存数据（dwd_jbxx_zfgjjjc）
+
+--------------------------------------------------------------------住房公积金缴存数据-------------------------------------------------------------------------------------------
+ --SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-22 18:55:31
+--table_name:dwd_jbxx_zfgjjjc
+--use_tables:std_szfhjsj_zfgjjjcsj102153(区发展改革局-住房公积金缴存数据表)std_qfzggj_t_busi_zfgjj_jcsj(市住房和建设局-住房公积金缴存数据)
+--取数逻辑:从std_qfzggj_t_busi_zfgjj_jcsj取数，std_szfhjsj_zfgjjjcsj102153作为补充
+--去重逻辑：无
+--修改人: TZM
+--修改时间:20201201
+--修改逻辑:用法人基本信息表补充社会统一信用代码
+--1230 优先取法人基本信息中的企业名称
+--2021-09-02 
+--修改人:tzm 修改内容:发现数据发散,然后故修改各源表先分别去重,根据信息来源类型取权威优先的数据
+--_********************************************************_
+insert overwrite table dwd_jbxx_zfgjjjc partition (dt='${DayBeforeStartTime}')
+SELECT  
+TYSHXYDM --统一社会信用代码
+,ZCH --注册号
+,zzjgdm --组织机构代码
+,DWGJJH --公积金号
+,gsmc --公司名称
+,GSZCDZ --工商注册地址
+,FRDBRXM --法定代表人
+,FRDBRZJLX --法人代表证件类型
+,FRDBRZJHM --法人代表证件号
+,DWKHDATE --开户时间
+,GJJJCJZDATE --缴存截止时间
+,LJJCE --累计缴存额
+,J24Y --近12个月缴存(时间/人数/金额)
+,DWRJJCJS --单位人均缴存基数
+,J24YDWZHZT --近12个月单位账户状态
+,xxlylx --信息来源类型
+, lyb  --来源表
+, lyjg    --来源机构
+, yxsj    --运行时间
+from 
+(
+SELECT  
+TYSHXYDM --统一社会信用代码
+,ZCH --注册号
+,zzjgdm --组织机构代码
+,DWGJJH --公积金号
+,gsmc --公司名称
+,GSZCDZ --工商注册地址
+,FRDBRXM --法定代表人
+,FRDBRZJLX --法人代表证件类型
+,FRDBRZJHM --法人代表证件号
+,DWKHDATE --开户时间
+,GJJJCJZDATE --缴存截止时间
+,LJJCE --累计缴存额
+,J24Y --近12个月缴存(时间/人数/金额)
+,DWRJJCJS --单位人均缴存基数
+,J24YDWZHZT --近12个月单位账户状态
+,xxlylx --信息来源类型
+, lyb  --来源表
+, lyjg    --来源机构
+, yxsj    --运行时间
+,row_number() over(partition by TYSHXYDM  order by  case when  xxlylx='权威' then 1 when xxlylx='补充' then 2 else 3 end asc) rn
+from 
+(select 
+ distinct
+ t2.tyshxydm as TYSHXYDM ,
+ t2.zch  as ZCH,
+ t.zzjgdm  as zzjgdm,
+ t.dwgjjh as DWGJJH ,
+ nvl(t2.lgl_name,t.gsmc) as  gsmc,
+ t.gszcdz as GSZCDZ,
+ t.fr as FRDBRXM,
+ t.frzjlx as FRDBRZJLX,
+ t.frzjhm as  FRDBRZJHM,
+ t.dwkhsj as  DWKHDATE,
+ t.jcjzsj as  GJJJCJZDATE,
+ cast(t.ljjce as decimal(38,4)) as LJJCE,
+ t.zjynjc as J24Y ,
+ cast(t.rjjcj as decimal(38,4)) as DWRJJCJS,
+  t.zjyndwzhzt  as J24YDWZHZT,
+ '权威' as xxlylx ,
+ 'std_qfzggj_t_busi_zfgjj_jcsj' as lyb,
+ '区发展改革局' as lyjg,
+ current_timestamp AS yxsj 
+ from 
+(	select * from 
+	(
+		select a.*,row_number() over(partition by zzjgdm order by timeflag) rn from std_szfhjsj_zfgjjjcsj102153 a where  dt=(SELECT max(dt) from std_szfhjsj_zfgjjjcsj102153 )
+	)where rn=1
+) t
+left join (select distinct tyshxydm,zch,zzjgdm,lgl_id,lgl_name,LEGAL_PERSON_NAME from dwd_jbxx_frjcxx t2 where t2.dt=(SELECT max(dt) from dwd_jbxx_frjcxx ))t2
+ on t.zzjgdm=t2.zzjgdm
+ union all 
+ SELECT
+ distinct
+ t2.tyshxydm  as TYSHXYDM --统一社会信用代码
+,t2.zch as ZCH --注册号
+,t1.orgcode as ORGCODE --组织机构代码
+,t1.dwgjjh as DWGJJH --公积金号
+,nvl(t2.lgl_name,t1.entname) as  ENTNAME--公司名称
+,t1.gszcdz  as GSZCDZ--工商注册地址
+,t1.frdbxm   as FRDBXM--法定代表人
+,t1.frdbzjlx_name   as FRDBZJLX--法人代表证件类型
+,t1.frdbzjhm  as  FRDBZJHM--法人代表证件号
+,t1.dwkhdate  as  DWKHDATE--开户时间
+,t1.gjjjcjzdate as  GJJJCJZDATE --缴存截止时间
+,cast(t1.ljjce as decimal(38,4))  as LJJCE --累计缴存额
+,t1.j24y as J24Y--近12个月缴存(时间/人数/金额)
+ ,cast(t1.dwrjjcjs as decimal(38,4)) as DWRJJCJS
+ ,j24ydwzhzt as J24YDWZHZT
+,'补充' AS xxlylx  --信息来源类型
+,t1.lyb as lyb--来源表
+,t1.lyjg as lyjg --来源机构
+ ,current_timestamp AS yxsj 
+ FROM (	select * from 
+	(
+		select a.*,row_number() over(partition by orgcode order by timeflag) rn from std_qfzggj_t_busi_zfgjj_jcsj a where  dt=(SELECT max(dt) from std_qfzggj_t_busi_zfgjj_jcsj )
+		)where rn=1 
+    ) t1
+ left join (select distinct tyshxydm,zch,zzjgdm,lgl_name from dwd_jbxx_frjcxx t2 where t2.dt=(SELECT max(dt) from dwd_jbxx_frjcxx ))t2
+ on t1.orgcode=t2.zzjgdm
+ )
+ )where rn=1
