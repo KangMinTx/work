@@ -1,0 +1,90 @@
+
+专利信息（dwd_zczb_zlxx）
+以区发改局专利资助信息（std_qfzggj_t_busi_zscqj_patimburse）为主表，左关联法人基本信息(dwd_jbxx_frjcxx)，取相应的字段
+union all 
+以std_qfzggj_xylg_scjgj_advent(区发展改革局_知识产权局优势企业)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)，取相应的字段
+得到专利信息（dwd_zczb_zlxx）
+
+
+---------------------------------------------------------------DM专利信息--------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-04 15:01:19.84
+--所属主题:专利信息
+--内容描述:专利信息1张表,加工至dwd_zczb_zlxx(专利信息)
+--			std_qfzggj_t_busi_zscqj_patimburse(区发展改革局_专利资助信息)1
+--			std_qfzggj_xylg_scjgj_advent(区发展改革局_知识产权局优势企业)2
+
+--加载策略:全量
+--_********************************************************_
+--truncate table std_qfzggj_xylg_scjgj_advent;
+insert overwrite table dwd_zczb_zlxx partition (dt='${DayBeforeStartTime}')
+
+select
+	uuid() uuid		--主键
+	,tyshxydm	--统一社会信用代码
+	,ztsfdm		--主体身份代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,gsmc		--公司名称
+	,zlh		--专利号
+	,zlm		--专利名
+	,zllx		--专利类型
+	,dlr		--代理人
+	,zlzy		--专利摘要
+	,sqrq		--授权日期
+	,zlzt		--专利状态
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+select
+	distinct
+	b.tyshxydm	--统一社会信用代码
+	,a.aicentcode ztsfdm		--主体身份代码
+	,b.zzjgdm zzjgdm		--组织机构代码
+	,b.zch zch		--登记/注册号
+	,b.lgl_name gsmc		--公司名称
+	,patnum zlh		--专利号
+	,patname zlm		--专利名
+	,null zllx		--专利类型
+	,null dlr		--代理人
+	,null zlzy		--专利摘要
+	,to_date(accdate) sqrq		--授权日期
+	,null zlzt		--专利状态
+	,'补充' xxlylx		--信息来源类型
+ 	,'std_qfzggj_t_busi_zscqj_patimburse' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,current_timestamp yxsj      --运行时间
+ from std_qfzggj_t_busi_zscqj_patimburse a
+left join (select distinct lgl_id,tyshxydm,zzjgdm,zch,lgl_name from dwd_jbxx_frjcxx b where b.dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+ on trim(a.aicentcode)=trim(b.lgl_id)
+ where a.dt=(select max(dt) from std_qfzggj_t_busi_zscqj_patimburse) --691
+union
+select
+	distinct
+	b.tyshxydm	--统一社会信用代码
+	,a.entid ztsfdm		--主体身份代码
+	,b.zzjgdm zzjgdm		--组织机构代码
+	,b.zch zch		--登记/注册号
+	,b.lgl_name gsmc		--公司名称
+	,null zlh		--专利号
+	,zlname zlm		--专利名
+	,zllb zllx		--专利类型
+	,null dlr		--代理人
+	,null zlzy		--专利摘要
+	,to_date(sqtime) sqrq		--授权日期
+	,null zlzt		--专利状态
+	,'补充' xxlylx		--信息来源类型
+ 	,'std_qfzggj_xylg_scjgj_advent' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,current_timestamp yxsj      --运行时间
+ from std_qfzggj_xylg_scjgj_advent a
+left join (select * from dwd_jbxx_frjcxx b where b.dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+ on trim(a.entid)=trim(b.lgl_id)
+ where a.dt=(select max(dt) from std_qfzggj_xylg_scjgj_advent) 
+ )
+ 

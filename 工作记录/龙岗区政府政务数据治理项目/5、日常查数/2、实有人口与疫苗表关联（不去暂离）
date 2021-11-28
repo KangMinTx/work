@@ -1,0 +1,22 @@
+-----查找实有人口接种的人群
+SELECT A.zjhm,A.XM,A.jdmc,A.GXBZ,case when length(ZJHM)= 18 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(trim(ZJHM),7,8),'yyyyMMdd'))/12)
+      when length(ZJHM)= 15 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date('19'||substr(trim(ZJHM),7,6),'yyyyMMdd'))/12)
+      when length(ZJHM) not in(18,15) and length(CSNY)>=10 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(CSNY,1,10),'yyyy-MM-dd'))/12)
+end as NL,B.YM_MC,B.ZC,B.YM_DM,B.JZDWMC,B.SFYWC 
+FROM dm_rkk_syrkkb_temp A INNER JOIN DM_RKK_YQFMYMBQB_TO_YXY b ON a.ZJHM =b.SFZ;
+
+----查找实有人口接种的总人数，包括身份证去重与不去重
+select count(1),count(DISTINCT zjhm) from (
+SELECT A.zjhm,A.XM,A.jdmc,A.GXBZ,case when length(ZJHM)= 18 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(trim(ZJHM),7,8),'yyyyMMdd'))/12)
+      when length(ZJHM)= 15 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date('19'||substr(trim(ZJHM),7,6),'yyyyMMdd'))/12)
+      when length(ZJHM) not in(18,15) and length(CSNY)>=10 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(CSNY,1,10),'yyyy-MM-dd'))/12)
+end as NL,B.YM_MC,B.ZC,B.YM_DM,B.JZDWMC,B.SFYWC 
+FROM dm_rkk_syrkkb_temp A INNER JOIN DM_RKK_YQFMYMBQB_TO_YXY b ON a.ZJHM =b.SFZ ) ;
+
+----查找街道接种的人数，包括身份证去重与不去重
+select count(1),count(DISTINCT zjhm),jdmc from (
+SELECT A.zjhm,A.XM,A.jdmc,A.GXBZ,case when length(ZJHM)= 18 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(trim(ZJHM),7,8),'yyyyMMdd'))/12)
+      when length(ZJHM)= 15 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date('19'||substr(trim(ZJHM),7,6),'yyyyMMdd'))/12)
+      when length(ZJHM) not in(18,15) and length(CSNY)>=10 then  floor(months_between(to_date(current_date,'yyyy-mm-dd'),to_date(substr(CSNY,1,10),'yyyy-MM-dd'))/12)
+end as NL,B.YM_MC,B.ZC,B.YM_DM,B.JZDWMC,B.SFYWC 
+FROM dm_rkk_syrkkb_temp A INNER JOIN DM_RKK_YQFMYMBQB_TO_YXY b ON a.ZJHM =b.SFZ ) group by jdmc

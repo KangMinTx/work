@@ -1,0 +1,121 @@
+纳税信息（dwd_jbxx_nsxx）
+以std_qfzggj_t_busi_swj_reginfo (区发展改革局_税务登记信息)为主表，
+左关联std_qfzggj_aic_base(区发展改革局_登记备案信息)表，关联条件为主体身份代码
+左关联std_qfzggj_aic_base(区发展改革局_登记备案信息)表，关联条件为公司名称
+左关联市地方税务局de税务基本登记情况（std_sdfswj_t_swjbdjqk_10_20110527160713）表，
+左关联市地方税务局de年度纳税大户信息（std_sdfswj_t_ndnsdhxx_10_20110527160837）
+按照统一社会信用代码、核准税务登记时间、税务登记注销时间、实际经营地点、纳税人状态代码、纳税人电子序号、纳税年度分组
+核准税务登记时间排序，取最新的一条数据，得到，dwd_jbxx_nsxx (纳税信息)表
+
+
+---------------------------------------------------------------------------------纳税信息--------------------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-03 14:33:14
+--table_name : dwd_jbxx_nsxx (纳税信息)
+--use_tables : std_qfzggj_t_busi_swj_reginfo (区发展改革局_税务登记信息)
+--			   std_sdfswj_t_ndnsdhxx_10_20110527160837 (市地方税务局_年度纳税大户信息)
+--			   std_sdfswj_t_swjbdjqk_10_20110527160713 (市地方税务局_税务基本登记情况)
+--			   dwd_jbxx_frjcxx (法人基本信息)
+-- 取数逻辑  :以 std_qfzggj_t_busi_swj_reginfo (区发展改革局_税务登记信息) 为主表，通过主体身份代码和纳税人名称 左关联 dwd_jbxx_frjcxx (法人基本信息) 补充法人基本信息
+--			  通过 纳税人识别号 左关联 std_sdfswj_t_ndnsdhxx_10_20110527160837 (市地方税务局_年度纳税大户信息)、std_sdfswj_t_swjbdjqk_10_20110527160713 (市地方税务局_税务基本登记情况) 补充相关信息
+--2021/01/05修改，增加源表去重逻辑，根据主题代码分组后取最新一条记录
+--2021/01/20修改，新增三个字段 国标行业（主行业）代码（gbhy_zhydm）、适用会计制度代码（sykjzddm）、纳税人状态代码（nsrztmdm）
+--2021-09-01
+--修改人:tzm 修改内容:市地方税务局de税务基本登记情况,同一条纳税人识别号有多条实际经营地点导致数据发散，根据核准税务登记时间取最新一条，发现数据是公司变更
+--_********************************************************_
+--truncate table std_sdfswj_t_swjbdjqk_10_20110527160713
+insert overwrite table dwd_jbxx_nsxx partition (dt='${DayBeforeStartTime}')
+
+select 
+uuid() as uuid
+,tyshxydm
+,ztsfdm
+,zzjgdm
+,zch
+,gsmc
+,nsrsbh
+,swdjyxqq
+,swdjyxqz
+,swdjzxsj
+,sjjydd
+,gbhy_zhydm
+,gbhy_zhy
+,sykjzddm
+,sykjzd
+,dszgswj
+,nszefdbs
+,nsrztmdm
+,nsrztm
+,nsrdzxh
+,hzswdjsj
+,nsnd
+,lyb
+,lyjg
+,yxsj
+from 
+(
+select
+nvl(b1.tyshxydm,b2.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t1.aicentcode,b2.lgl_id) as ztsfdm --主体身份代码
+,nvl(b1.zzjgdm,b2.zzjgdm) as zzjgdm --组织机构代码
+,nvl(b1.zch,b2.zch) as zch --登记/注册号
+,nvl(t1.nsrmc,b1.lgl_name) as gsmc --公司名称
+,t1.nsrsbh as nsrsbh --纳税人识别号
+,t2.swdjyxq_q as swdjyxqq --税务登记有效期起
+,t2.swdjyxq_z as swdjyxqz --税务登记有效期止
+,t2.sqzxrq as swdjzxsj --税务登记注销时间
+,t2.scjydz as sjjydd --实际经营地点
+,t2.hy_dm as gbhy_zhydm --国标行业（主行业）代码
+,t2.hy_dm_name as gbhy_zhy --国标行业（主行业）
+,t2.qykjzd_dm as sykjzddm --适用会计制度
+,t2.qykjzd_dm_name as sykjzd --适用会计制度
+,t2.zgswjg_dm as dszgswj --地税主管税务局
+,t3.nszefdbs as nszefdbs --纳税总额分段标示
+,t1.nsrzt_dm as nsrztmdm --纳税人状态代码
+,t1.nsrzt_mc as nsrztm --纳税人状态
+,t2.nsrdzxh as nsrdzxh --纳税人电子序号
+,t2.lrrq as hzswdjsj --核准税务登记时间
+,t3.nsnd as nsnd --纳税年度
+,'std_qfzggj_t_busi_swj_reginfo' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,substr(current_timestamp,1,19) as yxsj --运行时间
+,row_number() over(partition by nvl(b1.tyshxydm,b2.tyshxydm),t2.lrrq,t2.sqzxrq,t2.scjydz,t2.nsrzt_dm,t2.nsrdzxh,t3.nsnd order by t2.lrrq desc) as rn
+from 
+(select * from 
+(select nsrsbh,nsrmc,nsrzt_dm,case when nsrzt_dm='02' then '筹建期'
+      when nsrzt_dm='03' then '正常'
+      when nsrzt_dm='04' then '停业'
+      when nsrzt_dm='05' then '非正常'
+      when nsrzt_dm='06' then '清算'
+      when nsrzt_dm='07' then '注销'
+      when nsrzt_dm='08' then '非正常户注销'
+       else '其他状态' end as nsrzt_mc,aicentcode,lyjg,row_number() over(partition by aicentcode order by timeflag desc) rn
+from std_qfzggj_t_busi_swj_reginfo 
+where dt=(select max(dt) from std_qfzggj_t_busi_swj_reginfo))  where rn=1 ) t1
+left join 
+(select lgl_id,tyshxydm,zzjgdm,zch,lgl_name from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b1
+on t1.aicentcode=b1.lgl_id
+left join 
+(select lgl_id,tyshxydm,zzjgdm,zch,lgl_name from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b2
+on t1.nsrmc=b2.lgl_name
+left join 
+(select * from 
+(select nsrsbh,swdjyxq_q,swdjyxq_z,
+  to_date('20'||replace(replace(substr(sqzxrq,instr(sqzxrq,'月')+1),' ',''),'-','')
+||'-'||substr(substr(sqzxrq,instr(sqzxrq,'-')+1),1,instr(substr(sqzxrq,instr(sqzxrq,'-')+1),'月')-1)
+||'-'||substr(sqzxrq,1,instr(sqzxrq,'-')-1)) as sqzxrq
+ ,scjydz,hy_dm,hy_dm_name,qykjzd_dm,qykjzd_dm_name,zgswjg_dm,nsrzt_dm,nsrdzxh,lrrq 
+ ,row_number() over(partition by nsrsbh order by lrrq desc) rn
+ from std_sdfswj_t_swjbdjqk_10_20110527160713
+where dt=(select max(dt) from std_sdfswj_t_swjbdjqk_10_20110527160713)
+)where rn=1) t2
+on t1.nsrsbh=t2.nsrsbh
+left join 
+(select nszefdbs,nsnd,nsrsbh from std_sdfswj_t_ndnsdhxx_10_20110527160837 
+where dt=(select max(dt) from std_sdfswj_t_ndnsdhxx_10_20110527160837)) t3
+on t1.nsrsbh=t3.nsrsbh
+) where rn=1
+
+

@@ -1,0 +1,670 @@
+一、安装及配置：
+1、安装idea
+2、在开始的页面点击插件，安装scala插件，前提需要安装jdk_8的环境配置
+
+二、常用的知识
+package com.chenbk.scala01
+
+object varchenbk {
+  def main(args: Array[String]): Unit = {
+    var a:Int =10
+    a=20
+    println(a)
+    println(a)
+  }
+}
+
+1、要得println(a)
+a.sout 回车
+
+要得到 def main(args: Array[String]): Unit = 
+main 回车
+
+2、  /*
+  定义变量：
+  val/var 变量名:变量类型 = 变量值
+  */
+  val a: Int = 1
+
+  /*
+  定义方法：
+  def 函数名(参数名:参数类型):返回值类型={方法体}
+  */
+  def hello(arg: String): Unit = {
+    println(arg)
+  }
+
+ /*
+  完全面向对象：scala完全面向对象，故scala去掉了java中非面向对象的元素，如static关键字，void类型
+  1.static
+  scala无static关键字，由object实现类似静态方法的功能（类名.方法名），object关键字和class的关键字定义方式相同，但作用不同。class关键字和java中的class关键字作用相同，用来定义一个类；object的作用是声明一个单例对象，object后的“类名”可以理解为该单例对象的变量名。
+  2.void
+  对于无返回值的函数，scala定义其返回值类型为Unit类
+  */
+注：能用常量，就不用变量
+
+scala的类型推导
+其它设置-首选项-编辑器-镶嵌提示-scala-type hints 全部选择
+
+从git拉取文件
+https://github.com/zhenchao125/scala1015.git
+
+//从键盘输入数据
+package day01
+
+import scala.io.StdIn
+
+object input {
+
+  def main(args: Array[String]): Unit = {
+    val line = StdIn.readLine("请输入你的银行卡密码:")
+    println(line)
+  }
+}
+
+/*
+从键盘输入数据:
+    java:
+        1. 高级写法, 在1.5之后支持
+            val scanner = new Scanner(System.in)
+            println(scanner.nextLine())
+
+        2. 低级写法, 1.5之前使用
+            val reader = new BufferedReader(new InputStreamReader(System.in, "utf-8"))
+            val line: String = reader.readLine()
+
+    scala:
+
+        val line: String = StdIn.readLine("请输入你的银行卡密码:")
+        println(line)
+
+ */
+
+/*
+标识符(变量, 常量,类, 对象, 方法, 函数)命名规范:
+    1. 使用java的命名规则
+            数字字母 (下划线) 驼峰(大驼峰:类, 小驼峰))
+            scala中的下划线要慎用
+            
+    2. 不要使用$
+            将来scala编译的时候, 一些类会自动添加$
+    
+    3. 支持使用运算符(+- ...)来命名标识符!!!
+         在scala中没有真正的运算符, 所有的运算符其实都是对象的方法
+         a: 不要使用单个运算符作为变量名和常量
+         b:  字符和运算符不能混用
+                a++ 不允许
+        c: 如果混用,可以用_隔开
+        
+     4. 可以使用 ` ` 定义任意的字符. 主要为了java中的一些标识符名
+ */
+
+package day01
+
+object varvaldemol {
+
+  def main(args: Array[String]): Unit = {
+    /*var a: Int = 10
+           a = 20
+           println(a)  // 快捷键:  输入: a.sout tab
+           
+           val b: Int = 100
+           println(b)*/
+
+    /*var a :Int = 100
+    val b : Int = 1*/
+    var b: Int = 20
+    var a: Int = 10 //scala的类型推导.   hint
+  }
+}
+/*
+java:
+    变量和常量
+    int a = 10
+    final int A = 100
+        final 类 太监类 没有后代 不能有子类
+
+scala:
+    // 声明变量
+    var a:Int = 10
+    
+    // 声明常量
+    val b: Int = 100
+    
+    注意: 1. 在scala中, 能用常量的地方不要用变量
+        常量安全!!!
+        2. 必须在声明的同时给变量和常量赋值!
+        
+    
+   
+ 万能键:
+    eclipse: ctrl+1
+    idea: alt + enter
+    
+ */
+
+
+2、运算符
+package day01
+
+object Operator1 {
+  def main(args: Array[String]): Unit = {
+
+    val r=1.+(2)
+    println(r)
+
+    var i=1
+    i+=1
+    println(i)
+
+    var a = "a"
+    var ab1=a+"b"
+    var ab2=a+"b"
+    println(ab1)
+    println(ab1.equals(ab2)) //true
+    println(ab1.eq(ab2)) //false
+
+  }
+
+
+}
+/*
+运算符:
+    在scala中, 没有真正的运算符. 所谓运算符, 其实是一个方法(函数)名!!!
+   
+   +-/ 都是方法名
+   
+   1. 在scala中, 调用方法的点.可以省略
+   2. 在给方法传递参数的时候, 如果这个方法的参数只有一个参数或者没有参数, 则愿括号也可以省略
+        .和()都省略后, 这个时候的方法名我们就称为运算符
+   
+ ++  -- 这两个垃圾运算符被去掉.
+ 
+ 关于比较相等:
+    java:
+        ==
+            基本类型比较的就是值
+            引用类型: 比的也是值: 对象的地址值
+        equals
+            只能用户引用类型.
+            比较的内容
+            
+    scala:
+        ==  等价于 equals   (!=)
+        equals 等价于 ==
+            自定义类型应该覆写equals.
+                不要忘记覆写一下hashCode, 这两个返回要一致(hashCode相等的两个对象, 应该equals返回true)
+        eq  等价于java的 ==  只能用于AnyRef  (ne)
+    
+ 
+ 快捷键:
+  1. alt + enter 万能键
+  
+  2. 双击shift  打开查找类的对话框
+ */
+
+3、字符类型
+/*
+1. java的输出
+    System.out.println("")
+2. scala的输出
+    println("")
+3. printf
+    格式化输出
+        %d 输出整数
+        %s 输出字符串
+        %f 输出浮点数
+4. 字符串插值
+ 
+ */
+package day01
+
+object string_1 {
+  def main(args: Array[String]): Unit = {
+    //s插值
+    val a=10
+    val b=20
+   // val s=s"a=$a,b=$b"
+  //  println(s)
+ //   val s=s"a=${a*2},b=${b*3}"
+  //  println(s)
+
+    //raw 插值
+    val s=raw"\n \t \s"
+    println(s)
+  }
+
+}
+
+4、多行字符串
+/*
+多行字符串:
+    """
+    
+    """
+
+ */
+package day01
+
+object string_2 {
+  def main(args: Array[String]): Unit = {
+
+    var s=
+      """
+        |aaaa
+        |sss
+        |fff
+        |
+        |ffff
+        |
+        |
+        |fffffff
+        |""".stripMargin
+    println(s)
+  }
+
+}
+
+5、数据类型
+package day01
+
+object Type1 {
+  def main(args: Array[String]): Unit = {
+    val a:Unit=0
+    println(a)
+  }
+
+}
+/*
+数据类型:
+
+java:
+    基本数据类型
+        8大基本数据类型:
+            byte   1
+            short  2
+            char   2
+            int    4
+            long   8
+            float  4
+            double 8
+            boolean  1(有的用一个字节, 有的用一位)
+    
+    引用数据类型
+        对象类型
+        除了基本类型, 都是引用类型
+        基本类型=>包装类
+        
+scala
+    所有的数据都是对象!!! 函数也是对象
+
+Any
+    AnyVal
+        Double
+            ...
+        Unit(类型)
+            对应着java中的void
+            只有一个值就是:  ()
+            一般用于方法或函数不需要返回值的时候返回值
+        StringOps
+            看成是String的加强版.
+             当使用java的String时候, 一些没有方法, 会自动从这个类型找(隐式转换)
+             
+    AnyRef
+        
+        null(关键字) 在java中可以给任何的引用类型赋值
+        在scala中:
+            Null
+                是所有的AnyRef的子类型
+                只有一个值: null(其实就是java中的null)
+    
+    Nothing:
+        在scala中, 是所有类型的子类型
+        是一个象征意义, 用于辅助类型推导. 一般用于非正常结束情况下的返回值
+        
+        抛出一个异常
+    
+
+ */
+package day01
+
+object Type2 {
+  def main(args: Array[String]): Unit = {
+    val a:Long=1
+    val b:Double =a
+    println(b)
+
+    val c=1L
+    val long:Long=c.toLong
+    println(long)
+
+    val s="123456"
+    println(s.toInt)
+    println(s.toDouble)
+    println(123.toString)
+
+  }
+
+}
+/*
+值类型之间的转换:
+ Byte
+ Short
+ Long
+ Int
+ Float
+     ...
+       自动转换(提升):
+            byte->short->int->long->float->double
+                   char->int
+                   scala中照样是适用
+       
+       强制转换:
+            java:   (int)1L
+            scala:
+                    .toInt
+                    .toDouble
+                    
+       字符串中, 如果是纯数字, 也可以轻易转换成相应的类型:
+        "123" -> 123
+            java:
+                Integer.parseInt("123")
+            scala:
+                "123".toInt
+                
+        如何转成字符串:
+            123 + ""
+            123.toString
+            
+
+引用类型的转换:
+    遵守面向对象的规则. 多态
+ */
+
+ /*
+面向过程编程:
+    C
+        结构体
+
+面向对象编程:
+    C++
+    java
+    对象
+        属性和方法
+    对象?
+        解决数据和行为的封装问题
+        是数据和行为的集合
+
+函数式编程:
+    更加类似面向过程编程
+    
+    所有的东西都可以看成数据, 函数其实也是一种数据
+    函数式一等公民
+    
+    在科学领域解决数据的运算比较方便, 在工程领域并不是太适合
+    
+    scala 是结合函数式和面向对象的所有优点于一体
+    
+    scala 可以面向对象风格, 也可以面向函数风格, 但是大部分情况都是二者结合起来
+    
+函数式编程:
+    1. 纯函数
+        一个函数只做自己该做的事情, 没有其他的任何的副作用
+        def add(a:Int,b:Int) = { a + b }  // 纯函数
+        def add(a:Int,b:Int) = {println("abc"); a + b } // 不是纯函数
+        val c = 10
+        def add(a:Int,b:Int) = { a + b + c } // 不是纯函数
+        1. 引用透明
+        2. 没有副作用
+            常见的副作用
+                1. 输出
+                2. 写文件到磁盘, 数据等外部存储
+                3. 更改了外部的变量的值
+                
+       过程:
+        只有副作用, 没有返回值(Unit)
+       
+    2. 闭包
+    3. 柯里化
+    4. 高阶函数
+            ...
+*/
+---------------------------------函数和方法的区别---------------------------------
+package com.chenbk.scala
+
+object day2 {
+  def main(args: Array[String]): Unit = {
+    println(add(10, 20))
+    println(add(30, 40))
+    println(add1(70, 80))
+    println(add1(90, 100))
+  }
+  def add(a:Int,b:Int):Int={
+  a+b
+  }
+
+  def add1(d:Int,f:Int)={
+    d+f
+  }
+}
+/*
+函数和方法的区别:
+    绝大部分情况不需要区分, 所以以后, 说函数和方法都没有区别
+
+在scala中如何定义函数(方法):
+    // 函数签名 = 函数体
+    def 函数名(参数列表): 函数的返回值 = {
+        // 尽量不用return
+        // 最后一行代码的值会自动返回
+    }
+    
+
+ */
+
+--------------------------------------------------------------------------------------
+package com.chenbk.scala
+
+object day2 {
+  def main(args: Array[String]): Unit = {
+    println(foo(10, 20, 30))
+    println(foo1(10, 90))
+  }
+   /* println(add(10, 20))
+    println(add(30, 40))
+    println(add1(70, 80))
+    println(add1(90, 100))
+  }
+  def add(a:Int,b:Int):Int={
+  a+b
+  }
+
+  def add1(d:Int,f:Int)={
+    d+f
+  }*/
+
+  def foo(a:Int,c:Int,d:Int)=a+c+d
+  def foo1(a:Int,c:Int,d:Int=90)=a+c+d
+}
+
+
+/*
+1. 函数的返回值类型可以省略, 然后scala会根据最后一行代码, 推导出来函数的返回值类型
+    一般都是省略
+        有些情况不能推导:
+        1. 如何函数内有return语句, 则类型不能推导
+        2. 返回值类型和推导类型不一致的时候, 不要推
+        3. 递归调用的时候不能推
+        
+2. 如果函数签名和函数体之间的 = 省略, 那么这个函数用于返回 Unit (隐式的返回Unit)
+    函数就成了一个过程
+ 
+3. 如果函数显示指明返回Unit, 则用于返回Unit
+
+4. 调用函数的时候, 如果函数的参数的个数是0,则愿括号可以省略
+
+5. 在声明函数时候, 如果不需要参数, 则愿括号也可以省略. 调用时候, 就不能再有愿括号
+
+6. 函数的参数默认都是val, 所以, 在函数内部不能更改参数的值!!!!
+    如果想修改参数的值, 则应该定义一个新的局部变量, 然后去修改局部变量的值!
+    
+7. 声明函数的时候, 参数可以带默认值
+    def add(a:Int, b:Int, c:Int = 3) = a + b + c
+    
+8. 在java和scala中, 默认传递函数参数, 是按照位置来的.
+    scala中一种另外传递参数的方式: 命名参数
+        add(10, c = 100)
+        add(c = 100, a = 10, b = 20)
+ */
+
+-------------------------------------------函数--------------------------------------------
+def add(a:Int,b:Int):Int={
+  a+b
+  }
+
+def 定义函数关键字
+add 函数名
+a b 参数名
+Int 参数类型及函数返回值类型
+a+b 函数体
+{} 可省略
+
+package day02
+
+
+object hangshu {
+  def main(args: Array[String]): Unit = {
+    //函数声明
+    def f(arg:String)={
+      println(arg)
+    }
+    //函数调用
+    f("kangmin")
+
+    def test():Unit={
+      println("无参，无返回值")
+    }
+    test()
+    def test1():String={
+      return "无参，有返回值"
+    }
+    println(test1())
+    //有参，无返回值
+    def test2(s:String):Unit= {
+      println(s)
+    }
+    test2("chenbk")
+   //有参，有返回值
+    def test3(s:String):String={
+      return s+"有参，有返回值"
+    }
+
+    println(test3("min"))
+
+    //多参，无返回值
+    def test5(name:String,age:Int):Unit={
+      println(s"$name, $age")
+    }
+    test5("dalang",40)
+  }
+
+
+}
+------------------------------------------------------------------------
+package day02
+
+object TestFunction {
+  def main(args: Array[String]): Unit = {
+    // 可变参数
+    def test(s:String*):Unit={
+      println(s)
+    }
+    // 有输入参数：输出 Array
+    test("Hello", "Scala")
+
+    // 无输入参数：输出List()
+    test()
+    //如果参数列表中存在多个参数，那么可变参数一般放置在最后
+    def test1(name:String,s:String*):Unit={
+      println(name + "," + s)
+    }
+    test1("chenbk","min")
+
+    //参数默认值
+    def test2(name:String,age:Int=30):Unit={
+      println(s"$name,$age")
+    }
+    // 如果参数传递了值，那么会覆盖默认值
+    test2("chenbk",28)
+    // 如果参数有默认值，在调用的时候，可以省略这个参数
+    test2("chenbk")
+    def test4(sex:String="男",name:String):Unit={
+      println(s"$name,$sex")
+    }
+    //带名参数
+    test4(name="chenbk")
+  }
+}
+
+---------------------------------------------至简原则:能省则省-----------------------
+package day02
+
+object test02 {
+  def main(args: Array[String]): Unit = {
+    //函数标准写法
+    def f1(s:String):String={
+      return s+"chenbk"
+    }
+    println(f1("hello "))
+    // 至简原则:能省则省
+    //return可以省略,scala会使用函数体的最后一行代码作为返回值
+    def f2(s:String):String={
+       s+"chenbk"
+    }
+    println(f2("hello "))
+    //如果函数体只有一行代码，可以省略花括号
+    def f4(s:String) = s + " jinlian"
+    def f5(s:String) = "jinlian"
+    def f6() = " dalang"
+    // 如果函数无参，但是声明参数列表，那么调用时，小括号，可加可不加。
+    println(f6())
+    println(f6)
+    //如果函数没有参数列表，那么小括号可以省略,调用时小括号必须省略
+    def f7="chenbk"
+    var f8="chenbk"
+    println(f8)
+    println(f7)
+   //如果函数明确声明unit，那么即使函数体中使用return关键字也不起作用
+    def f9():Unit={
+      return "abc"
+      "chenbk"
+    }
+    println(f9)
+    println(f9)
+    //scala如果想要自动推断无返回值,可以省略等号
+    // 将无返回值的函数称之为过程
+
+    def f10(): Unit ={
+      "chenbk"
+    }
+
+    println(f10())
+    def f11()={
+      "chenbk"
+    }
+    println(f11)
+
+    //如果不关心名称，只关系逻辑处理，那么函数名（def）可以省略
+    ()->{
+      println("kangmin")
+      val f12=(x:String)=>("wusang")
+    }
+    //如果函数明确使用return关键字，那么函数返回就不能使用自行推断了,需要声明返回值类型
+    def f13():String={
+    return "baobao"
+    }
+
+    println(f13())
+  }
+
+}
+

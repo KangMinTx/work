@@ -1,0 +1,720 @@
+法人许可证登记信息（dwd_zzxk_frxkzdjxx）
+std_qfzggj_t_busi_hbj_xzxkxx (区发展改革局_环保行政许可信息)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，通过统一社会信用代码,组织机构代码，注册号关联条件，补充信息
+union all 
+std_qfzggj_t_busi_cgj_xzxk (区发展改革局_城管局行政许可信息)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，通过主体身份代码关联条件，补充信息
+union all
+std_qfzggj_t_busi_mgj_xzxkxx (区发展改革局_经信委行政许可信息),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过统一社会信用代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_rsj_rlxk (区发展改革局_人力资源服务许可证信息),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过主体身份代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_aic_jlpfxkz (区发展改革局_酒类批发许可证),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过公司名称关联条件，补充信息
+union all 
+std_qfzggj_t_busi_aic_foodjyxk (区发展改革局_食品经营许可信息),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过主体身份代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_ghgtw_jsgcghxkz (区发展改革局_建设工程规划许可证),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过主体身份代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_ghgtw_jsydghxkz (区发展改革局_建设用地规划许可证),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过主体身份代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_wsj_license (区发展改革局_卫生许可证颁发登记信息),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过主体身份代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_czj_xzxkxx (区发展改革局_财政委行政许可信息),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过统一社会信用代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_jtj_dlysjyxkzxx (区发展改革局_道路运输经营许可证信息),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过主体身份代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_mgj_whp (区发展改革局_危化品经营许可信息),取相应的字段
+union all 
+std_qfzggj_t_busi_xfj_xfxk (区发展改革局_消防局行政许可),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过统一社会信用代码关联条件，补充信息
+union all 
+std_qfzggj_t_busi_lyj_xkxx (区发展改革局_文体旅游局行政许可信息),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过主体身份代码关联条件，补充信息
+union all 
+std_qfzggj_dm_sgs_xzxk (区发展改革局_行政许可),左关联法人基本信息(dwd_jbxx_frjcxx)表，通过统一社会信用代码关联条件，补充信息
+
+
+----------------------------------------------------------------------------------法人许可证登记信息----------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-30 16:40:35
+--table_name : dwd_zzxk_frxkzdjxx (法人许可证登记信息)
+--use_tables : std_qfzggj_t_busi_hbj_xzxkxx (区发展改革局_环保行政许可信息)
+--             std_qfzggj_t_busi_cgj_xzxk (区发展改革局_城管局行政许可信息)
+--             std_qfzggj_t_busi_mgj_xzxkxx (区发展改革局_经信委行政许可信息)
+--             std_qfzggj_t_busi_rsj_rlxk (区发展改革局_人力资源服务许可证信息)
+--             std_qfzggj_t_busi_aic_jlpfxkz (区发展改革局_酒类批发许可证)
+--             std_qfzggj_t_busi_aic_foodjyxk (区发展改革局_食品经营许可信息)
+--             std_qfzggj_t_busi_ghgtw_jsgcghxkz (区发展改革局_建设工程规划许可证)
+--             std_qfzggj_t_busi_ghgtw_jsydghxkz (区发展改革局_建设用地规划许可证)
+--             std_qfzggj_t_busi_wsj_license (区发展改革局_卫生许可证颁发登记信息)
+--             std_qfzggj_t_busi_czj_xzxkxx (区发展改革局_财政委行政许可信息)
+--             std_qfzggj_t_busi_jtj_dlysjyxkzxx (区发展改革局_道路运输经营许可证信息)
+--             std_qfzggj_t_busi_mgj_whp (区发展改革局_危化品经营许可信息)
+--             std_qfzggj_t_busi_xfj_xfxk (区发展改革局_消防局行政许可)
+--             std_qfzggj_t_busi_lyj_xkxx (区发展改革局_文体旅游局行政许可信息)
+--             std_qfzggj_dm_sgs_xzxk (区发展改革局_行政许可)
+--取数逻辑   ： 从各表中取出对应字段，关联法人基本信息表，补充缺失法人基本信息
+
+--_********************************************************_
+
+insert overwrite table dwd_zzxk_frxkzdjxx partition (dt='${DayBeforeStartTime}')
+
+select
+uuid    --主键
+,tyshxydm    --统一社会信用代码
+,ztsfdm    --主体身份代码
+,zzjgdm    --组织机构代码
+,zch    --登记/注册号
+,gsmc    --公司名称
+,xzxkjdwsh    --文书号
+,xzxkjdwsmc    --许可名称
+,sxbm    --事项编码
+,xmmc    --项目名称
+,spzt    --审批状态
+,xkjg    --许可机构
+,xknr    --许可内容
+,if(length(yxrqzhi)=8,substr(yxrqzhi,1,4) || '-' || substr(yxrqzhi,5,2) || '-' || substr(yxrqzhi,7,2) || ' 00:00:00',if(length(yxrqzhi)=19,yxrqzhi,'')) yxrqzhi    --有效日期至
+,if(length(yxrqzi)=10,yxrqzi || ' 00:00:00',yxrqzi) yxrqzi    --有效日期自
+,if(length(xkjdrq)=10,xkjdrq || ' 00:00:00',xkjdrq) xkjdrq    --许可决定日期
+,lyb    --来源表
+,lyjg    --来源机构
+,yxsj    --运行时间
+
+
+from
+(
+/*std_qfzggj_t_busi_hbj_xzxkxx 
+区发展改革局_环保行政许可信息
+*/
+select 
+uuid() as uuid --主键
+,nvl(nvl(nvl(t4.tyshxydm,t3.tyshxydm),t2.tyshxydm),t1.xk_xdr_shxym) as tyshxydm --统一社会信用代码
+,nvl(nvl(t4.lgl_id,t3.lgl_id),t2.LGL_ID) as ztsfdm --主体身份代码
+,nvl(nvl(t4.zzjgdm,t2.zzjgdm),t1.xk_xdr_zdm) as zzjgdm --组织机构代码
+,nvl(nvl(t3.zch,t2.zch),t1.xk_xdr_gsdj) as zch --登记/注册号
+,nvl(nvl(t4.lgl_name,t3.lgl_name),t2.lgl_name) as gsmc --公司名称
+,t1.xk_wsh as xzxkjdwsh --文书号
+,'环保行政许可' as xzxkjdwsmc --许可名称
+,t1.sxbm as sxbm --事项编码
+,t1.xk_xmmc as xmmc --项目名称
+,t1.xk_zt as spzt --审批状态
+,t1.xk_xzjg as xkjg --许可机构
+,t1.xk_nr as xknr --许可内容
+,substr(t1.xk_jzq,1,10) as yxrqzhi --有效日期至
+,substr(t1.xk_sxq,1,10) as yxrqzi --有效日期自
+,substr(t1.fzrq,1,10) as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_hbj_xzxkxx' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select xk_xdr_shxym,xk_xdr_zdm,xk_xdr_gsdj,xk_wsh,sxbm,xk_xmmc,xk_zt,xk_xzjg,xk_nr,xk_jzq,xk_sxq,fzrq,lyjg,row_number() over(partition by xk_xh order by xk_xdr_gsdj desc) rn from std_qfzggj_t_busi_hbj_xzxkxx 
+where dt=(select max(dt) from std_qfzggj_t_busi_hbj_xzxkxx)) t1
+left join 
+(select LGL_ID,tyshxydm,LGL_NAME,zzjgdm,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2 
+on trim(t1.xk_xdr_shxym) = trim(t2.tyshxydm)
+left join 
+(select LGL_ID,tyshxydm,LGL_NAME,zzjgdm,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on trim(t1.xk_xdr_zdm) = trim(t3.zzjgdm)
+left join 
+(select LGL_ID,tyshxydm,LGL_NAME,zzjgdm,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t4
+on trim(t1.xk_xdr_gsdj) = trim(t4.zch)
+ where t1.rn=1
+union ALL
+
+/*
+std_qfzggj_t_busi_cgj_xzxk
+区发展改革局_城管局行政许可信息
+*/
+select
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,nvl(t2.zzjgdm,t1.zzjgdm) as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,t2.LGL_NAME as gsmc --公司名称
+,t1.zzbh as xzxkjdwsh --文书号
+,null as xzxkjdwsmc --许可名称
+,t1.spsx as sxbm --事项编码
+,null as xmmc --项目名称
+,null as spzt --审批状态
+,null as xkjg --许可机构
+,t1.zzmc as xknr --许可内容
+,substr(t1.zzyxqx,1,10) as yxrqzhi --有效日期至
+,substr(t1.czrq,1,10) as yxrqzi --有效日期自
+,substr(t1.czrq,1,10) as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_cgj_xzxk' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from std_qfzggj_t_busi_cgj_xzxk t1
+left join 
+(select LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2 
+on trim(t1.aicentcode)=trim(t2.LGL_ID)
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_cgj_xzxk)
+
+union all
+
+/*
+std_qfzggj_t_busi_mgj_xzxkxx
+区发展改革局_经信委行政许可信息
+
+*/
+select 
+uuid() as uuid --主键
+,t1.xk_xdr_shxym as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,t1.xk_xdr_zdm as zzjgdm --组织机构代码
+,t1.xk_xdr_gsdj as zch --登记/注册号
+,t2.LGL_NAME as gsmc --公司名称
+,t1.xk_wsh as xzxkjdwsh --文书号
+,null as xzxkjdwsmc --许可名称
+,t1.sxbm as sxbm --事项编码
+,t1.xk_xmmc as xmmc --项目名称
+,t1.xk_zt as spzt --审批状态
+,t1.xk_xzjg as xkjg --许可机构
+,t1.xk_nr as xknr --许可内容
+,t1.zzyxqx as yxrqzhi --有效日期至
+,substr(t1.fzrq,1,10) as yxrqzi --有效日期自
+,substr(t1.xk_jdrq,1,10) as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_mgj_xzxkxx' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from std_qfzggj_t_busi_mgj_xzxkxx t1
+left JOIN
+(select LGL_ID,tyshxydm,LGL_NAME,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2 
+on trim(t1.xk_xdr_shxym)=trim(t2.tyshxydm)
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_mgj_xzxkxx)
+
+union all
+
+/*std_qfzggj_t_busi_rsj_rlxk
+区发展改革局_人力资源服务许可证信息
+*/
+SELECT  uuid()                       AS uuid --主键 
+       ,t2.tyshxydm                  AS tyshxydm --统一社会信用代码 
+       ,t1.aicentcode                AS ztsfdm --主体身份代码 
+       ,t2.zzjgdm                    AS zzjgdm --组织机构代码 
+       ,t2.zch                       AS zch --登记/注册号 
+       ,t1.entname                   AS gsmc --公司名称 
+       ,t1.zsbh                      AS xzxkjdwsh --文书号 
+       ,'人力资源服务许可证'                  AS xzxkjdwsmc --许可名称 
+       ,null                         AS sxbm --事项编码 
+       ,null                         AS xmmc --项目名称 
+       ,null                         AS spzt --审批状态 
+       ,null                         AS xkjg --许可机构 
+       ,null                         AS xknr --许可内容 
+       ,t1.dqdate                    AS yxrqzhi --有效日期至 
+       ,CASE WHEN fzdate like '%/%' THEN to_date(substr(to_date(fzdate,'mm/dd/yyyy'),1,4)||'-'||substr(fzdate,1,instr(fzdate,'/')-1)||'-'||substr(substr(fzdate,instr(fzdate,'/')+1),1,instr(substr(fzdate,instr(fzdate,'/')+1),'/')-1)) ELSE fzdate END AS yxrqzi --有效日期自 
+       ,CASE WHEN fzdate like '%/%' THEN to_date(substr(to_date(fzdate,'mm/dd/yyyy'),1,4)||'-'||substr(fzdate,1,instr(fzdate,'/')-1)||'-'||substr(substr(fzdate,instr(fzdate,'/')+1),1,instr(substr(fzdate,instr(fzdate,'/')+1),'/')-1)) ELSE fzdate END AS xkjdrq --许可决定日期 
+       ,'std_qfzggj_t_busi_rsj_rlxk' AS lyb --来源表 
+       ,t1.lyjg                      AS lyjg --来源机构 
+       ,CURRENT_TIMESTAMP            AS yxsj --运行时间
+FROM 
+
+(select aicentcode,entname,zsbh,dqdate,fzdate,lyjg,row_number() over(partition by aicentcode,entname,zsbh,dqdate,fzdate,lyjg order by dqdate,scfzdate desc) rn 
+ from std_qfzggj_t_busi_rsj_rlxk where dt=(select max(dt) from std_qfzggj_t_busi_rsj_rlxk))  t1
+LEFT JOIN 
+(
+	SELECT  LGL_ID,tyshxydm
+	       ,LGL_NAME
+	       ,zch
+	       ,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.aicentcode)=trim(t2.LGL_ID) 
+where t1.rn=1
+
+union ALL
+/*
+05
+std_qfzggj_t_busi_aic_jlpfxkz
+区发展改革局_酒类批发许可证
+*/
+
+select 
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t2.LGL_ID as ztsfdm --主体身份代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,t1.entname as gsmc --公司名称
+,t1.aicentcode as xzxkjdwsh --文书号
+,null as xzxkjdwsmc --许可名称
+,null as sxbm --事项编码
+,null as xmmc --项目名称
+,null as spzt --审批状态
+,t1.issauth as xkjg --许可机构
+,null as xknr --许可内容
+,substr(t1.valto,1,10) as yxrqzhi --有效日期至
+,substr(t1.isscarddate,1,10) as yxrqzi --有效日期自
+,substr(t1.isscarddate,1,10) as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_aic_jlpfxkz' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select entname,aicentcode,issauth,valto,isscarddate,isscarddate,lyjg,row_number() over(partition by entname,aicentcode,issauth,valto,isscarddate,isscarddate,lyjg order by issauth,valto desc) rn from  std_qfzggj_t_busi_aic_jlpfxkz 
+where dt=(select max(dt) from std_qfzggj_t_busi_aic_jlpfxkz)
+) t1
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.entname)=trim(t2.LGL_NAME)  
+where t1.rn=1
+
+union ALL
+
+/*
+06
+std_qfzggj_t_busi_aic_foodjyxk
+区发展改革局_食品经营许可信息
+*/
+
+select 
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t1.ent_id as ztsfdm --主体身份代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t1.ent_reg_no as zch --登记/注册号
+,t1.ent_name as gsmc --公司名称
+,t1.license_no as xzxkjdwsh --文书号
+,'食品经营许可' as xzxkjdwsmc --许可名称
+,null as sxbm --事项编码
+,null as xmmc --项目名称
+,null as spzt --审批状态
+,t1.certification_organ_name as xkjg --许可机构
+,t1.license_name as xknr --许可内容
+,t1.validity_to as yxrqzhi --有效日期至
+,t1.validity_from as yxrqzi --有效日期自
+,t1.judge_date as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_aic_foodjyxk' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select ent_id,ent_reg_no,ent_name,license_no,certification_organ_name,license_name,validity_to,validity_from,judge_date,lyjg
+ ,row_number() over(PARTITION by ent_id,ent_reg_no,ent_name,license_no,certification_organ_name,license_name,validity_to,validity_from,judge_date,lyjg order by ent_reg_no,ent_name desc) rn from  std_qfzggj_t_busi_aic_foodjyxk t1
+where dt=(select max(dt) from std_qfzggj_t_busi_aic_foodjyxk) ) t1
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.ent_id)=trim(t2.LGL_ID)  
+where t1.rn=1
+
+union ALL
+
+/*
+07
+std_qfzggj_t_busi_ghgtw_jsgcghxkz
+区发展改革局_建设工程规划许可证
+*/
+
+select 
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,t1.unit_name as gsmc --公司名称
+,t1.license_no as xzxkjdwsh --文书号
+,'建设工程规划许可证' as xzxkjdwsmc --许可名称
+,null as sxbm --事项编码
+,null as xmmc --项目名称
+,null as spzt --审批状态
+,null as xkjg --许可机构
+,null as xknr --许可内容
+,null as yxrqzhi --有效日期至
+,to_date('20'
+||substr( substr( substr(license_data,instr(license_data,'-')+1) , instr(substr(license_data,instr(license_data,'-')+1),'月')+1  ) , instr(substr( substr(license_data,instr(license_data,'-')+1)  ,  instr(substr(license_data,instr(license_data,'-')+1),'月')+1  ),'-'  ) +1 )
+||'-'||substr( substr(license_data,instr(license_data,'-')+1)  ,1,   instr(substr(license_data,instr(license_data,'-')+1),'月')-1   ) ||'-'||substr(license_data,1,instr(license_data,'-')-1) )
+ as yxrqzi --有效日期自
+,null as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_ghgtw_jsgcghxkz' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select aicentcode,unit_name,license_no,license_data,lyjg
+ ,row_number() over(partition by aicentcode,unit_name,license_no,license_data,lyjg order by  license_no desc) rn from std_qfzggj_t_busi_ghgtw_jsgcghxkz
+where dt=(select max(dt) from std_qfzggj_t_busi_ghgtw_jsgcghxkz) ) t1
+ left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.aicentcode)=trim(t2.LGL_ID)  
+where t1.rn=1
+
+union all
+
+/*
+08
+std_qfzggj_t_busi_ghgtw_jsydghxkz
+区发展改革局_建设用地规划许可证
+*/
+
+select
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,t1.unit_name as gsmc --公司名称
+,t1.lu_permission_no as xzxkjdwsh --文书号
+,'建设用地规划许可证' as xzxkjdwsmc --许可名称
+,null as sxbm --事项编码
+,t1.lu_proj_title as xmmc --项目名称
+,null as spzt --审批状态
+,null as xkjg --许可机构
+,null as xknr --许可内容
+,null as yxrqzhi --有效日期至
+,case when substr( substr( substr(issue_data,instr(issue_data,'-')+1) , instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ) , instr(substr( substr(issue_data,instr(issue_data,'-')+1)  ,  instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ),'-'  ) +1 )
+>'20' then 
+to_date('19'
+||substr( substr( substr(issue_data,instr(issue_data,'-')+1) , instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ) , instr(substr( substr(issue_data,instr(issue_data,'-')+1)  ,  instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ),'-'  ) +1 )
+||'-'||substr( substr(issue_data,instr(issue_data,'-')+1)  ,1,   instr(substr(issue_data,instr(issue_data,'-')+1),'月')-1   ) ||'-'||substr(issue_data,1,instr(issue_data,'-')-1) )
+else 
+to_date('20'
+||substr( substr( substr(issue_data,instr(issue_data,'-')+1) , instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ) , instr(substr( substr(issue_data,instr(issue_data,'-')+1)  ,  instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ),'-'  ) +1 )
+||'-'||substr( substr(issue_data,instr(issue_data,'-')+1)  ,1,   instr(substr(issue_data,instr(issue_data,'-')+1),'月')-1   ) ||'-'||substr(issue_data,1,instr(issue_data,'-')-1) )
+end
+as yxrqzi --有效日期自
+,case when substr( substr( substr(issue_data,instr(issue_data,'-')+1) , instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ) , instr(substr( substr(issue_data,instr(issue_data,'-')+1)  ,  instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ),'-'  ) +1 )
+>'20' then 
+to_date('19'
+||substr( substr( substr(issue_data,instr(issue_data,'-')+1) , instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ) , instr(substr( substr(issue_data,instr(issue_data,'-')+1)  ,  instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ),'-'  ) +1 )
+||'-'||substr( substr(issue_data,instr(issue_data,'-')+1)  ,1,   instr(substr(issue_data,instr(issue_data,'-')+1),'月')-1   ) ||'-'||substr(issue_data,1,instr(issue_data,'-')-1) )
+else 
+to_date('20'
+||substr( substr( substr(issue_data,instr(issue_data,'-')+1) , instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ) , instr(substr( substr(issue_data,instr(issue_data,'-')+1)  ,  instr(substr(issue_data,instr(issue_data,'-')+1),'月')+1  ),'-'  ) +1 )
+||'-'||substr( substr(issue_data,instr(issue_data,'-')+1)  ,1,   instr(substr(issue_data,instr(issue_data,'-')+1),'月')-1   ) ||'-'||substr(issue_data,1,instr(issue_data,'-')-1) )
+end as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_ghgtw_jsydghxkz' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select aicentcode,unit_name,lu_permission_no,lu_proj_title,issue_data,issue_data,lyjg,row_number() over(partition by aicentcode order by issue_data desc ) rn from std_qfzggj_t_busi_ghgtw_jsydghxkz
+where dt=(select max(dt) from std_qfzggj_t_busi_ghgtw_jsydghxkz)) t1
+ left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.aicentcode)=trim(t2.LGL_ID)  
+where t1.rn=1
+
+union ALL
+/*
+09
+std_qfzggj_t_busi_wsj_license
+区发展改革局_卫生许可证颁发登记信息
+*/
+
+select 
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,nvl(t2.zzjgdm,t1.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t1.zch) as zch --登记/注册号
+,t1.entname as gsmc --公司名称
+,t1.licnum as xzxkjdwsh --文书号
+,'卫生许可证' as xzxkjdwsmc --许可名称
+,null as sxbm --事项编码
+,t1.licnxm as xmmc --项目名称
+,null as spzt --审批状态
+,null as xkjg --许可机构
+,t1.licname as xknr --许可内容
+,substr(t1.yxqx,1,10) as yxrqzhi --有效日期至
+,substr(t1.yxqq,1,10) as yxrqzi --有效日期自
+,substr(t1.licdate,1,10) as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_wsj_license' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select aicentcode,zzjgdm,zch,entname,licnum,licnxm,licname,yxqx,yxqq,licdate,lyjg
+ ,row_number() over(partition by aicentcode,zzjgdm,zch,entname,licnum,licnxm,licname,yxqx,yxqq,licdate order by zzjgdm desc) rn from std_qfzggj_t_busi_wsj_license
+where dt=(select max(dt) from std_qfzggj_t_busi_wsj_license)) t1
+ left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.aicentcode)=trim(t2.LGL_ID)  
+where t1.rn=1
+
+union all
+/*
+10
+std_qfzggj_t_busi_czj_xzxkxx
+区发展改革局_财政委行政许可信息
+*/
+select 
+uuid() as uuid --主键
+,nvl(t1.xk_xdr_shxym,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t2.LGL_ID,t3.LGL_ID) as ztsfdm --主体身份代码
+,nvl(t2.zzjgdm,t1.xk_xdr_zdm) as zzjgdm --组织机构代码
+,nvl(nvl(t2.zch,t3.zch),t1.xk_xdr_gsdj) as zch --登记/注册号
+,nvl(t2.LGL_NAME,t3.LGL_NAME) as gsmc --公司名称
+,t1.xk_wsh as xzxkjdwsh --文书号
+,'财政委行政许可' as xzxkjdwsmc --许可名称
+,t1.sxbm as sxbm --事项编码
+,t1.xk_xmmc as xmmc --项目名称
+,null as spzt --审批状态
+,'财政委' as xkjg --许可机构
+,t1.xk_nr as xknr --许可内容
+,substr(t1.xk_jzq,1,10) as yxrqzhi --有效日期至
+,substr(t1.fzrq,1,10) as yxrqzi --有效日期自
+,substr(t1.xk_jdrq,1,10) as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_czj_xzxkxx' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select xk_xdr_shxym,xk_xdr_zdm,xk_xdr_gsdj,xk_wsh,sxbm,xk_xmmc,xk_nr,xk_jzq,fzrq,xk_jdrq,lyjg
+,row_number() over(partition by xk_xdr_shxym,xk_xdr_zdm,xk_xdr_gsdj,xk_wsh,sxbm,xk_xmmc,xk_nr,xk_jzq,fzrq,xk_jdrq order by xk_xdr_zdm desc ) rn from std_qfzggj_t_busi_czj_xzxkxx
+where dt=(select max(dt) from std_qfzggj_t_busi_czj_xzxkxx)) t1
+ left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.xk_xdr_shxym)=trim(t2.tyshxydm)  
+ left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t3
+ON trim(t1.xk_xdr_zdm)=trim(t3.zzjgdm)  
+where t1.rn=1
+
+union ALL
+/*
+11
+std_qfzggj_t_busi_jtj_dlysjyxkzxx
+区发展改革局_道路运输经营许可证信息
+*/
+select 
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,t2.LGL_NAME as gsmc --公司名称
+,t1.jingyingxukezhenghao as xzxkjdwsh --文书号
+,'道路运输经营许可证' as xzxkjdwsmc --许可名称
+,null as sxbm --事项编码
+,null as xmmc --项目名称
+,null as spzt --审批状态
+,null as xkjg --许可机构
+,substr(t1.fazhengyuanyin,1,10) as xknr --许可内容
+,substr(t1.youxiaoqi,1,10) as yxrqzhi --有效日期至
+,substr(t1.fazhengriqi,1,10) as yxrqzi --有效日期自
+,null as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_jtj_dlysjyxkzxx' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select aicentcode,jingyingxukezhenghao,fazhengyuanyin,youxiaoqi,fazhengriqi,lyjg
+,row_number() over(partition by aicentcode,jingyingxukezhenghao,fazhengyuanyin,youxiaoqi,fazhengriqi order by jingyingxukezhenghao desc) rn from std_qfzggj_t_busi_jtj_dlysjyxkzxx 
+where dt=(select max(dt) from std_qfzggj_t_busi_jtj_dlysjyxkzxx))t1
+ left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.aicentcode)=trim(t2.LGL_ID)  
+where t1.rn=1
+
+union ALL
+
+/*
+12
+std_qfzggj_t_busi_mgj_whp
+区发展改革局_危化品经营许可信息
+*/
+select 
+uuid() as uuid --主键
+,t1.tyshxydm as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,t1.zzjgdm as zzjgdm --组织机构代码
+,t1.zch as zch --登记/注册号
+,t1.entname as gsmc --公司名称
+,t1.xh as xzxkjdwsh --文书号
+,'危化品经营许可' as xzxkjdwsmc --许可名称
+,null as sxbm --事项编码
+,null as xmmc --项目名称
+,null as spzt --审批状态
+,null as xkjg --许可机构
+,t1.whp as xknr --许可内容
+,null as yxrqzhi --有效日期至
+,null as yxrqzi --有效日期自
+,substr(t1.fzdate,1,10) as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_mgj_whp' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select tyshxydm,aicentcode,zzjgdm,zch,entname,xh,whp,lyjg,fzdate
+,row_number() over(partition by tyshxydm,aicentcode,zzjgdm,zch,entname,xh,whp,lyjg,fzdate order by tyshxydm,aicentcode) rn from std_qfzggj_t_busi_mgj_whp
+where dt=(select max(dt) from std_qfzggj_t_busi_mgj_whp ) ) t1
+where t1.rn=1
+
+union ALL
+
+/*
+13
+std_qfzggj_t_busi_xfj_xfxk
+区发展改革局_消防局行政许可
+
+*/
+select 
+uuid() as uuid --主键
+,t1.xk_xdr_shxym as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,t1.xk_xdr_zdm as zzjgdm --组织机构代码
+,t1.xk_xdr_gsdj as zch --登记/注册号
+,t2.LGL_NAME as gsmc --公司名称
+,t1.xk_wsh as xzxkjdwsh --文书号
+,'消防局行政许可' as xzxkjdwsmc --许可名称
+,t1.sxbm as sxbm --事项编码
+,t1.xk_xmmc as xmmc --项目名称
+,t1.xk_zt as spzt --审批状态
+,t1.xk_xzjg as xkjg --许可机构
+,t1.xk_nr as xknr --许可内容
+,case when substr( substr( substr(xk_jzq,instr(xk_jzq,'-')+1) , instr(substr(xk_jzq,instr(xk_jzq,'-')+1),'月')+1  ) , instr(substr( substr(xk_jzq,instr(xk_jzq,'-')+1)  ,  instr(substr(xk_jzq,instr(xk_jzq,'-')+1),'月')+1  ),'-'  ) +1 )
+>'20' then 
+to_date('19'
+||substr( substr( substr(xk_jzq,instr(xk_jzq,'-')+1) , instr(substr(xk_jzq,instr(xk_jzq,'-')+1),'月')+1  ) , instr(substr( substr(xk_jzq,instr(xk_jzq,'-')+1)  ,  instr(substr(xk_jzq,instr(xk_jzq,'-')+1),'月')+1  ),'-'  ) +1 )
+||'-'||substr( substr(xk_jzq,instr(xk_jzq,'-')+1)  ,1,   instr(substr(xk_jzq,instr(xk_jzq,'-')+1),'月')-1   ) ||'-'||substr(xk_jzq,1,instr(xk_jzq,'-')-1) )
+else 
+to_date('20'
+||substr( substr( substr(xk_jzq,instr(xk_jzq,'-')+1) , instr(substr(xk_jzq,instr(xk_jzq,'-')+1),'月')+1  ) , instr(substr( substr(xk_jzq,instr(xk_jzq,'-')+1)  ,  instr(substr(xk_jzq,instr(xk_jzq,'-')+1),'月')+1  ),'-'  ) +1 )
+||'-'||substr( substr(xk_jzq,instr(xk_jzq,'-')+1)  ,1,   instr(substr(xk_jzq,instr(xk_jzq,'-')+1),'月')-1   ) ||'-'||substr(xk_jzq,1,instr(xk_jzq,'-')-1) )
+end as yxrqzhi --有效日期至
+,substr(t1.xk_sxq,1,10) as yxrqzi --有效日期自
+,substr(t1.fzrq,1,10) as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_xfj_xfxk' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select xk_xdr_shxym,aicentcode,xk_xdr_zdm,xk_xdr_gsdj,xk_wsh,sxbm,xk_xmmc,xk_zt,xk_xzjg,xk_nr,xk_jzq,xk_sxq,fzrq,lyjg 
+,row_number() over(partition by xk_xdr_shxym,aicentcode,xk_xdr_zdm,xk_xdr_gsdj,xk_wsh,sxbm,xk_xmmc,xk_zt,xk_xzjg,xk_nr,xk_jzq,xk_sxq,fzrq order by fzrq desc) rn from std_qfzggj_t_busi_xfj_xfxk 
+where dt=(select max(dt) from std_qfzggj_t_busi_xfj_xfxk) ) t1
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.aicentcode)=trim(t2.LGL_ID)  
+where t1.rn=1
+
+union ALL
+/*
+14
+std_qfzggj_t_busi_lyj_xkxx
+区发展改革局_文体旅游局行政许可信息
+*/
+select 
+uuid() as uuid --主键
+,t1.xk_xdr_shxym as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,nvl(t1.xk_xdr_zdm,t2.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t1.xk_xdr_gsdj,t2.zch) as zch --登记/注册号
+,t2.lgl_name as gsmc --公司名称
+,t1.xk_wsh as xzxkjdwsh --文书号
+,'文体旅游局行政许可' as xzxkjdwsmc --许可名称
+,t1.sxbm as sxbm --事项编码
+,t1.xk_xmmc as xmmc --项目名称
+,null as spzt --审批状态
+,'文体旅游局' as xkjg --许可机构
+,t1.xk_nr as xknr --许可内容
+,substr(t1.xk_jzq,1,10) as yxrqzhi --有效日期至
+,substr(t1.fzrq,1,10) as yxrqzi --有效日期自
+,substr(t1.xk_jdrq,1,10) as xkjdrq --许可决定日期
+,'std_qfzggj_t_busi_lyj_xkxx' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(SELECT   xk_xdr_shxym,aicentcode,xk_xdr_zdm,xk_xdr_gsdj,xk_wsh,sxbm,xk_xmmc,xk_nr,xk_jzq,fzrq,xk_jdrq,lyjg
+       ,row_number() over(partition by xk_xdr_shxym,aicentcode,xk_xdr_zdm,xk_xdr_gsdj,xk_wsh,sxbm,xk_xmmc,xk_nr,xk_jzq,fzrq,xk_jdrq order by xk_wsh desc) rn FROM std_qfzggj_t_busi_lyj_xkxx 
+where dt=(select max(dt) from std_qfzggj_t_busi_lyj_xkxx )) t1
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.aicentcode)=trim(t2.LGL_ID)  
+where t1.rn=1
+
+union ALL
+/*
+15
+std_qfzggj_dm_sgs_xzxk
+区发展改革局_行政许可
+*/
+select 
+uuid() as uuid --主键
+,t1.tyshxydm as tyshxydm --统一社会信用代码
+,t2.lgl_id as ztsfdm --主体身份代码
+,nvl(t2.zzjgdm,t1.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t1.gszch) as zch --登记/注册号
+,t2.lgl_name as gsmc --公司名称
+,t1.xzxkjdwsh as xzxkjdwsh --文书号
+,t1.xkzsmc as xzxkjdwsmc --许可名称
+,null as sxbm --事项编码
+,null as xmmc --项目名称
+,t1.approvalstate_mc as spzt --审批状态
+,null as xkjg --许可机构
+,null as xknr --许可内容
+,null as yxrqzhi --有效日期至
+,null as yxrqzi --有效日期自
+,null as xkjdrq --许可决定日期
+,'std_qfzggj_dm_sgs_xzxk' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from 
+(select tyshxydm,zzjgdm,gszch,xzxkjdwsh,xkzsmc,approvalstate,approvalstate_mc,lyjg
+,row_number() over(partition by tyshxydm,zzjgdm,gszch,xzxkjdwsh,xkzsmc,approvalstate,approvalstate_mc order by approvalstate desc) rn  from std_qfzggj_dm_sgs_xzxk
+where dt=(select max(dt) from std_qfzggj_dm_sgs_xzxk) ) t1
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2
+ON trim(t1.tyshxydm)=trim(t2.tyshxydm)  
+where t1.rn=1
+
+)
+

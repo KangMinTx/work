@@ -1,0 +1,87 @@
+事故隐患（dm_jk_frfm_sgyh）
+以事故隐患_事故信息（dwd_sgxx）为主，左关联dwd_frdzxx（法人地址），左关联dwd_jbxx_frjcxx(法人基本信息)，取相应的字段
+------------------------------------------------------------------DM事故隐患----------------------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-15 22:38:22
+--0119 He 新增两个字段 社区名称（sqmc），街道名称（jdmc） 取值来自于 法人地址信息表
+--_********************************************************_
+truncate table dm_jk_frfm_sgyh;
+insert into table dm_jk_frfm_sgyh  
+SELECT  uuid() agency_key --代理主键 
+       ,nvl(b4.lgl_id,b2.ztsfdm) --主体身份代码 
+       ,nvl(b4.tyshxydm,b2.tyshxydm) --统一社会信用代码 
+       ,nvl(b4.lgl_name,b2.frmc) --法人名称/字号 
+       ,b2.xzcfjdwsh --行政处罚决定书文号 
+       ,b2.sgfsdd --事故发生地点 
+       ,to_date(b2.sgfssj) --事故发生时间 
+       ,b2.sw			--死亡（含失踪或下落不明）
+	   ,b2.zsrs			--重伤人数
+	   ,b2.jxgyzdrs		--急性工业中毒人数
+	   ,b2.qsrs			--轻伤人数
+	   ,b2.swrshj		--伤亡人数合计
+	   ,b2.bqddsw		--不确定的死亡（含失踪或下落不明）
+	   ,b2.bqddzsrs		--不确定的重伤人数
+	   ,b2.bqddjxgyzd	--不确定的急性工业中毒
+	   ,b2.bqddqssrs	--不确定的轻伤伤人数
+	   ,b2.bqddswrshj	--不确定的伤亡人数合计
+	   ,b2.sgjjss		--事故经济损失
+	   ,b2.sgdj			--事故等级
+	   ,b2.sglxdm		--事故类型代码
+	   ,b2.sglx			--事故类型
+	   ,b2.sgyy			--事故原因
+	   ,b2.qyw			--起因物
+	   ,b2.zhw			--致害物
+	   ,b2.baqxw		--不安全行为
+	   ,b2.baqzt		--不安全状态
+	   ,b2.sggk		--事故概况
+	   ,to_date(b2.xgsj)		--修改时间
+       ,'事故隐患' fmxxlb --负面信息类别 
+       ,b3.sqcode sqdm --社区代码 
+	   ,b3.sqname sqmc --社区名称
+       ,b3.jdbm jddm --街道代码 
+	   ,b3.jdmc jdmc --街道名称
+       ,b2.lyjg lyjg --来源机构
+       ,current_timestamp yxsj --运行时间 
+from (
+  (
+		SELECT  tyshxydm --统一社会信用代码 
+       ,ztsfdm --主体身份代码 
+       ,gsmc AS frmc --法人名称/字号 
+       ,xzcfjdwsh --行政处罚决定书文号 
+       ,sgfsdd --事故发生地点 
+       ,sgfssj --事故发生时间 
+       ,sw			--死亡（含失踪或下落不明）
+	   ,zsrs		--重伤人数
+	   ,jxgyzdrs	--急性工业中毒人数
+	   ,qsrs		--轻伤人数
+	   ,swrshj		--伤亡人数合计
+	   ,bqddsw		--不确定的死亡（含失踪或下落不明）
+	   ,bqddzsrs	--不确定的重伤人数
+	   ,bqddjxgyzd	--不确定的急性工业中毒
+	   ,bqddqssrs	--不确定的轻伤伤人数
+	   ,bqddswrshj	--不确定的伤亡人数合计
+	   ,sgjjss		--事故经济损失
+	   ,sgdj		--事故等级
+	   ,sglxdm		--事故类型代码
+	   ,sglx		--事故类型
+	   ,sgyy		--事故原因
+	   ,qyw			--起因物
+	   ,zhw			--致害物
+	   ,baqxw		--不安全行为
+	   ,baqzt		--不安全状态
+	   ,sggk		--事故概况
+	   ,xgsj		--修改时间
+       ,lyjg        --来源机构
+	   ,row_number() over(partition by tyshxydm,gsmc order by sgfssj desc) rn
+    FROM dwd_sgxx
+		where dt =(select max(dt) from dwd_sgxx ) 
+) b2 
+left join ( select DISTINCT tyshxydm,sqcode,jdbm,zh,sqname,jdmc from  dwd_frdzxx where dt=(select max(dt) from dwd_frdzxx)) b3
+on  trim(b2.frmc)=trim(b3.zh)
+left join ( select DISTINCT tyshxydm,lgl_id,lgl_name from  dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b4
+on  trim(b2.frmc)=trim(b4.lgl_name)
+)
+where b2.rn=1 and nvl(b4.tyshxydm,b2.tyshxydm) is not null;
+

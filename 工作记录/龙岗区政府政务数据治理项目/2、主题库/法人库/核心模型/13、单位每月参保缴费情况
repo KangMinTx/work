@@ -1,0 +1,29 @@
+单位每月参保缴费情况（dm_frk_dwmycbjfqk）
+以法人社保基本信息（dwd_jbxx_frsbjbxx）为基础，取相应的字段，得到单位每月参保缴费情况（dm_frk_dwmycbjfqk）
+
+----------------------------------------------------DM单位每月参保缴费情况------------------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2021-01-13 14:32:16
+--_********************************************************_
+insert overwrite table dm_frk_dwmycbjfqk
+select
+tyshxydm dwbh              ,--单位编号
+zzjgdm zzjgdm              ,--组织机构代码
+gsmc dwmc              ,--单位名称
+lc_flag gscbqk              ,--工伤参保情况
+kc_flag ylcbqk              ,--医疗参保情况
+jc_flag syucbqk              ,--生育参保情况
+ic_flag ylsbqk              ,--养老参保情况
+account_flag dzzt              ,--到账状态
+account_year jfdzn              ,--缴费到账年
+account_month jfdzy              ,--缴费到账月
+account_date jfdzr              ,--缴费到账日
+stayear tbqsn              ,--投保起始年
+stamonth tbqsy              ,--投保起始月
+stastatus sbzt              ,--社保状态
+null bz              ,--备注
+substr(now(),1,19) yxsj              ,--数据运行时间
+mc_flag syecbqk              --失业参保情况
+from (select * from dwd_jbxx_frsbjbxx where dt=(select max(dt) from dwd_jbxx_frsbjbxx))b1;

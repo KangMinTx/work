@@ -1,0 +1,4 @@
+select SUM(TS) ,month from   lgfrk.dm_jk_frfm_ymx_dtl   where  jdmc='坂田'  and  substr(month,1,4)=substr(now(),1,4)
+group by month;
+
+主要为了查看龙岗区坂田法人负面信息的条数，并形成一张表

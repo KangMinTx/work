@@ -1,0 +1,12 @@
+一、日常运维（1、法人负面、一企一档接口整体运行情况。2、2021-11-08源表数据量统计和法人负面统计详情 3、疫情支撑相关 4、查看运维大盘调度执行情况等）
+2021-11-09
+有两个调度出错，都是字段长度不够，需要在源表增加长度：1、调度名称_dm_frzz_gxqysj_to_jd 2、DM法人基本信息_增量_达梦
+达梦数据库
+alter table DM_JBXX_FRJCXX_BM modify JYDZ varchar2(1000);
+alter table DM_JBXX_FRJCXX_BM modify JYCS varchar2(1000);
+alter table DM_JBXX_FRJCXX_BM modify BUSINESS_SCOPE varchar2(4000);
+mysql数据库
+修改dm_jbxx_frjcxx表中，字段buss_addr_flag的长度，直接修改更新
+然后再起调度，重跑相应的数据或节点
+二、72张更新频率的表，停的调度已经启动，太极的表不更新但我们依然起调度，分两种情况：1、有一些模型只有一张源表，所以如果停了这张表，就说明这个调度只能停掉  2、有部分模型，几张表都是不更新的表，如果暂停，就说明这个模型也要停掉（区应急管理局_事故信息、行政强制）
+三、这些不更新的表，需要向太极沟通一下，有没有相对应的表能代替这不更新的表。

@@ -1,0 +1,58 @@
+法人资质（dwd_frzz_frzzxx）
+以商事主体资质证书信息（std_sdzzwzyzx_sszt_zzzsxx_10_1023184725）为表，左关联法人基本信息(dwd_jbxx_frjcxx)表
+取相应的字段，得到法人资质（dwd_frzz_frzzxx）
+
+------------------------------------------------------------------------------法人资质---------------------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-25 11:01:19.84
+--所属主题:法人资质信息
+--内容描述:法人资质信息,加工至dwd_frzz_frzzxx(法人资质信息)
+--加载策略:全量
+--_********************************************************_
+
+insert overwrite table dwd_frzz_frzzxx partition (dt='${DayBeforeStartTime}')
+select
+	uuid		--主键
+	,tyshxydm	--统一社会信用代码
+	,zch		--注册号
+	,zzjgdm		--组织机构代码
+	,zsmc		--证书名称
+	,zzzsh		--资质证书号
+	,zzdj		--资质等级
+	,qyzslx		--企业证书类型
+	,zzlb		--资质类别
+	,cjgcfw		--承接工程范围
+	,fzjg		--发证机关
+	,fzrq		--发证日期
+	,zzyxq		--资质有效期
+	,bz			--备注
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+	select
+		uuid() uuid
+		,b.tyshxydm
+		,b.zch
+		,b.zzjgdm
+		,zsmc
+		,zzzsh
+		,zzdj
+		,qyzslx
+		,zzlb
+		,cjgcfw
+		,a.fzjg
+		,a.fzrq
+		,zzyxq
+		,bz
+		,'std_sdzzwzyzx_sszt_zzzsxx_10_1023184725' lyb
+		,a.lyjg
+		,substr(current_timestamp,1,19) as yxsj
+	from (select * from std_sdzzwzyzx_sszt_zzzsxx_10_1023184725 where dt=(select max(dt) from std_sdzzwzyzx_sszt_zzzsxx_10_1023184725)) a
+	left join (select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+	on trim(a.zzjgdm)=trim(b.zzjgdm)
+ )
+ 

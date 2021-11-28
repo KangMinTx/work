@@ -1,0 +1,26 @@
+法定代表人信息（dwd_jbxx_frjcxx）
+以法人基本信息(dwd_jbxx_frjcxx)为基础，取相应的字段，得到法定代表人信息（dwd_jbxx_frjcxx）表
+
+----------------------------------------------------------------------------------法定代表人信息-------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-02 17:03:51
+--_********************************************************_
+INSERT OVERWRITE TABLE dwd_cyxx_fddbrxx PARTITION (dt = '${DayBeforeStartTime}')
+select
+uuid() uuid                ,--主键
+tyshxydm                ,--统一社会信用代码
+lgl_id ztsfdm                ,--主体身份代码
+zzjgdm                ,--组织机构代码
+zch as zch                ,--登记/注册号
+lgl_name gsmc                ,--公司名称
+legal_person_card_id fddbrzjlx                ,--法定代表人证件类型
+legal_person_card_no fddbrzjh                ,--法定代表人证件号
+null fddbrlxfs                ,--法定代表人联系方式
+legal_person_name fddbr                ,--法定代表人
+"dwd_jbxx_frjcxx" lyb                ,--来源表
+lyjg                ,--来源机构
+now() yxsj                --运行时间
+from dwd_jbxx_frjcxx
+where dt=(select max(dt) from dwd_jbxx_frjcxx);

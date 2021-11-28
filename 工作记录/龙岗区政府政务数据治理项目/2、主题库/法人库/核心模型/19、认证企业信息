@@ -1,0 +1,302 @@
+认证企业信息（dwd_zzxk_rzqyxx）
+std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd(海关高级认证企业名单)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，左关联std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+通过组织机构代码、企业名称关联条件，补充信息
+union all 
+std_qfzggj_t_busi_hg_highauthen (海关高级认证企业)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，左关联std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+通过组织机构代码、企业名称等关联条件，补充信息
+union all 
+std_qfzggj_t_busi_xxb_hightechent (高新技术企业认定信息)取相应的字段
+union all 
+std_qfzggj_t_busi_zjj_entcer (企业体系认证及3c认证信息)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，左关联std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+通过企业名称关联条件，补充信息
+union all 
+std_qfzggj_t_busi_yjj_gpscog (药品经营企业gsp认证信息)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，左关联std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+通过组织机构代码、企业名称关联条件，补充信息
+union all 
+std_qfzggj_t_busi_yjj_gmpprodu (药品生产(gmp认证)企业登记信息)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，左关联std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+通过组织机构代码、企业名称关联条件，补充信息
+union all 
+std_qfzggj_t_busi_zxzx_entinfo (电子商务认证企业信息)为主表，左关联法人基本信息(dwd_jbxx_frjcxx)表，左关联std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+通过组织机构代码、企业名称关联条件，补充信息
+union all 
+std_qfzggj_t_busi_mgj_entcertxx (市级企业技术中心认定信息),取相应的字段
+
+得到认证企业信息（dwd_zzxk_rzqyxx）
+
+
+---------------------------------------------------------------------------DM认证企业信息--------------------------------------------------------------------
+ --sparksql
+--_********************************************************_
+--author: he
+--create time: 2020-11-26 09:52:04
+--table_name : dwd_zzxk_rzqyxx(认证企业信息)
+--use_tables : std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd(海关高级认证企业名单)
+--			   std_qfzggj_t_busi_hg_highauthen (海关高级认证企业)
+--			   std_qfzggj_t_busi_xxb_hightechent (高新技术企业认定信息)
+--			   std_qfzggj_t_busi_zjj_entcer (企业体系认证及3c认证信息)
+--			   std_qfzggj_t_busi_yjj_gpscog (药品经营企业gsp认证信息)
+--			   std_qfzggj_t_busi_yjj_gmpprodu (药品生产(gmp认证)企业登记信息)
+-- 			   std_qfzggj_t_busi_zxzx_entinfo (电子商务认证企业信息)
+--			   std_qfzggj_t_busi_mgj_entcertxx (市级企业技术中心认定信息)
+--			   dwd_jbxx_frjcxx (法人基本信息)
+--			   std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+-- 取数逻辑  : 8张认证企业表,取出已有字段信息,
+--			   再通过 组织机构代码 或企业名称 关联 法人基本信息,商事主体基本信息 获取统一社会信用代码,注册号等信息
+--			   union all 进行汇总
+-- 去重逻辑  : 汇总后的数据,根据所有字段进行去重.
+--_********************************************************_
+insert overwrite table dwd_zzxk_rzqyxx partition (dt='${DayBeforeStartTime}') 
+select 
+tyshxydm --统一社会信用代码
+,zzjgdm --组织机构代码
+,zch --注册号
+,qymc --企业名称
+,rznr --认证内容
+,rzdj --认证等级
+,zsbh --证书编号
+,zskssj as zskssj  --认证开始日期
+,substr(yxqx,1,10) as  yxqx--有效期限
+,lyb --来源表 
+,'区发展改革局' lyjb --来源机构
+,current_timestamp yxsj --运行时间
+from (
+select 
+*
+,row_number() over(partition by tyshxydm,zzjgdm,zch,qymc,rznr,rzdj,zsbh,zskssj,yxqx,lyb order by qymc) rn
+from (
+/*01 std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd(海关高级认证企业名单)
+ 通过组织机构代码(zzjgdm)或企业名称(qyzwmc)关联 dwd_jbxx_frjcxx (法人基本信息)
+          std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+ 补充tyshxydm,zch 信息
+*/
+select 
+nvl(nvl(nvl(t2.tyshxydm,t3.tyshxydm),t4.tyshxydm),t5.tyshxydm) as tyshxydm
+,t1.zzjgdm as zzjgdm
+,nvl(nvl(nvl(t2.zch,t3.zch),t4.zch),t5.zch) as zch
+,t1.qyzwmc as qymc
+,'海关高级企业认证' as rznr
+,t1.xydj as rzdj
+,null as zsbh
+,null as zskssj
+,null as yxqx
+,'std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd' lyb
+from std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd t1
+left join (select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+ on t1.zzjgdm=t2.zzjgdm 
+ left join 
+ (select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.qyzwmc=t3.lgl_name
+ left join 
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t4
+  on t1.zzjgdm=t4.zzjgdm 
+  left join 
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t5
+on t1.qyzwmc=t5.qymc
+where t1.dt=(select max(dt) from std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd)
+and t1.zxbz='正常' 
+
+union all
+/*02 std_qfzggj_t_busi_hg_highauthen(海关高级认证企业)
+ 通过组织机构代码(entorgcode) 或 企业名称(entnamecn) 关联 dwd_jbxx_frjcxx (法人基本信息)
+          std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+ 补充tyshxydm,zch 信息
+*/
+select 
+nvl(nvl(nvl(t2.tyshxydm,t3.tyshxydm),t4.tyshxydm),t5.tyshxydm) as tyshxydm --统一社会信用代码
+,entorgcode as zzjgdm --组织机构代码
+,nvl(nvl(nvl(t2.zch,t3.zch),t4.zch),t5.zch) as zch --注册号
+,entnamecn as qymc --企业名称
+,'海关高级企业认证' as rznr --认证内容
+,creditclass as rzdj --认证等级
+,null as zsbh --证书编号
+,creditclassdate as zskssj --认证开始日期
+,null as yxqx --有效期限
+,'std_qfzggj_t_busi_hg_highauthen' as lyb --来源表
+from std_qfzggj_t_busi_hg_highauthen t1 
+ left join 
+(select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+ on t1.entorgcode=t2.zzjgdm 
+ left join 
+ (select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.entnamecn=t3.lgl_name
+ left join 
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t4
+  on t1.entorgcode=t4.zzjgdm 
+  left join 
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t5
+on t1.entnamecn=t5.qymc
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_hg_highauthen)
+and t1.isvalid=0
+
+union all
+/*03 std_qfzggj_t_busi_xxb_hightechent(高新技术企业认定信息)
+*/
+select 
+tyshxydm as tyshxydm --统一社会信用代码
+,orgcode as zzjgdm --组织机构代码
+,zch as zch --注册号
+,entname as qymc --企业名称
+,'高新技术企业认证' as rznr --认证内容
+,null as rzdj --认证等级
+,licno as zsbh --证书编号
+,to_date(to_date(cogyear,'yyyy-MM-dd'),'yyyy-MM-dd HH:mm:ss')  as zskssj --认证开始日期
+,yxq as yxqx --有效期限
+,'std_qfzggj_t_busi_xxb_hightechent' as lyb --来源表 
+from std_qfzggj_t_busi_xxb_hightechent t1
+
+union all
+/*04 std_qfzggj_t_busi_zjj_entcer(企业体系认证及3c认证信息)
+通过 企业名称(entname) 关联 dwd_jbxx_frjcxx (法人基本信息)
+          std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+ 补充tyshxydm,zch 信息*/
+select 
+nvl(t2.tyshxydm,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t2.zzjgdm,t3.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t3.zch) as zch --注册号
+,entname as qymc --企业名称
+,cername as rznr --认证内容
+,null as rzdj --认证等级
+,null as zsbh --证书编号
+,to_date(to_date(replace(cerbegdate,'.','-'),'yyyy-MM-dd'),'yyyy-MM-dd HH:mm:ss')  as zskssj --认证开始日期
+,floor((datediff(to_date(replace(cerenddate,'.','-'),'yyyy-MM-dd'),to_date(replace(cerbegdate,'.','-'),'yyyy-MM-dd')))/365)   as yxqx --有效期限
+,'std_qfzggj_t_busi_zjj_entcer'as lyb --来源表 
+from
+std_qfzggj_t_busi_zjj_entcer t1
+left join   
+ (select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.entname=t2.lgl_name
+ left join  
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t3
+on t1.entname=t3.qymc
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_zjj_entcer)
+
+union all
+/*05 std_qfzggj_t_busi_yjj_gpscog(药品经营企业gsp认证信息)
+通过 企业名称(entname) 关联 dwd_jbxx_frjcxx (法人基本信息)
+          std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+ 补充tyshxydm,zch 信息*/
+select 
+nvl(t2.tyshxydm,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t2.zzjgdm,t3.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t3.zch) as zch --注册号
+,entname as qymc --企业名称
+,lictype as rznr --认证内容
+,null as rzdj --认证等级
+,licnum as zsbh --证书编号
+,to_date(to_date(cogdate,'yyyy-MM-dd'),'yyyy-MM-dd HH:mm:ss') as zskssj --认证开始日期
+,floor(datediff(to_date(valperiod,'yyyy-MM-dd'),to_date(cogdate,'yyyy-MM-dd'))/365) as yxqx --有效期限
+,'std_qfzggj_t_busi_yjj_gpscog' as lyb --来源表 
+from 
+std_qfzggj_t_busi_yjj_gpscog t1 
+left join   
+ (select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.entname=t2.lgl_name
+ left join  
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t3
+on t1.entname=t3.qymc
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_yjj_gpscog)
+
+union all
+/*06 std_qfzggj_t_busi_yjj_gmpprodu(药品生产(gmp认证)企业登记信息)
+通过 组织机构代码(orgcode) 或 企业名称(entname) 关联 dwd_jbxx_frjcxx (法人基本信息)
+          std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+ 补充tyshxydm,zch 信息*/
+select 
+nvl(nvl(nvl(t2.tyshxydm,t3.tyshxydm),t4.tyshxydm),t5.tyshxydm) as tyshxydm --统一社会信用代码
+,orgcode as zzjgdm --组织机构代码
+,nvl(nvl(nvl(t2.zch,t3.zch),t4.zch),t5.zch) as zch --注册号
+,entname as qymc --企业名称
+,proscope as rznr --认证内容
+,null as rzdj --认证等级
+,licno as zsbh --证书编号
+,to_date(to_date(licdate,'yyyy-MM-dd'),'yyyy-MM-dd HH:mm:ss')  as zskssj --认证开始日期
+,floor(datediff(to_date(yxq,'yyyy-MM-dd'),to_date(licdate,'yyyy-MM-dd'))/365) as yxqx --有效期限
+,'std_qfzggj_t_busi_yjj_gmpprodu' as lyb --来源表 
+from std_qfzggj_t_busi_yjj_gmpprodu t1
+left join 
+(select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+ on t1.orgcode=t2.zzjgdm 
+ left join 
+ (select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.entname=t3.lgl_name
+ left join 
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t4
+  on t1.orgcode=t4.zzjgdm 
+  left join 
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t5
+on t1.entname=t5.qymc
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_yjj_gmpprodu)
+
+union all
+/*07 std_qfzggj_t_busi_zxzx_entinfo(电子商务认证企业信息)
+通过 组织机构代码(entorgcode) 或 企业名称(entname) 关联 dwd_jbxx_frjcxx (法人基本信息)
+          std_schzljgw_sszt_jbxx110497 (市监局_商事主体基本信息)
+ 补充tyshxydm,zch 信息*/
+select 
+nvl(nvl(nvl(t2.tyshxydm,t3.tyshxydm),t4.tyshxydm),t5.tyshxydm) as tyshxydm --统一社会信用代码
+,entorgcode as zzjgdm --组织机构代码
+,entregno as zch --注册号
+,entname as qymc --企业名称
+,'电子商务企业认证' as rznr --认证内容
+,null as rzdj --认证等级
+,null as zsbh --证书编号
+,to_date(to_date(createtime,'yyyy-MM-dd'),'yyyy-MM-dd HH:mm:ss') as zskssj --认证开始日期
+,null as yxqx --有效期限
+,'std_qfzggj_t_busi_zxzx_entinfo' as lyb --来源表 
+from std_qfzggj_t_busi_zxzx_entinfo t1
+left join  
+(select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+ on t1.entorgcode=t2.zzjgdm 
+ left join 
+ (select tyshxydm,zzjgdm,zch,lgl_name
+ from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.entname=t3.lgl_name
+ left join 
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t4
+  on t1.entorgcode=t4.zzjgdm 
+  left join 
+ (select tyshxydm,zzjgdm,zch,qymc
+ from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497)) t5
+on t1.entname=t5.qymc
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_zxzx_entinfo)
+
+
+union all
+/*08 std_qfzggj_t_busi_mgj_entcertxx(市级企业技术中心认定信息)
+
+*/
+select 
+tyshxydm as tyshxydm --统一社会信用代码
+,zzjgdm as zzjgdm --组织机构代码
+,zch as zch --注册号
+,qymc as qymc --企业名称
+,'市级企业技术中心' as rznr --认证内容
+,rdjb as rzdj --认证等级
+,null as zsbh --证书编号
+,to_date(rdrq,'yyy-MM-dd') as zskssj --认证开始日期
+,floor(datediff(to_date(yxq,'yyyy-MM-dd'),to_date(rdrq,'yyyy-MM-dd'))/365) as yxqx --有效期限
+,'std_qfzggj_t_busi_mgj_entcertxx' as lyb --来源表 
+from 
+std_qfzggj_t_busi_mgj_entcertxx t1
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_mgj_entcertxx)
+)
+) where rn=1
+

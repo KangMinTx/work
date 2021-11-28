@@ -1,0 +1,60 @@
+法人社保缴存（dwd_jbxx_frsbjc）
+以单位每月参保缴费情况（std_srlzyhshbzj_dwmycbjfqk106441）为主表，
+左关联法人基本信息(dwd_jbxx_frjcxx)表，取相应的字段，得到法人社保缴存（dwd_jbxx_frsbjc）
+
+-----------------------------------------------------法人社保缴存--------------------------------------------------------------------------------------
+ --SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-25 11:01:19.84
+--所属主题:法人社保缴存
+--内容描述:法人社保缴存,加工至dwd_jbxx_frsbjc(法人社保缴存)
+--加载策略:全量
+--_********************************************************_
+--select * from dwd_jbxx_frsbjc
+insert overwrite table dwd_jbxx_frsbjc partition (dt='${DayBeforeStartTime}')
+select
+	uuid			--主键
+	,tyshxydm		--统一社会信用代码
+	,zzjgdm      	--组织机构代码
+	,unit_sno		--社保编号
+	,dwmc			--单位名称
+	,accountdate	--缴费到账日期
+	,ic_flag		--养老参保情况
+	,lc_flag		--工伤参保情况
+	,kc_flag		--医疗参保情况
+	,jc_flag        --生育参保情况
+	,mc_flag        --失业参保情况
+	,account_flag	--到账状态
+	,fqbm			--分区编码
+	,lyb			--来源表
+	,lyjg			--来源机构
+	,yxsj			--运行时间
+ from 
+(
+	select
+  		distinct
+		uuid() uuid			--主键
+		,b.tyshxydm tyshxydm		--统一社会信用代码
+		,b.zzjgdm 	--组织机构代码
+		,unit_sno		--社保编号
+		,lgl_name dwmc			--单位名称
+  --|| account_date
+		,(account_year ||'-'|| account_month) accountdate	--缴费到账日期
+		,ic_flag		--养老参保情况
+		,lc_flag		--工伤参保情况
+		,kc_flag		--医疗参保情况
+		,jc_flag        --生育参保情况
+		,mc_flag        --失业参保情况
+		,account_flag	--到账状态
+		,fqbm			--分区编码
+		,'std_srlzyhshbzj_dwmycbjfqk106441' lyb			--来源表
+		,a.lyjg			--来源机构
+		,current_timestamp yxsj			--运行时间
+	from std_srlzyhshbzj_dwmycbjfqk106441 a
+	left join (select distinct tyshxydm,zzjgdm,lgl_name from dwd_jbxx_frjcxx b where b.dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+	on  trim(a.unit_org_code)=trim(b.zzjgdm)
+	where a.dt=(select max(dt) from std_srlzyhshbzj_dwmycbjfqk106441) 
+ );
+
+

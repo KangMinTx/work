@@ -1,0 +1,14 @@
+select a.table_name,b.table_name,a.table_num,b.table_num,a.statistic_time,b.table_time ,concat('`','%',substring_index(a.table_name,'.',-1),'`')
+from (select * from ods_oracle_table_data_log where substr(statistic_time,1,10)=current_date) as a
+left join
+(select * from dwd_frfztk_tjsjl where substr(table_time,1,10)=current_date) as b
+ON upper(replace(b.table_name,'	','')) LIKE concat('%','_',substring_index(a.table_name,'.',-1));
+
+然后形成一张，源表数据量统计和法人负面统计详情表，这表的主要用途是orcale数据库与抽到ods表的数据进行数量比对，找出正常起调的数据并且找到数量一致、有问题的数据，然后找相应的原因，从orcale数据库及大数据平台找相关的原因
+
+----------------------------------------最新------------------------------------
+select a.table_name,b.table_name,a.table_num,b.table_num,a.statistic_time,b.table_time ,concat('`','%',substring_index(a.table_name,'.',-1),'`')
+from (select *,if(table_name='LGQZWB.XZCFXX','LGQZWB.QZWFWSJGLJ_XZCFXX',table_name)tables_name from ods_oracle_table_data_log where substr(statistic_time,1,10)=current_date) as a
+left join
+(select * from dwd_frfztk_tjsjl where substr(table_time,1,10)=current_date) as b
+ON upper(replace(b.table_name,'	','')) LIKE concat('%',substring_index(a.tables_name,'.',-1))

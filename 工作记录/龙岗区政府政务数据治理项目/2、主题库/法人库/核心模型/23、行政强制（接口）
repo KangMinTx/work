@@ -1,0 +1,80 @@
+行政强制（dm_jk_frfm_xzqz）
+以行政强制信息（dwd_xzqzxx）为主表，左关联dwd_frdzxx（法人地址），左关联法人基本信息(dwd_jbxx_frjcxx)表，补充相应的信息
+按照行政强制决定文书编号、统一社会信用代码、企业名称、行政强制日期分组，行政强制日期排序，取最新的一条数据。
+
+
+----------------------------------------------------------------------------行政强制------------------------------------------------------------------------
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-14 18:48:22
+--1229 he 修改内容:通过关联法人基本信息表 先取法人基本信息表中的 企业名称 业务名称作为 补充
+--0119 he 修改内容：新增两个字段 社区名称（sqmc），街道名称（jdmc） 取值来自于 法人地址信息表
+--_********************************************************_
+--修改时间：2021-03-17
+--修改行政强制日期时间格式YYYY-MM-DD hh24:mi:ss
+truncate table dm_jk_frfm_xzqz;
+insert into table dm_jk_frfm_xzqz  
+SELECT  agency_key --代理主键 
+       ,qznum --行政强制决定文书编号 
+       ,tyshxydm --统一社会信用代码 
+       ,zzjgdm
+       ,qymc gsmc --企业名称 
+       ,jgmc --行政强制机关名称 
+       ,sxmc --行政强制事项名称 
+       ,yj --行政强制依据 
+       ,qzrq qzrq--行政强制日期 
+       ,zxqk --行政强制执行情况 
+       ,astatus --状态 
+       ,xzqz_jcwh
+       ,xzqz_jcrq
+       ,fmxxlb --负面信息类别 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,yxsj --运行时间
+    ,lyjg
+FROM 
+(
+	SELECT  uuid()            AS agency_key --代理主键 
+	       ,b1.xzqzjdwsbh     AS qznum --行政强制决定文书编号 
+	       ,b1.tyshxydm       AS tyshxydm --统一社会信用代码 
+   ,nvl(b1.zzjgdm,b3.zzjgdm) as  zzjgdm
+	       ,nvl(b3.lgl_name,b1.gsmc)   AS qymc --企业名称 
+	       ,b1.xzqzjg         AS jgmc --行政强制机关名称 
+	       ,b1.xzqzsxmc       AS sxmc --行政强制事项名称 
+	       ,b1.xzqzyj         AS yj --行政强制依据 
+	       ,b1.xzqzrq         AS qzrq --行政强制日期 
+	       ,b1.xzqzzxqk       AS zxqk --行政强制执行情况 
+	       ,null              AS astatus --状态 
+           ,b1.xzqz_jcwh as xzqz_jcwh
+           ,b1.xzqz_jcrq as xzqz_jcrq
+	       ,'行政强制'            AS fmxxlb --负面信息类别 
+	       ,b2.sqcode         AS sqdm --社区代码 
+		   ,b2.sqname		  AS sqmc --社区名称
+	       ,b2.jdbm           AS jddm --街道代码
+		   ,b2.jdmc			  AS jdmc 
+	       ,CURRENT_TIMESTAMP AS yxsj --运行时间 
+           ,b1.lyjg
+	       ,row_number() over(partition by b1.xzqzjdwsbh,b1.tyshxydm,b1.gsmc,b1.xzqzrq ORDER BY b1.xzqzrq desc) rn
+	FROM (select * from dwd_xzqzxx where dt=(SELECT  MAX(dt) FROM dwd_xzqzxx) AND xzqzjdwsbh is not null ) b1
+	LEFT JOIN 
+	(
+		SELECT  DISTINCT tyshxydm 
+		       ,sqcode 
+		       ,jdbm
+			   ,sqname
+			   ,jdmc
+               ,zh
+		FROM dwd_frdzxx 
+	) b2
+	ON b1.tyshxydm=b2.tyshxydm or b1.gsmc=b2.zh
+    
+   left join (
+	SELECT  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,LEGAL_PERSON_NAME FROM dwd_jbxx_frjcxx
+	WHERE dt=(  SELECT  MAX(dt) FROM dwd_jbxx_frjcxx) ) b3
+	on b1.tyshxydm=b3.tyshxydm
+)
+WHERE rn=1 ;
+
