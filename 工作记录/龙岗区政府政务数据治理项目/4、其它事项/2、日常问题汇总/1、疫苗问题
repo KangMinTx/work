@@ -1,0 +1,128 @@
+--核酸结果表与关联了人口表，想差了392条
+SELECT COUNT(1) FROM DM_RKK_YQFK_HS;--28567285  28552193
+SELECT COUNT(1) FROM dm_rkk_syrkyqfk_hs;--28566893  28551801
+
+SELECT 28567285-28566893 FROM dual;--392
+
+----与大数据平台相比
+ select count(1) from dm_yq_hsjcjg_incre_lsqlb;--28567287
+ select count(1) from dm_rkk_syrkfyqk_lsql_bqb;--28567287
+ 
+ 核酸结果表，差了2条
+ 
+ 
+ 
+ ----------------------------新增9张接口表----------------------------------
+1、jmllbxx11_select--居民楼列表信息
+2、ld_rk_select---根据楼栋查询人口信息
+3、fwxx_select---房屋数据数据
+4、frjbxx_select---法人基础信息
+5、frfmxx_selelct---法人负面信息
+6、cjrxx_select----残疾人信息
+7、gxqy_select----高新企业
+8、frfmxx_new_select----法人负面信息（字段均转成中文）
+9、mjwgrkbd_selelct----公安门禁数据和网格人口数据比对（社区）
+
+问题一
+9张表的取逻辑及来源表，是如何？
+问题二
+9张表分别放在大数据平台哪个库？
+问题三
+9张表是以接口方式提供出去还是以表的方式推给太极？
+问题四
+需要与街道确认，社区编码是否要加密？
+问题五
+接口查询是否在太极平台还是其它平台？
+问题六
+大数据平台是否有相应的表能够代替这些表？
+
+
+------------------------------------------------------------------------------------------
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN street_id varchar(70) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN community_id varchar(120) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN address_detail varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN penpay varchar(20) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN docnum VARCHAR(100) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '主体证件号码';
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN black_list_type varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '黑名单类型';
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN proname varchar(170) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '工程名称';
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN pundocno varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '处罚文书号';
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN case_no varchar(60) CHARACTER SET utf8 COLLATE utf8_general_ci NULL COMMENT '案号';
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN spchperson varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN address varchar(70) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN scentname varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN rejitem varchar(160) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN publish_end_dt varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN curr_status_code varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN punish_exp_dt varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN punish_eff_dt varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN punish_basis varchar(1000) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN punish_reason varchar(650) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN punish_code varchar(250) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN dwwgnr varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN wgajhm varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN dwwgcljg varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN limit_end_time varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN jc_time varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN hz_time varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN limit_user varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN limit_content varchar(160) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN auth_dt varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN mortgagee_addr varchar(120) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN mort_nums varchar(80) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN mort_name varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN regi_card_num varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN mort_value varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN remove_oa_reason varchar(90) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN remove_oa_dt varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN load_oa_dt varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN decision_content varchar(3000) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN load_oa_reason varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN dead varchar(30) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN cause varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN accidate varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN accino varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+ALTER TABLE lgfrk.dm_jk_frfmxxb MODIFY COLUMN acciaddr varchar(40) CHARACTER SET utf8 COLLATE utf8_general_ci NULL;
+
+
+ALTER TABLE lgfrk.dm_jk_frfmxxb ADD GLDM_CREATE_TIME varchar(100) NULL;
+
+----------------------------------------------疫情相关正常切换的问题-------------------------------------
+1、创建核酸分区表
+CREATE TABLE LQGSM.DM_YQ_HSJCJG_0923 
+   (ID VARCHAR2(255 CHAR), 
+	RECEIVE_TIME VARCHAR2(255 CHAR), 
+	REAL_NAME VARCHAR2(255 CHAR), 
+	SPECIMEN_CODE VARCHAR2(255 CHAR), 
+	GENDER VARCHAR2(255 CHAR), 
+	AGE VARCHAR2(255 CHAR), 
+	PHONE VARCHAR2(255 CHAR), 
+	SPECIMEN_TYPE VARCHAR2(255 CHAR), 
+	COLLECTION_TIME VARCHAR2(255 CHAR), 
+	REPORT_TIME VARCHAR2(255 CHAR), 
+	ID_CARD_NO VARCHAR2(255 CHAR), 
+	COOPERATIVE_INSTITUTION VARCHAR2(255 CHAR), 
+	CHECK_RESULT VARCHAR2(255 CHAR), 
+	IMPORT_BATCH VARCHAR2(255 CHAR), 
+	CREATER VARCHAR2(255 CHAR), 
+	CREATE_TIME VARCHAR2(255 CHAR), 
+	TIMEFLAG TIMESTAMP (0), 
+	BZ VARCHAR2(255 CHAR), 
+	WYBS VARCHAR2(255 CHAR),
+	yxsj  DATE
+   ) PARTITION BY RANGE (yxsj) INTERVAL (numtoyminterval(1,'month'))
+(partition table_log values less than(to_date('2025-11-01', 'yyyy-mm-dd')));
+
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.ID IS '主键ID';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.REAL_NAME IS '姓名';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.SPECIMEN_CODE IS '标本编码';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.GENDER IS '性别';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.AGE IS '年龄';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.PHONE IS '手机';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.SPECIMEN_TYPE IS '标本类型';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.ID_CARD_NO IS '证件号码';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.COOPERATIVE_INSTITUTION IS '合作机构';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.CHECK_RESULT IS '检验结果';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.IMPORT_BATCH IS '导入批次';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.CREATER IS '创建者';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.yxsj IS '运行时间';
+

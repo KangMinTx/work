@@ -1,0 +1,46 @@
+rank、dense_rank、row_number、ntile等排序算法
+在 oracle 中有很多函数可以实现排序的功能，但是不尽相同。下面一一解说。
+
+row_number函数
+功能：可实现分组排序，为数据行添加序号，多用于分页查询。
+
+语法：row_number() over(partition by column order by column desc)
+
+select *,
+       row_number() over(partition by id order by score desc) as rank
+from Score;
+注意：当存在相同成绩的学生时，row_number() 会依次进行排序，序号不相同，例如：1、2、3、4、5……
+
+row_number() 的值不会存在重复，当排序的值相同时，按照表中记录的顺序进行排列。
+
+rank函数
+功能：针对某一个字段进行排序，跳跃排名。
+
+语法：rank() over(partition by column order by column desc)
+
+select *,
+       rank() over(partition by id order by score desc) as rank
+from Score;
+注意：当存在相同成绩的学生时，rank() 的排名是一样的，例如：1、2、2、2、5……
+
+dense_rank函数
+功能：同样的，排序函数，稍微有点不同，密集排名。
+
+语法：dense_rank() over(partition by column order by column desc)
+
+select *,
+       dense_rank() over(partition by id order by score desc) as rank
+from Score;
+注意：dense_rank() 是密集排名，排名具有连续性，例如：1、2、2、2、3……
+
+ntile函数
+功能：oracle 中的分析函数，对一个数据分区中的有序结果集进行划分，将其分组为各个桶，并为每个小组分配一个唯一的组编号。默认是对表在不做任何操作之前进行切片分组的。
+
+语法：ntile(n) over(partition by column order by column desc)
+
+select shopname,
+       sales,
+       date2,
+       ntile(3) over(partition by shopname order by sales desc nulls last)
+from temp_cwh_window;
+根据shopname进行分组，再按sales排序之后分为3个桶。

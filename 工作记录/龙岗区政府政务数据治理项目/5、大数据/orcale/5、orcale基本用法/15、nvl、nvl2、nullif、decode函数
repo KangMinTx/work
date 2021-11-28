@@ -1,0 +1,61 @@
+nvl、nvl2、nullif、decode函数
+一、nvl函数
+功能：从两个表达式返回一个非 NULL 值。
+
+语法：
+
+select nvl(expression1, expression2)
+-- 如果 expression1 计算结果为 null，则返回 expression2
+-- 任意一种数据类型
+-- 如果 expression1、expression2 都为null则返回null
+
+select nvl(null, 1) from dual;
+-- 1
+返回值类型：字符型、日期型、日期时间型、数值型、货币型、逻辑型或 null 值。
+
+两个表达式数据类型必须一致。
+
+二、nvl2函数
+语法：
+
+select nvl2(expression1, expression2, expression3)
+-- expression1 不为null则返回 expression2
+-- expression1 为null则返回 expression3
+expression2 和 expression3 类型不同情况下，会强制转换为 expression2 数据类型。
+
+select nvl2(expr, 1, 0) from dual;
+三、nullif函数
+语法：
+
+select nullif(100, 200)
+-- 100
+说明：相等返回null，不等返回 expression1。
+
+四、decode函数
+SQL中没有逻辑判断语句（分支语句），decode 函数可以完成类似功能。
+
+语法：
+
+select decode(条件， 值1， 返回值1， 值2， 返回值2...， 值n， 返回值n， 缺省值);
+/*
+IF 条件 = 值1 THEN
+　　　　RETURN(返回值1)
+ELSIF 条件 = 值2 THEN
+　　　　RETURN(返回值2)
+　　　　......
+ELSIF 条件 = 值n THEN
+　　　　RETURN(返回值n)
+ELSE
+　　　　RETURN(缺省值)
+END IF
+*/
+应用：结合 lpad 补全函数，可以使主键的值自动加1并补0。
+
+select lpad(decode(count(id), 0, 1, max(to_number(id)+1)), 14, '0') as col from dual;
+应用：性别统计。
+
+select decode(sex, '男', 1, 0), decode(sex, '女', 1, 0) from table_name;
+应用：order by 对字符进行特定的排序。
+
+select * from table_name
+order by decode(subject_name, '语文', 1, '数学', 2, '英语', 3);

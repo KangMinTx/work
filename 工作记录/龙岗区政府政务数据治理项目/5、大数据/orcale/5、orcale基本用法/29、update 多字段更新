@@ -1,0 +1,51 @@
+update 多字段更新
+一次性update多个字段
+以student表为例：
+
+-- 创建学生表
+create table student
+(
+  id number,
+  name varchar2(40),
+  age number,
+  birthday date,
+  address varchar2(200)
+)
+
+-- 插入数据
+insert into student(id, name, age, birthday, address)
+values(1, '王小波', 50, to_date('19700520','yyyymmdd'), '广州市天河区')
+
+-- 查询
+select * from student
+-- 1	王小波	50	1970/5/20	广州市天河区
+如果需要修改数据，一般语法：
+
+update student
+set name = '王大锤'，
+    age = 49,
+    birthday = to_date('19710206','yyyymmdd'),
+    address = '广州市越秀区'
+where id = 1;
+如果字段非常多，这样写就稍微麻烦点，因为待修改字段和待修改的数据没有分离。
+
+还有另外一种写法（字段多的时候写的时候方便，书写效率高些；字段少的时候感觉不出来）：
+
+update student
+set (name, age, birthday, address) = 
+(select '王大锤', 49, to_date('19710206','yyyymmdd'), '广州市越秀区' from dual)
+where id = 1
+update 多表级联更新
+多表级联更新语法为：
+
+update tableA a set a.col1 = (select b.col1 from tableB b where b.col2 = a.col2),
+                    a.col3 = (select c.col1 from tableC c where c.col2 = a.col2)
+where condition
+该语句作用就是当tableA中col2列的值等于tableB中col2列的值时，那么将tableA所在行的col1的值设置为tableB相应行的col1的值，当tableA中col2列的值等于tableC中col2列的值时，那么将tableA所在行的col1的值设置为tableC相应行的col1的值，换句话说就是将tablA中所有满足a.col2=b.col2的行的col1列的值设置为b对应的行的col1列的值，将tableA中所有满足a.col3=c.col1的行的col3列的值设置为c对应的行的col1列的值。
+
+多字段update
+Oracle 多字段 update语法为：
+
+update table_a
+set (a,b,c) = 
+(select a,b,c from table_b)

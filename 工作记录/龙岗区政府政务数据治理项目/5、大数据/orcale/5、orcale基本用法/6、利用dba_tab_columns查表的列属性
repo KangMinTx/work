@@ -1,0 +1,12 @@
+
+在 Oracle 中可以利用系统表 dba_tab_columns 查询表的列属性。
+
+-- 查询所有列
+select * from dba_tab_columns where table_name = 'TEMP_CWH_CITY';
+
+-- 结果
+TEMP_CWH_CITY	CITY_CODE	VARCHAR2
+TEMP_CWH_CITY	CORP_ID	VARCHAR2
+TEMP_CWH_CITY	LATN_ID	VARCHAR2
+TEMP_CWH_CITY	CORP_NAME	VARCHAR2
+

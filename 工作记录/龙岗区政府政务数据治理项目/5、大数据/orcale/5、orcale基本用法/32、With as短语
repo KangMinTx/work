@@ -1,0 +1,35 @@
+　With as短语，也叫做子查询部分（subquery factoring），可以定义一个SQL片断，该SQL片断会被整个SQL语句用到。该语句会在真正的查询之前预先构造一个临时表，之后可以多次使用做进一步的分析和处理。
+
+　　优势：
+
+　　1.可以使SQL语句的可读性更高；
+　　2.一次分析，多次使用，提高性能；
+
+　　语法：
+
+
+with
+    tempName
+as
+    (select ...)
+select * from tempName;
+
+
+with
+    tmp as (select * from table_1),
+    tmp2 as (select * from table_2),
+    tmp3 as (select * from table_3)
+    ...
+
+　　实际上就是把重复用到是SQL语句放到with as 里面，取一个别名，在后面的查询中可以重复使用，这样子对于大批量的SQL语句起到一个优化的作用，而且清晰明了。
+
+　　插入数据的with as用法：
+
+
+insert into table2
+with
+    s1 as (select rownum c1 from dual connect by rownum <= 10),
+    s2 as (select rownum c2 from dual connect by rownum <= 10)
+select a.c1, b.c2 from s1 a, s2 b where ...;
+
+　　with as相当于虚拟视图。

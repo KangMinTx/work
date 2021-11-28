@@ -1,0 +1,54 @@
+1、在管理员帐户下，创建用户chenbk，并创建密码
+create user chenbk identified BY 111111;
+2、修改密码
+alter user chenbk identified by cbk19930701AA;
+3、授予chenbk用户创建session的权限，即登陆权限
+grant create session to chenbk;
+4、授予chenbk用户使用表空间的权限
+grant unlimited tablespace to chenbk;
+5、授予创建表的权限
+grant create table to chenbk;
+6、授予删除表的权限
+grant drop any TABLE TO chenbk;
+7、插入表的权限
+grant INSERT any table to chenbk;
+--给查询表的权限
+grant SELECT ON LQGSM.DM_RKK_YQFMYMBQB TO LGQSM_YXY;
+8、创建视图的权限
+GRANT create any VIEW TO chenbk;
+9、创建索引的权限
+GRANT CREATE ANY INDEX TO chenbk;
+10、对所有用户授予创建会话权限，public代表所有用户
+grant create session to public;
+11、授予所有权限(all)给所有用户(public)
+grant all to public;
+12、创建存储过程
+GRANT create any PROCEDURE TO chenbk;
+13、创建基本所有的权限
+GRANT
+create session, create any table, create any view ,create any index, create any procedure, 
+alter any table, alter any procedure, 
+drop any table, drop any view, drop any index, drop any procedure, 
+select any table, insert any table, update any table, delete any table 
+to chenbk;
+14、访问所有的表
+grant select any table to chenbk;--除了能查询当前用户，也能查询sys、system用户上的表，风险比较大
+15、隐式游标赋权
+select 'GRANT SELECT ON SYSTEM.'||object_name||' to CHENBK;' from dba_objects where owner='SYSTEM' and object_type='TABLE';
+--可以查询出想要的语句
+
+二、权限收回
+1、查看当前用户的系统权限和表级权限
+select * from user_sys_privs;
+select * from user_tab_privs;
+2、收回创建表的权限
+revoke create table from chenbk;
+3、查看所有用户及当前用户名
+select * from all_users;
+select * from user_users;
+4、当前用户所拥有的全部权限
+select * from session_privs;
+5、指定表授权查询权限
+grant select on system.CBK_HSJCJG_SSZS_ZB to chenbk;
+--在chenbk用户下，查询
+

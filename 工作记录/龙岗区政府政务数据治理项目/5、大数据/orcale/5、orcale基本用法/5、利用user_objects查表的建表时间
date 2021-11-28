@@ -1,0 +1,17 @@
+在 Oracle 中可以利用系统表 user_objects 查询表的建表时间。
+
+-- 查询表
+select * from user_objects;
+
+-- 返回
+object_name -- 表名
+object_type -- 类型
+created -- 创建时间
+last_ddl_time -- 最后一个操作时间
+查询某些临时表，可按照以下进行查询：
+
+select * from user_objects 
+where object_type = 'TABLE' 
+and object_name like '%TEMP_CWH_%' 
+order by created
+从而进行 drop 操作。

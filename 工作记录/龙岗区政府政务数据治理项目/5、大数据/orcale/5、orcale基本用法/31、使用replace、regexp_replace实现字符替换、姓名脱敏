@@ -1,0 +1,43 @@
+使用replace、regexp_replace实现字符替换、姓名脱敏
+　在数据库中难免会遇到需要对数据进行脱敏的操作，无论是姓名，还是身份证号。
+
+　　最近遇到一个需求，需要对姓名进行脱敏：
+
+姓名长度为2，替换为姓+*；
+姓名长度为3，替换中间字符为*；
+姓名长度为4，替换第3个字符为*；
+　　经过一番搜索之后，最终找到了3种方式的实现，具体如下。
+
+一、先查找，再替换
+
+select replace('陈宏宏',substr('陈宏宏',2,1),'*') as name from dual;
+
+
+注意：此种方法通过对第2个字符进行替换，如果名字为叠名，则会发生上述误替换情况；
+
+二、拼接
+
+select substr('陈宏宏',1,1)||'*'||substr('陈宏宏',3,1) as name from dual;
+
+
+三、使用regexp_replace进行精准替换
+
+select regexp_replace('陈宏宏','(.)','*',2,1) as name from dual;
+注意：regexp_replace支持使用正则表达式对字符串进行替换，该语句解释为从第2个字符开始，取任意1个字符，替换为*；
+
+四、完整的替换代码 
+
+create table temp_cwh_002 as
+select a.acc_nbr,
+       a.act_city,
+       a.city_name,a.number1,
+       a.number2,
+       case when length(a.cust_name) = 2 then regexp_replace(cust_name,'(.)','*',2,1)
+            when length(a.cust_name) = 3 then regexp_replace(cust_name,'(.)','*',2,1)
+            when length(a.cust_name) = 4 then regexp_replace(cust_name,'(.)','*',3,1)
+       else cust_name end cust_name,
+       a.acc_nbr2,
+       a.param_value
+from temp_cwh_001 a
+where length(a.cust_name) <= 4
+

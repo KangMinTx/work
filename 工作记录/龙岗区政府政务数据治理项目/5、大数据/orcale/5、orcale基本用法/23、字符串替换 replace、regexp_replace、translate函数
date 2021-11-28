@@ -1,0 +1,105 @@
+字符串替换 replace、regexp_replace、translate函数
+1.replace 函数
+语法：replace(char, search_string, replacement_string) --针对字符串替换
+
+功能：
+
+​ 将char中的字符串替换。
+
+​ 当replacement_string为空时，剔除search_string。
+
+select replace('fasdfasdf','fk','j') as col from dual;
+-- fasdfasdf
+select replace('fdasfasdd','as','jjj') as col from dual;
+-- fdjjjfjjjdd
+完全匹配的字符才会进行替换，如无字符匹配，则返回原字符串。
+
+该匹配是贪婪匹配，匹配都的字符串都会被替换，不仅仅是第一个匹配到的字符串。
+
+2.regexp_replace 函数
+语法：regexp_replace(str_source, pattern_str, rep_str)
+
+功能：
+
+​ 支持正则表达式，用法类似于 replace，但功能更强大。
+
+​ 当rep_str为空时，把str_source中的pattern_str字符串剔除。
+
+select regexp_replace('abccc123','abc','*') as col from dual;
+-- *cc123
+select regexp_replace('abccc123','[ac]','*') as col from dual;
+-- *b***123
+select regexp_replace('abccc123','[ac]') as col from dual;
+-- b123
+可使用正则表达式进行替换，[ac]表示a或者c字符。
+
+3.translate 函数
+语法：translate(char, from, to) -- 针对单个字符替换
+
+功能：
+
+​ 将from替换为to字符串，逐个替换。
+
+​ 如果from比to字符串长，那么在from中比to中多出的字符串将会被删除。
+
+​ 三个参数中有一个为空，返回为空。
+
+select translate('abcdefga','abc','wo') as col from dual;
+-- wodefgw
+select translate('abcdefga','#abc','#') as col from dual;
+-- defg
+a替换为w，b替换为o，c删除。
+
+translate有#的特殊用法，以#开头表示所有字符。
+
+select translate('12334567','1233','abcd') as col from dual;
+-- abcc4567
+如果相同字符对应多个字符，按第一个。
+
+应用1
+在实际业务中，可以用来删除一些异常数据，比如电话号码的有效性，11位数字，可以使用 translate 函数进行过滤。
+
+-- 创建测试表
+create table temp_cwh_001
+(
+ acc_nbr varchar2(20)
+);
+-- 插入数据
+insert into temp_cwh_001 values('19912345678');
+insert into temp_cwh_001 values('18812345678');
+insert into temp_cwh_001 values('aaabbbcccdd');
+-- 查询
+select * from temp_cwh_001;
+-- 测试
+select * from temp_cwh_001 a
+where length(translate(trim(a.acc_nbr),
+                       '0123456789' || a.acc_nbr,
+                       '0123456789')) = length(trim(a.acc_nbr));
+-- 18812345678
+-- 19912345678
+解释：通过在acc_nbr字段的前面拼上0123456789数字字符串之后，将0123456789替换为0123456789，则其他非数字字符串会被替换为空，再通过判断替换前后的字符串长度，则可之后该号码是否有效。
+
+其中，trim 函数用于去除指定字符的前后空格。
+
+ltrim 函数用于去除指定字符的前面空格。
+
+rtrim 函数用于去除指定字符的后面空格。
+
+应用2
+如果想保留某些特定字符，筛选掉其他的。比如筛掉汉字保留数字，则可以：
+
+先把数字筛选掉：
+
+select translate('你我3阿斯蒂芬2的6撒谎8发', '#0123456789', '#') as col from dual;
+-- 你我阿斯蒂芬的撒谎发
+再用筛选出的汉字去筛选原来的语句留下数字：
+
+select translate('你我3阿斯蒂芬2的6撒谎8发','#'||translate('你我3阿斯蒂芬2的6撒谎8发', '#0123456789', '#'),'#') as col from dual;
+-- 3268
+应用3
+如果有2个字符串都是数字字符，其中数字字符的顺序不同，且每个字符只出现一次，通过灵活用法可判断两个字符串包含的数字是否完全一致。
+
+select 1 from dual
+where translate('0123456789','123','aaaaaa') = translate('0123456789','132','aaaaaa')
+-- 1
+where中的等式成立，包含数字一致。

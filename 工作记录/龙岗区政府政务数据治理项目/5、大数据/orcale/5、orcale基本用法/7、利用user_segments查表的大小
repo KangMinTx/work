@@ -1,0 +1,9 @@
+
+在 Oracle 中可以利用系统表 user_segments 查询表的存储空间占用大小。
+
+select segment_name as table_name,  -- 表名
+       segment_type, -- 表类型
+       bytes, -- 实际大小
+       round(bytes/1024/1024, 2) -- 以M为单位
+from user_segments
+where segment_name = 'table_name';

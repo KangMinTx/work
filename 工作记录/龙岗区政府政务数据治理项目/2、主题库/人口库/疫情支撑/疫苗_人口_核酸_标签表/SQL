@@ -1,0 +1,534 @@
+--SparkSQL
+--_********************************************************_
+--author: chenbaokang
+--create time: 2021-09-07 14:09:04
+--_********************************************************_
+--获取与太极平台全量表一致的人口数据
+--insert overwrite  
+create table dm_rkk_syrkbqb_ql
+select 
+    id                                               ,--'主键id',
+    zjlx                                               ,--'证件类型',
+    zjhm                                               ,--'证件号码',
+    bm                                               ,--'别名',
+    xm                                               ,--'姓名',
+    gj                                               ,--'国籍',
+    gatbz                                               ,--'港澳台标志',
+    csny                                               ,--'出生年月',
+    xb                                               ,--'性别',
+    mz                                               ,--'民族',
+    jg                                               ,--'籍贯',
+    zjxy                                               ,--'宗教信仰',
+    lsrq                                               ,--'来深日期',
+    hyzk                                               ,--'婚姻状况',
+    chrq                                               ,--'初婚日期',
+    swrq                                               ,--'死亡日期',
+    jkzk                                               ,--'健康状况',
+    byyx                                               ,--'毕业院校',
+    hy                                               ,--'行业',
+    zhy                                               ,--'职业',
+    zc                                               ,--'职称',
+    ysr                                               ,--'月收入',
+    sg                                               ,--'身高',
+    zy                                               ,--'专业',
+    by                                               ,--'兵役',
+    xx                                               ,--'血型',
+    xw                                               ,--'学位',
+    yhzgx                                               ,--'与户主关系',
+    hjlx                                               ,--'户籍类型',
+    yhj                                               ,--'原户籍',
+    hklx                                               ,--'户口类型',
+    hkxz                                               ,--'户口性质',
+    sfds                                               ,--'是否独生',
+    whcd                                               ,--'文化程度',
+    zzmm                                               ,--'政治面貌',
+    hkszd                                               ,--'户口所在地',
+    gllb                                               ,--'管理类别',
+    xzqhid                                               ,--'行政区划id',
+    sftj                                               ,--'是否统计',
+    gxbz                                               ,--'更新标志',
+    zjhm2                                               ,--'证件号码2',
+    xgljgid                                               ,--'新管理机构id',
+    lkyy                                               ,--'离开原因',
+    ckqk                                               ,--'持卡情况',
+    bydt                                               ,--'避孕动态',
+    sydt                                               ,--'生育动态',
+    yx                                               ,--'邮箱',
+    sj                                               ,--'手机',
+    zzdh                                               ,--'住宅电话',
+    zslb                                               ,--'住所类别',
+    gzdw                                               ,--'工作单位',
+    dwdz                                               ,--'单位地址',
+    bgdh                                               ,--'办公电话',
+    blr                                               ,--'办理人',
+    blsj                                               ,--'办理时间',
+    xgz                                               ,--'修改者',
+    xgsj                                               ,--'修改时间',
+    cjsj                                               ,--'创建时间',
+    cjz                                               ,--'创建者',
+    bz                                               ,--'备注',
+    djr                                               ,--'登记人',
+    djsj                                               ,--'登记时间',
+    crsj                                               ,--'插入时间',
+    yxx                                               ,--'有效性',
+    yxrq                                               ,--'有效日期',
+    jdbm                                               ,--'街道编码',
+    jdmc                                               ,--'街道名称',
+    sqbm                                               ,--'社区编码',
+    sqmc                                               ,--'社区名称',
+    wgbm                                               ,--'网格编码',
+    wgmc                                               ,--'网格名称',
+    house_code                                               ,--'房屋编码',
+    building_code                                               ,--'楼栋编码',
+    lxdh                                               ,--'联系电话',
+    tzr                                               ,--'同住人',
+    lyb                                               ,--'来源表',
+    lyjg                                               ,--'来源机构',
+    yxsj                                               ,--'运行时间',
+    syrkjzdz                                               ,--'实有人口居住地址',
+    fwmc                                               ,--'房屋名称',
+    byzd1                                               ,--'备用字段1',
+    byzd2                                               ,--'备用字段2',
+    byzd3                                               ,--'备用字段3',
+	case when length(zjhm)=18 then 
+ if(
+ /*18位身份证校验*/
+ case when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='0' then '1'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='1' then '0'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='2' then 'X'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='3' then '9'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='4' then '8'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='5' then '7'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='6' then '6'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='7' then '5'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='8' then '4'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='9' then '3'
+	  when 
+		mod( (substr(zjhm,1,1)*7)+(substr(zjhm,2,1)*9)+(substr(zjhm,3,1)*10)+(substr(zjhm,4,1)*5)
+			+(substr(zjhm,5,1)*8)+(substr(zjhm,6,1)*4)+(substr(zjhm,7,1)*2)+(substr(zjhm,8,1)*1)
+			+(substr(zjhm,9,1)*6)+(substr(zjhm,10,1)*3)+(substr(zjhm,11,1)*7)+(substr(zjhm,12,1)*9)
+			+(substr(zjhm,13,1)*10)+(substr(zjhm,14,1)*5)+(substr(zjhm,15,1)*8)+(substr(zjhm,16,1)*4)
+			+(substr(zjhm,17,1)*2),11) ='10' then '2' 
+	 end = substr(zjhm,18,1) ,'1','0')
+ when  
+	/*15位身份证无需校验*/
+	length(zjhm)=15 then '1'
+ when 
+    /*港澳通行证*/
+    ((zjhm like 'H%' or zjhm like 'M%') and (length(zjhm)=9 or length(zjhm)=11)) then '1'
+ when 
+	/*电子港澳通行证*/
+	(zjhm RLIKE '^C[A-Z]\\d{7}$' or zjhm RLIKE '^C\\d{8}$' ) then '1'     
+ when 
+	/*香港身份证*/
+	(zjhm RLIKE '^[A-Z]{1}\\d{6}[\\（\\(][0-9A]{1}[\\）\\)]$') then '1'
+ when 
+	/*澳门身份证*/
+    (zjhm RLIKE '^[1|5|7]\\d{6}[\\(\\(][0-9Aa][\\)\\）]$') then '1'
+ when 
+	/*台湾身份证*/
+	((ASCII(zjhm)>=65 and ASCII(zjhm)<=90) and (length(zjhm)=10) and
+      zjhm not rlike '^[A-Z]{1}\\d{6}[\\（\\(][0-9A]{1}[\\）\\)]$') then '1'
+ else '0' end as byzd4,
+ byzd5                                               --'备用字段5'
+ from dm_rkk_syrkkb_temp ; ---人口表
+
+--获取打疫苗的数据
+--insert overwrite 
+create table ymbqb_ql
+select 
+	sfz
+	,ymjzrq
+	,zc
+	,byzd1 sfjzwb
+	,ym_dm
+	,row_number() over(partition by sfz order by ymjzrq asc)rn
+from ymjz_new_cbk_ql;--疫苗表
+
+
+
+
+--获取做核酸数据
+--insert overwrite
+create table  table hsbqb_ql 
+select
+  a.xm xm --姓名
+  ,a.zjhm zjhm --证件号码
+  ,case when sj is null then byzd2 else sj end dh  --电话
+  ,SYRKJZDZ jzdz --住址
+  ,case when sqmc='中海怡翠' and sqbm is not null then  sqbm||replace(wgmc,'中海怡翠','0') ||'000' 
+		else  a.wgbm || '000' end qybm --区域编码
+  ,jdmc		--街道名称
+  ,jdbm	 	--街道编码
+  ,sqmc		--社区名称
+  ,sqbm		--社区编码
+  ,wgmc		--网格名称
+  ,a.wgbm  wgbm		--网格编码
+  ,a.building_code ldbm	--楼栋编码
+  ,a.house_code fwbm	--房屋编码
+  ,case when b.zjhm is not null then 1 else 0 end sfzhs --是否做核酸
+  ,b.hsjcsj as zjychsjcsj										--最近一次核酸检测时间
+  ,case when b.byzd4 in ('yqfkhscjcollection', 'yqfkthreecomhd', 'new_crown_virus_check_result')
+  then 1 when b.byzd4 in ('hscyxx102957', 'hsjcxx_jgfh20210606_BF', 'hscyxx20210611','yqfkthreecomhd','yhs_fh20210816_bf', 'yqfk_hscyxx_qc') then 0 else null end sfqn
+  ,case when yxx='有效' then 0 else 1 end zlbs		--暂离标识
+  ,a.byzd4 zjyswxbs --证件疑似无效标识
+  ,cast(null as string) byzd1
+  ,cast(null as string) byzd2
+  ,cast(null as string) byzd3
+  ,cast(null as string) byzd4
+  ,cast(null as string) byzd5
+  ,cast(null as string) byzd6
+  ,cast(null as string) byzd7
+  ,cast(null as string) byzd8
+  ,cast(null as string) byzd9
+  ,cast(null as string) byzd10
+  ,a.id
+from dm_rkk_syrkbqb_ql a
+left join (
+select zjhm, hsjcsj, byzd4
+  from /*根据证件号分组，取时间最大一条*/ 
+  (select zjhm,
+            hsjcsj,
+            byzd4,
+            row_number() over(partition by zjhm order by hsjcsj desc) rn
+       from (
+ -----------------------------------------------------------------------------1、hscyxx102957-----------------------------------------------------------------------     
+             /*市里数据*/
+             select t1.ID_CARD_NO zjhm,
+                     t1.SAMPLE_TIME hsjcsj,
+                     'hscyxx102957' as byzd4
+               from ods_sjhpt_hscyxx102957_total_cs t1
+              where dt =
+                    (select max(dt)
+                       from ods_sjhpt_hscyxx102957_total_cs)
+                and substr(SAMPLE_TIME, 1, 10) >= '2021-05-27'   
+      union all
+            /*0606市里数据*/
+----------------------------------------------------------------------------2、hsjcxx_jgfh20210606_BF-----------------------------------------------------------------
+             select t1.zjhm zjhm,
+                     t1.cysj hsjcsj,
+                     'hsjcxx_jgfh20210606_BF' as byzd4
+               from ods_sjhpt_yqfk_hsjcxx_jgfh20210606_total_cs_temp t1
+              where dt =
+                    (select max(dt)
+                       from ods_sjhpt_yqfk_hsjcxx_jgfh20210606_total_cs_temp)
+                and substr(cysj, 1, 10) >='2021-05-27'
+  ------------------------------------------------------------------------3、hscyxx20210611------------------------------------------------------------------------------     
+     union all
+            /*0611市里数据*/
+             select t1.zjhm zjhm,
+                     t1.cysj hsjcsj,
+                     'hscyxx20210611' as byzd4
+               from ods_sjhpt_yqfk_hscyxx20210611_total t1
+              where dt =
+                    (select max(dt)
+                       from ods_sjhpt_yqfk_hscyxx20210611_total)
+                and substr(cysj, 1, 10) >= '2021-05-27'
+-----------------------------------------------------------------------4、yqfkthreecomhd---------------------------------------------------------------------------------------
+	  union all
+            /*ods_swsjkwyh_yqfkthreecomhd_total_cs*/
+             select t1.cardno as zjhm,
+                     t1.cytime hsjcsj,
+                     'yqfkthreecomhd' as byzd4
+               from ods_swsjkwyh_yqfkthreecomhd_total_cs t1
+              where dt =
+                    (select max(dt)
+                       from ods_swsjkwyh_yqfkthreecomhd_total_cs)
+                and substr(cytime, 1, 10) >='2021-05-27'
+----------------------------------------------------------------------5、yhs_fh20210816_bf----------------------------------------------------------------------------------------
+	   union all
+            /*ods_lgqwjj_yqfk_yhs_fh20210816_bf_total_hs_ql*/
+             select t1.zjhm zjhm,
+                     t1.cyrq hsjcsj,
+                     'yhs_fh20210816_bf' as byzd4
+               from ods_lgqwjj_yqfk_yhs_fh20210816_bf_total_hs_ql t1
+              where dt =
+                    (select max(dt)
+                       from ods_lgqwjj_yqfk_yhs_fh20210816_bf_total_hs_ql)
+                and substr(cyrq, 1, 10) >= '2021-05-27'
+----------------------------------------------------------------------6、yqfk_hscyxx_qc-------------------------------------------------------------------------------------------
+	  union all
+            /*ods_lgqwjj_yqfk_hscyxx_qc_ql*/
+             select t1.zjhm zjhm,
+                     t1.sample_time as hsjcsj,
+                     'yqfk_hscyxx_qc' as byzd4
+               from  (select * from ods_lgqwjj_yqfk_hscyxx_qc_ql
+			where dt=(select max(dt) from ods_lgqwjj_yqfk_hscyxx_qc_ql )
+			) t1 where substr(sample_time, 1, 10) >='2021-05-27'
+	union all
+ /*区里数据*/
+		select
+			zjhm
+			,hsjcsj
+			,byzd4
+		from(
+             select zjhm, hsjcsj, byzd4,
+			 row_number() over(partition by zjhm order by hsjcsj desc) rn
+               from dm_rkk_syrkfyqk_lsql_bqb
+                where  substr(hsjcsj,1,10) >= '2021-05-27'
+                AND byzd4 IN ('yqfkhscjcollection', 'yqfkthreecomhd', 'new_crown_virus_check_result')
+				)where rn=1
+			)
+		)
+ where rn = 1
+)b
+on a.zjhm=b.zjhm;
+
+
+
+--与实有人口疫苗匹配 
+--insert overwrite 
+CREATE table dm_syrkbqb_hsym_ql 
+select
+	xm			--姓名
+	,zjhm		--证件号码
+	,dh			--电话
+	,jzdz		--住址
+	,qybm		--区域编码
+	,jdmc		--街道名称
+	,jdbm		--街道编码
+	,sqmc		--社区名称
+	,sqbm		--社区编码
+	,wgmc		--网格名称
+	,wgbm		--网格编码
+	,ldbm		--楼栋编码
+	,fwbm		--房屋编码
+	,sfzhs	--是否做核酸
+	,zjychsjcsj --最近一次核酸检测时间
+	,sfqn
+	,ymbs --疫苗标识
+	,zxymjzsj	--最新疫苗接种时间
+	,zlbs		--暂离标识
+	,zjyswxbs	--证件疑似无效标识
+	,byzd1
+	,byzd2
+	,byzd3
+	,byzd4
+	,byzd5
+	,byzd6
+	,byzd7
+	,byzd8
+	,byzd9
+	,byzd10
+	,id
+	,sfjzwb 	
+	,xgymlx	
+	,max(dytjzsj)   dytjzsj 	
+	,max(dytjzzc)   dytjzzc 	
+	,max(detjzsj)   detjzsj 	
+	,max(detjzzc)   detjzzc 	
+	,max(dsantjzsj) dsantjzsj
+	,max(dsantjzzc) dsantjzzc
+	,max(dsitjzsj)  dsitjzsj 
+	,max(dsitjzzc)  dsitjzzc 
+from(
+	select
+		xm			--姓名
+		,a.zjhm		--证件号码
+		,dh			--电话
+		,jzdz		--住址
+		,a.qybm		--区域编码
+		,jdmc		--街道名称
+		,jdbm		--街道编码
+		,sqmc		--社区名称
+		,sqbm		--社区编码
+		,wgmc		--网格名称
+		,wgbm		--网格编码
+		,a.ldbm		--楼栋编码
+		,a.fwbm		--房屋编码
+		,a.sfzhs	--是否做核酸
+		,a.zjychsjcsj --最近一次核酸检测时间
+		,a.sfqn sfqn
+		,case when a.zjhm=c.sfz then 1 else 0 end  ymbs --疫苗标识
+		,c.zxymjzsj	--最新疫苗接种时间
+		,zlbs		--暂离标识
+		,zjyswxbs	--证件疑似无效标识
+		,byzd1
+		,byzd2
+		,byzd3
+		,byzd4
+		,byzd5
+		,byzd6
+		,byzd7
+		,byzd8
+		,byzd9
+		,byzd10
+		,a.id
+		,sfjzwb 	
+		,xgymlx 	
+		,case when rn=1 and a.zjhm=d.sfz then ymjzrq else null end dytjzsj 	
+		,case when rn=1 and a.zjhm=d.sfz then zc else null end dytjzzc 	
+		,case when rn=2 and a.zjhm=d.sfz then ymjzrq else null end detjzsj 	
+		,case when rn=2 and a.zjhm=d.sfz then zc else null end detjzzc 	
+		,case when rn=3 and a.zjhm=d.sfz then ymjzrq else null end dsantjzsj
+		,case when rn=3 and a.zjhm=d.sfz then zc else null end dsantjzzc
+		,case when rn=4 and a.zjhm=d.sfz then ymjzrq else null end dsitjzsj 
+		,case when rn=4 and a.zjhm=d.sfz then zc else null end dsitjzzc 
+	from hsbqb_ql a
+	left join(
+	select
+		sfz
+		,sfjzwb
+		,zxymjzsj
+		,xgymlx
+from(
+		select
+			sfz
+			,row_number() over(partition by sfz order by rn desc) rn
+			,sfjzwb
+			,ymjzrq zxymjzsj
+			,ym_dm xgymlx
+		from ymbqb_ql
+)where rn=1
+	)c
+	on a.zjhm=c.sfz
+	left join(
+	select
+		sfz
+		,rn
+		,ymjzrq
+		,zc
+	from ymbqb_ql
+	)d
+	on a.zjhm=d.sfz
+)group by	xm			--姓名
+	,zjhm		--证件号码
+	,dh			--电话
+	,jzdz		--住址
+	,qybm		--区域编码
+	,jdmc		--街道名称
+	,jdbm		--街道编码
+	,sqmc		--社区名称
+	,sqbm		--社区编码
+	,wgmc		--网格名称
+	,wgbm		--网格编码
+	,ldbm		--楼栋编码
+	,fwbm		--房屋编码
+	,sfzhs	--是否做核酸
+	,zjychsjcsj --最近一次核酸检测时间
+	,sfqn
+	,ymbs --疫苗标识
+	,zxymjzsj	--最新疫苗接种时间
+	,zlbs		--暂离标识
+	,zjyswxbs	--证件疑似无效标识
+	,byzd1
+	,byzd2
+	,byzd3
+	,byzd4
+	,byzd5
+	,byzd6
+	,byzd7
+	,byzd8
+	,byzd9
+	,byzd10
+	,id
+	,sfjzwb 	
+	,xgymlx
+	;
+
+--与回复匹配 
+--insert overwrite table 
+create table dm_rkk_syrkyqfkbqb003ql_th 
+select
+	a.xm xm					--姓名
+	,a.zjhm zjhm              --证件号码
+	,a.dh dh                  --电话
+	,jzdz                     --住址
+	,a.qybm qybm              --区域编码
+	,a.jdmc jdmc              --街道名称
+	,a.jdbm jdbm              --街道编码
+	,a.sqmc sqmc              --社区名称
+	,a.sqbm sqbm              --社区编码
+	,wgmc                     --网格名称
+	,wgbm                     --网格编码
+	,a.ldbm ldbm              --楼栋编码
+	,a.fwbm fwbm              --房屋编码
+	,a.sfzhs sfzhs            --是否做核酸
+	,a.zjychsjcsj zjychsjcsj	--最近一次核酸检测时间
+	,a.sfqn sfqn
+	,ymbs						--疫苗标识
+	,zxymjzsj					--最新疫苗接种时间
+	,zlbs                       --暂离标识
+	,case when a.zjhm=d.zjhm and a.zlbs=0 then 1 else 0 end dxhfbzlg  --短信回复不在龙岗
+	,zjyswxbs					--证件疑似无效标识
+	,substr(now(),1,19) byzd1
+	,byzd2
+	,byzd3
+	,byzd4
+	,byzd5
+	,byzd6
+	,byzd7
+	,byzd8
+	,byzd9
+	,byzd10
+	,a.id
+	,sfjzwb 	
+	,xgymlx 	
+	,dytjzsj 	
+	,dytjzzc 	
+	,detjzsj 	
+	,detjzzc 	
+	,dsantjzsj
+	,dsantjzzc
+	,dsitjzsj 
+	,dsitjzzc 
+from dm_syrkbqb_hsym_ql a
+left join dhhf_new_03_th d
+on a.zjhm=d.zjhm;
+  
+--清除临时表数据
+--truncate table ymbqb_ql;
+
+
+----------------------------------------------------------------------------------------------------------
+

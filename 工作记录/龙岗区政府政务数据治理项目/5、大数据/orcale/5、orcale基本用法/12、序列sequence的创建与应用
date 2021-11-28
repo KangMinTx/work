@@ -1,0 +1,203 @@
+序列sequence的创建与应用
+在存储过程中看到一个语句：
+
+select sql_log_id.nextval into vcSeq_log_id from dual;
+dual 是 oracle 中的虚拟表
+sql_log_id 是创建序列时自定义的序列名称
+nextval 是获取序列的下一个值
+二、序列定义
+序列 (SEQUENCE) 是序列号生成器，可以为表中的行自动生成序列号，产生一组等间隔的数值(类型为数字)。
+
+不占用磁盘空间，占用内存。
+
+其主要用途是生成表的主键值，可以在插入语句中引用，也可以通过查询检查当前值，或使序列增至下一个值。
+
+通过 nextval 返回序列中下一个有效的值，任何用户都可以引用。
+
+三、创建序列
+创建序列需要 create sequence 系统权限。序列的创建语法如下：
+
+（序列名常定义为‘seq_XXX’的形式，创建序列不能使用replace）
+
+create sequence 序列名
+increment by n
+start with n
+maxvalue/minvalue n | nomaxvalue
+cycle | nocycle
+cache n | nocache
+其中：
+
+increment by 用于定义序列的步长，如果省略，则默认为1，如果出现负值，则代表 Oracle 序列的值是按照此步长递减的。
+start with 定义序列的初始值(即产生的第一个值)，默认为1。
+maxvalue 定义序列生成器能产生的最大值。选项 nomaxvalue 是默认选项，代表没有最大值定义，这时对于递增Oracle序列，系统能够产生的最大值是10的27次方；对于递减序列，最大值是-1。
+minvalue 定义序列生成器能产生的最小值。选项 nominvalue 是默认选项，代表没有最小值定义，这时对于递减序列，系统能够产生的最小值是负10的26次方；对于递增序列，最小值是1。
+cycle 和 nocycle 表示当序列生成器的值达到限制值后是否循环。cycle 代表循环，nocycle 代表不循环。如果循环，则当递增序列达到最大值时，循环到最小值；对于递减序列达到最小值时，循环到最大值。如果不循环，达到限制值后，继续产生新值就会发生错误。
+cache (缓冲)定义存放序列的内存块的大小，默认为20。nocache 表示不对序列进行内存缓冲。对序列进行内存缓冲，可以改善序列的性能。
+nextval 返回序列中下一个有效的值，任何用户都可以引用。
+currval 中存放序列的当前值，nextval 应该在 currval 之前指定，二者应同时有效。
+实例：
+
+-- 创建序列
+create sequence t_id_sql increment by 1 start with 1;
+-- 删除序列
+drop sequence t_id_sql;
+-- 查询当前序列
+select t_id_sql.currval from dual;
+-- 查询下一个序列值
+select t_id_sql.nextval from dual;
+-- 测试
+select t_id_sql.currval, t_id_sql.nextval from dual; -- 同时执行不报错 返回 1 1
+-- 测试负数
+drop sequence t_id_sql;
+create sequence t_id_sql increment by -1 start with -5;
+select t_id_sql.currval,t_id_sql.nextval from dual; -- -5 -5
+-- 继续执行之后 返回 -6 -6 -7 -7
+发现：针对新建的序列必须先使用 nextval 进行查询之后才能使用 currval 进行查询当前序列，否则会报错。
+
+四、序列使用
+nextval：生成序列的下一个序列号，调用时需要指出序列名，即：序列名.nextval
+currval：用于产生序列的当前值，无论调用多少次都不会产生序列的下一个值。用法同上。
+实例：
+
+-- 创建测试表
+create table temp_cwh_test_0530
+(
+	id number,
+    money number,
+    age number
+);
+
+-- 插入数据
+insert into temp_cwh_test_0530 values
+(t_id_sql.nextval,1,1);
+-- 插入8次之后
+
+-- 查询
+select * from temp_cwh_test_0530
+1	1	1
+2	1	1
+3	1	1
+4	1	1
+5	1	1
+6	1	1
+7	1	1
+8	1	1
+
+-- 查询序列
+select t_id_sql.currval from dual;  -- 8
+
+-- 查询下一个序列值
+select t_id_sql.nextval from dual; -- 9 10 11 执行3次
+五、修改序列
+修改序列需要注意：
+
+必须是序列的拥有者或者对序列有 alter any sequence 权限的用户
+只有将来的序列值会被改变
+改变序列的初始值只能通过删除序列之后重建序列的方法实现
+实例：
+
+-- 修改序列
+alter sequence t_id_sql increment by 10 maxvalue 1000 cycle; -- 增长到1000之后重新开始
+-- increment by 10 maxvalue 100 报错，可能 cache 中已经保存了20个值，所以无法直接修改
+-- 继续插入数据
+insert into temp_cwh_test_0530 values
+(t_id_sql.nextval,1,1);
+1	1	1
+2	1	1
+3	1	1
+4	1	1
+5	1	1
+6	1	1
+7	1	1
+8	1	1
+18	1	1
+28	1	1
+38	1	1
+可以营销 sequence 的初始化参数：
+
+sequence_cache_entries = 10 设置能同时被 cache 的 sequence 数量。
+
+-- 修改测试
+alter sequence t_id_sql increment by 2 maxvalue 10 cycle; -- 报错
+-- ORA-04013: number to CACHE must be less than one cycle
+
+-- 修改测试
+alter sequence t_id_sql increment by 2 maxvalue 100 cycle;
+-- sequence altered.
+六、查询序列
+在数据库中可以通过数据字典 user_objects 查看用户拥有的序列。
+
+select * from user_objects where object_type = 'SEQUENCE'
+查看所有 user_objects 类型。
+
+select distinct object_type from user_objects;
+/*
+INDEX PARTITION
+SEQUENCE
+TABLE PARTITION
+PROCEDURE
+DATABASE LINK
+LOB
+PACKAGE
+PACKAGE BODY
+TYPE BODY
+MATERIALIZED VIEW
+TABLE
+VIEW
+INDEX
+FUNCTION
+SYNONYM
+TYPE
+*/
+通过数据字典 user_sequences 可以查看序列的设置。
+
+select * from user_sequences; -- 包含以下字段
+-- sequence_name
+-- min_value
+-- max_value
+-- increment_by
+-- cycle_flag
+-- order_flag
+-- cache_size
+-- last_number
+通过数据字典 all_sequences 可以查看所有用户下的序列。
+
+select * from all_sequences;
+select * from dba_sequences; -- 应该是一样的
+七、删除序列
+通过 drop 删除序列。
+
+drop sequence t_id_sql;
+八、其他：序列作为主键使用的优缺点
+表设计中选择主键问题，用 sequence 作为主键有什么优缺点。
+
+1. seq.nextval 使用场景
+（1）如果一个事务中只是 insert 时需要序列，其他地方不会需要这个序列，那么只需要在 INSERT ... VALUES (seq.nextval ...)语句中使用即可；
+
+（2）如果一个事务中 INSERT 一张表后，还需要插入时的主键ID值，作为外键插入其他表，那么就需要在 INSERT 第一张表前使用 select seq.nextval from dual 提前获取可用的 ID 保存到一个变量中，为后面使用。
+
+2.序列调用原理
+使用序列时 Oracle 内部大体是按照如下步骤进行：
+
+（1）一个序列会被定义到 Oracle 内部的一张数据字典表(seq$)的一行。
+
+（2）第一次使用序列，序列的起始值会加上缓存大小，然后更新回行。
+
+（3）Oracle内部会自动跟踪内存中的两个值，当前值和目标值。
+
+（4）每次有会话调用 seq.nextval，Oracle 会递增当前值，然后检查是否超过了目标值，再返回结果。
+
+（5）如果当前值和目标值相同，Oracle 会更新数据字典表中的行，为目标值加上缓存大小，同时内存中产生了一个新的目标值。
+
+如果 cache 值较小，且序列使用的频率较高，那么会对 seq$ 表有频繁的更新操作，日志量会增加，尤其在RAC下，更新该行的时候，该数据块会在节点间不停的传送，就会产生可能的争用，这种问题会被放大。
+
+因此为了减少这种情况，我们可以将 cache 缓存值设置大一些，例如1000，减少对字典表的更新。
+
+序列还有一个问题，就是 cache 缓存是实例级的，对于RAC，比如第一个节点使用序列时会分配1-20，第二个节点会被分配21-40，Oracle保证不会重复，但若节点crash了，比如节点1坏了，那么序列就会出现断号，节点1再次使用时，只会从41-60，由于我们用主键只为了标示唯一，不关心段号，也不关心产生的顺序，所以这些可以忽略。
+
+3.产生裂缝
+序列在下列情况下会出现裂缝：
+
+回滚
+系统异常
+多个表同时使用同一序列\

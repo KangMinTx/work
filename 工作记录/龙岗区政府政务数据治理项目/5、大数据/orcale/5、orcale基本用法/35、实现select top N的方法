@@ -1,0 +1,33 @@
+实现select top N的方法
+
+由于Oracle不支持select top N语句，所以在Oracle中需要利用order by和rownum的组合来实现select top N的查询。
+
+　　rownum是记录表中数据编号的一个隐藏字段。
+
+　　1.抽取top N数据
+
+select id,name from 
+    (select id,name from customer order by name) a
+where rownum <= N
+order by rownum asc
+　　2.在top N数据中抽出第M（M <= N ）条记录
+
+
+select id,name from 
+    (select rownum as recno, id, name from 
+        (select id,name from customer order by name) a
+    where rownum <= N
+    order by rownum asc) b
+where recno = M (M <= N)
+
+　　3.抽取按某种方式排序的记录集中的第M条记录开始的X条记录
+
+
+select id,name from 
+    (select rownum as recno, id, name from 
+        (select id,name from customer order by name) a
+    where rownum <= N --(N>=(M+X-1))
+    order by rownum asc) b
+where recno between M and (M+X-1)
+
+　　在此基础上，可通过存储过程实现函数封装，将开始记录数以及抽取记录数作为输入参数，就可以轻松实现分页抽取数据。

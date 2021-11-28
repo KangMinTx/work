@@ -1,0 +1,106 @@
+update一整列 关联更新
+普通的 update 都是根据条件来对部分列的内容进行修改，用法如下：
+
+update temp_cwh_table set name = 'xxx'
+where id = 1;
+假设现在有2张表：A、B，需要关联A、B表，根据相同的 id 来 update A表。
+
+建立测试表
+-- 创建测试表 temp_cwh_001
+create table temp_cwh_001
+(
+ id int,
+ name varchar2(20)
+);
+-- 插入数据
+insert into temp_cwh_001 values (1,'AA');
+insert into temp_cwh_001 values (2,'BB');
+insert into temp_cwh_001 values (3,'CC');
+-- 查询
+select * from temp_cwh_001
+-- 1	1	AA
+-- 2	2	BB
+-- 3	3	CC
+-- 创建测试表 temp_cwh_002
+create table temp_cwh_002
+(
+ id int,
+ name varchar2(20)
+);
+-- 插入数据
+insert into temp_cwh_002 values (1,'CCCC');
+insert into temp_cwh_002 values (2,'DDDD');
+-- 查询
+select * from temp_cwh_002
+-- 1	1	CCCC
+-- 2	2	DDDD
+关联更新
+-- 关联更新
+update temp_cwh_001 a
+set name = (select b.name from temp_cwh_002 b where a.id = b.id);
+-- 提交
+commit;
+-- 查询
+select * from temp_cwh_001;
+-- 1	1	CCCC
+-- 2	2	DDDD
+-- 3	3	
+本意只是将关联得上的内容进行update，关联不上的内容不修改。但此用法下，关联不上的内容直接被update为null，需再度优化。
+
+方法一
+-- 关联更新
+update temp_cwh_001 a
+set name = (select b.name from temp_cwh_002 b where a.id = b.id)
+where id = (select b.id from temp_cwh_002 b where a.id = b.id)
+-- 提交
+commit;
+-- 查询
+select * from temp_cwh_001;
+-- 1	1	CCCC
+-- 2	2	DDDD
+-- 3	3 CC
+添加where条件过滤，符合条件。
+
+方法二：使用exists
+-- 关联更新
+update temp_cwh_001 a
+set name = (select b.name from temp_cwh_002 b where a.id = b.id)
+where exists (select 1 from temp_cwh_002 b where a.id = b.id)
+-- 提交
+commit;
+-- 查询
+select * from temp_cwh_001;
+-- 1	1	CCCC
+-- 2	2	DDDD
+-- 3	3 CC
+方法三
+update (select a.name aname, 
+               a.id aid, 
+               b.name bname,
+               b.id bid
+        from temp_cwh_001 a,
+             temp_cwh_002 b
+        where a.id = b.id)
+set aname = bname
+报错： ORA-01779: cannot modify a column which maps to a non key-preserved table
+
+需要主键的支持
+
+alter table temp_cwh_001 add primary key(id);
+alter table temp_cwh_002 add primary key(id);
+重新执行，便可。
+
+这种方法的局限性就是需要primary的支持。
+
+方法四
+可以使用存储过程的方式进行灵活处理，不过这里有点复杂。。暂且记录。。
+
+declare
+cursor cur_wm is select name, id from temp_cwh_002;
+begin
+	for my_wm in cur_wm loop
+	update temp_cwh_001 set name = my_wm.name
+	where id = my_wm.id;
+	end loop;
+end;
+执行之后，PL/SQL procedure successfully completed.

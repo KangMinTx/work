@@ -1,0 +1,37 @@
+decode函数
+decode函数主要作用：将查询结果翻译成其他值（即以其他形式变现出来）
+
+　　使用方法：
+
+SELECT DECODE(colunm_name,值1,翻译值1,值2,翻译值2……值n,翻译值n,缺省值) FROM tablename;
+　　解释：
+
+if （条件==值1）
+　　then return(翻译值1)
+elsif （条件==值2）
+　　then return(翻译值2)
+
+.......
+
+elsif （条件==值n）
+
+　　then return(翻译值n)
+
+else return(缺省值)
+
+end if
+
+　　注：其中缺省值可以是你要选择的column name 本身，也可以是你想定义的其他值，比如Other等；
+
+SELECT a.job_id, a.job_title, a.min_salary,
+       DECODE(a.min_salary,10000,'一万',6000,'六千','Other') min_chinese,
+       a.max_salary
+FROM HR.JOBS a;
+　　只与一个值比较
+
+SELECT DECODE(a.min_salary,NULL, '---',a.min_salary) min_salary FROM HR.JOBS a;
+　　另外：decode中可使用其他函数，如nvl函数或sign函数等。
+
+　　NVL(EXPR1,EXPR2)  —— 若EXPR1是NULL，则返回EXPR2，否则返回EXPR1；
+
+　　SIGN(EXPE1)  —— 根据某个值是0、正数还是负数，分别返回0、1、-1。

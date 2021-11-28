@@ -1,0 +1,492 @@
+---------------------------------------------疫苗问题------------------------------------------------
+1、提供给永兴元的表，不变DM_RKK_YQFMYMBQB
+原DM_RKK_YQFMYMBQB表，变为DM_RKK_YQFMYMBQB_temp表
+把DM_RKK_YQFMYMBQB_ymb，变为DM_RKK_YQFMYMBQB
+语句：
+ALTER TABLE DM_RKK_YQFMYMBQB RENAME TO DM_RKK_YQFMYMBQB_TEMP01;
+ALTER TABLE DM_RKK_YQFMYMBQB_TEMP RENAME TO DM_RKK_YQFMYMBQB;
+ALTER TABLE DM_RKK_YQFMYMBQB_TEMP01 RENAME TO DM_RKK_YQFMYMBQB_TEMP;
+
+给永兴元，查表的权限
+grant SELECT ON LQGSM.DM_RKK_YQFMYMBQB TO LGQSM_YXY;
+
+----注意的事情
+1、重命名时，要注意相应的表，berige的sql中的表，必要看清表有没有代替完成了
+2、berige有改动时，需要保存，提交版本，如果不是，起调执行的是旧的版本
+
+-------------------------------------------------------------------------
+2、表的数据对应不上时，可把大数据平台的全量表抽到14物理机，再进行操作
+DROP TABLE DM_RKK_YQFMYMBQB_TO_YXY_cbk;
+CREATE TABLE DM_RKK_YQFMYMBQB_TO_YXY_cbk as
+SELECT * FROM DM_RKK_YQFMYMBQB_TO_YXY A WHERE NOT EXISTS 
+(SELECT 1 FROM DM_RKK_YQFMYMBQB B WHERE A.SFZ=B.SFZ AND A.ZC=B.ZC AND A.DYZJZSJ=B.DYZJZSJ AND NVL(A.DEZJZSJ,1)=NVL(B.DEZJZSJ,1) AND NVL(A.DSZJZSJ,1) =NVL(B.DSZJZSJ,1));
+
+
+--插入相应的数据
+MERGE INTO  LQGSM.DM_RKK_YQFMYMBQB A
+USING (SELECT
+szzxm
+,sfz
+,ym_mc
+,zc
+,ym_dm
+,dyzjzsj
+,dezjzsj
+,dszjzsj
+,cjydm
+,cjedm
+,cjsdm
+,cjymc
+,cjemc
+,cjsmc
+,jdmc
+,jdbm
+,jzdwmc
+,szsxtdwbm
+,sfywc
+,yxsj
+,yxsj2
+,byzd2
+,byzd3
+,byzd4
+,byzd5
+,byzd6
+,byzd7
+,byzd8
+,byzd9
+,byzd10
+  FROM LQGSM.DM_RKK_YQFMYMBQB_TO_YXY_cbk ) B
+ON (A.SFZ=B.SFZ )
+WHEN MATCHED
+THEN
+  UPDATE SET
+--A.szzxm=B.szzxm
+--,A.sfz=B.sfz
+A.ym_mc=B.ym_mc
+,A.zc=B.zc
+,A.ym_dm=B.ym_dm
+,A.dyzjzsj=B.dyzjzsj
+,A.dezjzsj=B.dezjzsj
+,A.dszjzsj=B.dszjzsj
+,A.cjydm=B.cjydm
+,A.cjedm=B.cjedm
+,A.cjsdm=B.cjsdm
+,A.cjymc=B.cjymc
+,A.cjemc=B.cjemc
+,A.cjsmc=B.cjsmc
+,A.jdmc=B.jdmc
+,A.jdbm=B.jdbm
+,A.jzdwmc=B.jzdwmc
+,A.szsxtdwbm=B.szsxtdwbm
+,A.sfywc=B.sfywc
+,A.yxsj=SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,A.yxsj2=SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,A.byzd2=B.byzd2
+,A.byzd3=B.byzd3
+,A.byzd4=B.byzd4
+,A.byzd5=B.byzd5
+,A.byzd6=B.byzd6
+,A.byzd7=B.byzd7
+,A.byzd8=B.byzd8
+,A.byzd9=B.byzd9
+,A.byzd10=B.byzd10
+WHEN NOT MATCHED
+THEN
+  INSERT (
+A.szzxm
+,A.sfz
+,A.ym_mc
+,A.zc
+,A.ym_dm
+,A.dyzjzsj
+,A.dezjzsj
+,A.dszjzsj
+,A.cjydm
+,A.cjedm
+,A.cjsdm
+,A.cjymc
+,A.cjemc
+,A.cjsmc
+,A.jdmc
+,A.jdbm
+,A.jzdwmc
+,A.szsxtdwbm
+,A.sfywc
+,A.yxsj
+,A.yxsj2
+,A.byzd2
+,A.byzd3
+,A.byzd4
+,A.byzd5
+,A.byzd6
+,A.byzd7
+,A.byzd8
+,A.byzd9
+,A.byzd10
+  ) VALUES (
+B.szzxm
+,B.sfz
+,B.ym_mc
+,B.zc
+,B.ym_dm
+,B.dyzjzsj
+,B.dezjzsj
+,B.dszjzsj
+,B.cjydm
+,B.cjedm
+,B.cjsdm
+,B.cjymc
+,B.cjemc
+,B.cjsmc
+,B.jdmc
+,B.jdbm
+,B.jzdwmc
+,B.szsxtdwbm
+,B.sfywc
+,SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,B.byzd2
+,B.byzd3
+,B.byzd4
+,B.byzd5
+,B.byzd6
+,B.byzd7
+,B.byzd8
+,B.byzd9
+,B.byzd10
+  );
+ COMMIT;
+ 
+ 
+ ---------------------------------------------核酸------------------------------------------------
+ 1、创建分区表
+ CREATE TABLE LQGSM.DM_YQ_HSJCJG_0923 
+   (ID VARCHAR2(255 CHAR), 
+	RECEIVE_TIME VARCHAR2(255 CHAR), 
+	REAL_NAME VARCHAR2(255 CHAR), 
+	SPECIMEN_CODE VARCHAR2(255 CHAR), 
+	GENDER VARCHAR2(255 CHAR), 
+	AGE VARCHAR2(255 CHAR), 
+	PHONE VARCHAR2(255 CHAR), 
+	SPECIMEN_TYPE VARCHAR2(255 CHAR), 
+	COLLECTION_TIME VARCHAR2(255 CHAR), 
+	REPORT_TIME VARCHAR2(255 CHAR), 
+	ID_CARD_NO VARCHAR2(255 CHAR), 
+	COOPERATIVE_INSTITUTION VARCHAR2(255 CHAR), 
+	CHECK_RESULT VARCHAR2(255 CHAR), 
+	IMPORT_BATCH VARCHAR2(255 CHAR), 
+	CREATER VARCHAR2(255 CHAR), 
+	CREATE_TIME VARCHAR2(255 CHAR), 
+	TIMEFLAG TIMESTAMP (0), 
+	BZ VARCHAR2(255 CHAR), 
+	WYBS VARCHAR2(255 CHAR),
+	yxsj  DATE
+   ) PARTITION BY RANGE (yxsj) INTERVAL (numtoyminterval(1,'month'))
+(partition table_log values less than(to_date('2025-11-01', 'yyyy-mm-dd')));
+
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.ID IS '主键ID';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.REAL_NAME IS '姓名';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.SPECIMEN_CODE IS '标本编码';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.GENDER IS '性别';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.AGE IS '年龄';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.PHONE IS '手机';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.SPECIMEN_TYPE IS '标本类型';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.ID_CARD_NO IS '证件号码';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.COOPERATIVE_INSTITUTION IS '合作机构';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.CHECK_RESULT IS '检验结果';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.IMPORT_BATCH IS '导入批次';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.CREATER IS '创建者';
+COMMENT ON COLUMN LQGSM.DM_YQ_HSJCJG.yxsj IS '运行时间';
+
+2、插入一些数据
+INSERT INTO   DM_YQ_HSJCJG_0923 SELECT a.*,TO_CHAR(SUBSTR(SYSDATE,1,10),'yyyymmdd')  AS yxsj FROM DM_YQ_HSJCJG a WHERE rownum<100000; 
+COMMIT;
+
+
+-----------------------------------------------修改的sql-----------------------------------------------------
+MERGE INTO  LQGSM.DM_RKK_YQFMYMBQB_TEMP A
+USING (SELECT
+DISTINCT
+szzxm
+,sfz
+,ym_mc
+,zc
+,ym_dm
+,dyzjzsj
+,dezjzsj
+,dszjzsj
+,cjydm
+,cjedm
+,cjsdm
+,cjymc
+,cjemc
+,cjsmc
+,jdmc
+,jdbm
+,jzdwmc
+,szsxtdwbm
+,sfywc
+,yxsj
+,yxsj2
+,byzd2
+,byzd3
+,byzd4
+,byzd5
+,byzd6
+,byzd7
+,byzd8
+,byzd9
+,byzd10
+  FROM LQGSM.DM_RKK_YQFMYMBQB_xg ) B
+ON (A.SFZ=B.SFZ AND A.SZZXM=B.SZZXM)
+WHEN MATCHED
+THEN
+  UPDATE SET
+--A.szzxm=B.szzxm
+--,A.sfz=B.sfz
+A.ym_mc=B.ym_mc
+,A.zc=B.zc
+,A.ym_dm=B.ym_dm
+,A.dyzjzsj=B.dyzjzsj
+,A.dezjzsj=B.dezjzsj
+,A.dszjzsj=B.dszjzsj
+,A.cjydm=B.cjydm
+,A.cjedm=B.cjedm
+,A.cjsdm=B.cjsdm
+,A.cjymc=B.cjymc
+,A.cjemc=B.cjemc
+,A.cjsmc=B.cjsmc
+,A.jdmc=B.jdmc
+,A.jdbm=B.jdbm
+,A.jzdwmc=B.jzdwmc
+,A.szsxtdwbm=B.szsxtdwbm
+,A.sfywc=B.sfywc
+,A.yxsj=SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,A.yxsj2=SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,A.byzd2=B.byzd2
+,A.byzd3=B.byzd3
+,A.byzd4=B.byzd4
+,A.byzd5=B.byzd5
+,A.byzd6=B.byzd6
+,A.byzd7=B.byzd7
+,A.byzd8=B.byzd8
+,A.byzd9=B.byzd9
+,A.byzd10=B.byzd10
+WHEN NOT MATCHED
+THEN
+  INSERT (
+A.szzxm
+,A.sfz
+,A.ym_mc
+,A.zc
+,A.ym_dm
+,A.dyzjzsj
+,A.dezjzsj
+,A.dszjzsj
+,A.cjydm
+,A.cjedm
+,A.cjsdm
+,A.cjymc
+,A.cjemc
+,A.cjsmc
+,A.jdmc
+,A.jdbm
+,A.jzdwmc
+,A.szsxtdwbm
+,A.sfywc
+,A.yxsj
+,A.yxsj2
+,A.byzd2
+,A.byzd3
+,A.byzd4
+,A.byzd5
+,A.byzd6
+,A.byzd7
+,A.byzd8
+,A.byzd9
+,A.byzd10
+  ) VALUES (
+B.szzxm
+,B.sfz
+,B.ym_mc
+,B.zc
+,B.ym_dm
+,B.dyzjzsj
+,B.dezjzsj
+,B.dszjzsj
+,B.cjydm
+,B.cjedm
+,B.cjsdm
+,B.cjymc
+,B.cjemc
+,B.cjsmc
+,B.jdmc
+,B.jdbm
+,B.jzdwmc
+,B.szsxtdwbm
+,B.sfywc
+,SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,B.byzd2
+,B.byzd3
+,B.byzd4
+,B.byzd5
+,B.byzd6
+,B.byzd7
+,B.byzd8
+,B.byzd9
+,B.byzd10
+  );
+commit;
+
+
+insert into DM_RKK_YQFMYMBQB_bak (
+select * from DM_RKK_YQFMYMBQB_TEMP where ym_dm='5601' and dszjzsj is not null
+union all
+select *from DM_RKK_YQFMYMBQB_TEMP where ym_dm='5602' and dezjzsj is not null);
+commit;
+	 
+delete from DM_RKK_YQFMYMBQB_TEMP a where sfz in
+(select sfz from DM_RKK_YQFMYMBQB_TEMP where ym_dm='5601' and dszjzsj is not null
+union all
+select sfz from DM_RKK_YQFMYMBQB_TEMP where ym_dm='5602' and dezjzsj is not null);
+commit;
+
+
+---------新表----
+MERGE INTO  LQGSM.DM_RKK_YQFMYMBQB A
+USING (SELECT
+szzxm
+,sfz
+,ym_mc
+,zc
+,ym_dm
+,dyzjzsj
+,dezjzsj
+,dszjzsj
+,cjydm
+,cjedm
+,cjsdm
+,cjymc
+,cjemc
+,cjsmc
+,jdmc
+,jdbm
+,jzdwmc
+,szsxtdwbm
+,sfywc
+,yxsj
+,yxsj2
+,byzd2
+,byzd3
+,byzd4
+,byzd5
+,byzd6
+,byzd7
+,byzd8
+,byzd9
+,byzd10
+  FROM LQGSM.DM_RKK_YQFMYMBQB_TO_YXY_ZL ) B
+ON (A.SFZ=B.SFZ )
+WHEN MATCHED
+THEN
+  UPDATE SET
+--A.szzxm=B.szzxm
+--,A.sfz=B.sfz
+A.ym_mc=B.ym_mc
+,A.zc=B.zc
+,A.ym_dm=B.ym_dm
+,A.dyzjzsj=B.dyzjzsj
+,A.dezjzsj=B.dezjzsj
+,A.dszjzsj=B.dszjzsj
+,A.cjydm=B.cjydm
+,A.cjedm=B.cjedm
+,A.cjsdm=B.cjsdm
+,A.cjymc=B.cjymc
+,A.cjemc=B.cjemc
+,A.cjsmc=B.cjsmc
+,A.jdmc=B.jdmc
+,A.jdbm=B.jdbm
+,A.jzdwmc=B.jzdwmc
+,A.szsxtdwbm=B.szsxtdwbm
+,A.sfywc=B.sfywc
+,A.yxsj=SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,A.yxsj2=SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,A.byzd2=B.byzd2
+,A.byzd3=B.byzd3
+,A.byzd4=B.byzd4
+,A.byzd5=B.byzd5
+,A.byzd6=B.byzd6
+,A.byzd7=B.byzd7
+,A.byzd8=B.byzd8
+,A.byzd9=B.byzd9
+,A.byzd10=B.byzd10
+WHEN NOT MATCHED
+THEN
+  INSERT (
+A.szzxm
+,A.sfz
+,A.ym_mc
+,A.zc
+,A.ym_dm
+,A.dyzjzsj
+,A.dezjzsj
+,A.dszjzsj
+,A.cjydm
+,A.cjedm
+,A.cjsdm
+,A.cjymc
+,A.cjemc
+,A.cjsmc
+,A.jdmc
+,A.jdbm
+,A.jzdwmc
+,A.szsxtdwbm
+,A.sfywc
+,A.yxsj
+,A.yxsj2
+,A.byzd2
+,A.byzd3
+,A.byzd4
+,A.byzd5
+,A.byzd6
+,A.byzd7
+,A.byzd8
+,A.byzd9
+,A.byzd10
+  ) VALUES (
+B.szzxm
+,B.sfz
+,B.ym_mc
+,B.zc
+,B.ym_dm
+,B.dyzjzsj
+,B.dezjzsj
+,B.dszjzsj
+,B.cjydm
+,B.cjedm
+,B.cjsdm
+,B.cjymc
+,B.cjemc
+,B.cjsmc
+,B.jdmc
+,B.jdbm
+,B.jzdwmc
+,B.szsxtdwbm
+,B.sfywc
+,SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,SYSDATE+NVL(SUBSTR(REGEXP_SUBSTR(B.sfz,'((19)|(20))[0-9]{2}[0-1][0-9][0-3][0-9]',1),5,4),1)/86400
+,B.byzd2
+,B.byzd3
+,B.byzd4
+,B.byzd5
+,B.byzd6
+,B.byzd7
+,B.byzd8
+,B.byzd9
+,B.byzd10
+  );
+commit;
+
+ 
+

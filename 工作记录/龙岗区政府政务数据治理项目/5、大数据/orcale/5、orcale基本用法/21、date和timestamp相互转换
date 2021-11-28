@@ -1,0 +1,26 @@
+date和timestamp相互转换
+1.date 和 timestamp 说明
+date 类型能够存储年、月、日、世纪、时、分、秒，经常使用的格式为：MM/DD/YYYY HH24:MI:SS 或者 MM-DD-YYYY HH24:MI:SS 。date 只能精确到秒，不能精确到秒之内的时间，一般的时间计算足够，但是在时间精度要求较高的场景下，date 类型就有点力不从心。
+为了解决 date 类型粒度不够的问题，Oracle 扩展出了 timestamp 时间戳类型，timestamp 类型引入了小数秒的信息。
+在 Oracle 中可以使用 sysdate 和 systimestamp 查询当前系统时间、时间戳。
+
+select sysdate from dual;  -- 1	2019/12/24 14:59:37
+select systimestamp from dual; -- 1	24-12月-19 03.00.29.523851 下午 +08:00
+1.date 转换为 timestamp
+date 转换为 timestamp 格式可以使用函数 to_timestamp 进行转换。
+
+select to_timestamp(sysdate) from dual;
+-- 1	24-12月-19 12.00.00 上午
+select to_timestamp('2019-12-24 14:57:10.1','yyyy-mm-dd hh24:mi:ss.ff') from dual;
+-- 1	24-12月-19 02.57.10.100000000 下午
+2.timestamp 转换为 date
+timestamp + 0
+select systimestamp + 0 from dual;
+-- 1	2019/12/24 15:01:54
+to_char + to_date 方式
+select to_char(systimestamp, 'yyyymmdd') from dual;
+-- 1	20191224
+-- 多加一层 to_date 转化
+cast 方式
+select cast(systimestamp as date) from dual;
+-- 1	2019/12/24 15:03:33

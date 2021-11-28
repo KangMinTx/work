@@ -1,0 +1,97 @@
+一、随机抽取数据
+select *
+from
+(
+	select *
+    from table_name
+    order by dbms_random.value
+)
+where rownum < N;
+解释：
+
+dbms_random 是一个可以生成随机数值或者字符串的程序包。
+
+value() 最常用，有两种用法：
+
+function value return number —— 没有参数，会返回一个具有38位精度的数值，范围从0.0到1.0，但不包括1.0。示例：dbms_output.put_line(round(dbms_random.value*100));
+value 带有2个参数，第一个指下限，第二个指上限，将会生成下限到上限之间的数字，但不包含上限，例如：dbms_output.put_line(trunc(dbms_random.value(1,101)));
+二、其他随机数
+产生1个随机数：
+
+select dbms_random.random from dual;
+-- -1094870235
+产生 0 - 1 之间的随机数：
+
+select dbms_random.value from dual;
+-- 0.294788883152689
+10 - 20 的随机数：
+
+select dbms_random.value(10,20) from dual;
+-- 18.8163844280954
+0 - 2 的随机整数：
+
+select abs(mod(dbms_random.random, 3))+1 from dual;
+-- 2
+0 - 99 的随机整数：
+
+select abs(mod(dbms_random.random, 100)) from dual;
+-- 28
+100 - 1000 之间的随机数：
+
+select trunc(100 + 900 * dbms_random.value) from dual;
+-- 660
+利用 abs() 取绝对值、mod() 取余、trunc() 截取数字等函数可以自由便捷的输出任意规则随机数。
+
+三、正态分布
+normal() 函数返回服从正态分布的一组数。
+
+此正态分布标准偏差为1，期望值为0。
+
+这个函数返回的数值中有68%是介于-1与+1之间，95%介于-2与+2之间，99%介于-3与+3之间。
+
+select dbms_random.normal from dual;
+-- -0.0999498329758479
+四、随机字符串
+select dbms_random.string('P', 20) from dual;
+-- @0.ag9'Ys.he7g3RN:?W
+第一个参数 P 表示 printable，即字符串由任意可打印字符构成
+第二个参数表示返回字符串长度
+select dbms_random.string(opt, length) from dual;
+-- opt可取值如下：
+      'u','U'    :    大写字母
+      'l','L'    :    小写字母
+      'a','A'    :    大、小写字母
+      'x','X'    :    数字、大写字母
+      'p','P'    :    可打印字符
+select substr(cast(dbms_random.value as varchar2(38)),3,20) 
+from dual;
+长度为20的随机数字串。
+
+五、随机日期
+-- 获取随机日期
+select to_date(2459023 + trunc(dbms_random.value(0, 365)),'J')
+from dual;
+
+-- 获得指定日期的基数
+select to_char(sysdate, 'J') from dual;
+六、随机序列
+可以通过随机生成序列 GUID 来替代 sequence。
+
+select sys_guid() from dual;
+-- A8A37F9FD18AB4BAE050798430A46EC8
+生成带分隔符（-）的 GUID 自定义函数。
+
+create or replace function my_guid
+	return varchar2
+is
+    guid varchar(36);
+    temp varchar(32);
+begin
+    temp:=sys_guid();
+    guid:= substr(temp,1,8) || '-'
+         ||substr(temp,9,4) || '-'
+         ||substr(temp,13,4)|| '-'
+         ||substr(temp,17,4)|| '-'
+         ||substr(temp,21,12);
+    return guid;
+end;

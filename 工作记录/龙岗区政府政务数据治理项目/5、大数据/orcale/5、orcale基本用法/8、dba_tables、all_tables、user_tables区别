@@ -1,0 +1,18 @@
+dba_tables、all_tables、user_tables区别
+
+Oracle 中可以通过 DBA_TABLES、ALL_TABLES、USER_TABLES 等3个视图表查询关系表信息，它们之间的关系和区别为：
+
+DBA_TABLES >= ALL_TABLES >= USER_TABLES
+DBA_TABLES：DBA拥有的或者可以访问的所有关系表
+ALL_TABLES：某一用户所拥有的或者可以访问的所有关系表
+USER_TABLES：某一用户所拥有的所有关系表
+由上可知，当某一用户本身就为数据库 DBA 时，DBA_TABLES 与 ALL_TABLES 等价。
+
+此规律可以类推至 Oracle 中其它类似名称的视图。
+
+需要注意的是在 ORACLE 数据库中大小写是敏感的，而此三表中数据默认都是大写的，所以在进行查询的时候注意小写的数据可能会造成数据无法查到。
+
+因此需要进行转换，例如：
+
+select * from user_tables where table_name = upper('temp_cwh_city')
+
