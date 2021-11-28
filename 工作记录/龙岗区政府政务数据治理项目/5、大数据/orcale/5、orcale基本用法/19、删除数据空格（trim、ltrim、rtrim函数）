@@ -1,0 +1,42 @@
+删除数据空格（trim、ltrim、rtrim函数）
+删除空格
+数据库中有时候数据不规范引起莫名的错误，可能是由于数据字段前后存在空格引起的。因此有必要对字段进行删除空格操作。
+
+trim() 函数：删除数据左右两边（开头和结尾处）的空格
+rtrim() 函数：删除数据右边（结尾处）的空格
+ltrim() 函数：删除数据左边（开头处）的空格
+注意：trim()、rtrim()、ltrim() 函数不仅可以用于 select 语句中，还可以用于 where 等语句中。
+
+select trim('  abc  ') from dual; -- abc
+select rtrim('  abc  ') from dual; --  abc
+select ltrim('  abc  ') from dual; -- abc
+删除特殊字符
+另外，trim/ltrim/rtrim 函数还有特殊用法，可以去除指定的字符。
+
+trim() 函数：只能去除单个字符
+rtrim() ltrim() 函数：可以去除多个字符
+trim 语法
+select trim(leading|trailing|both string1 from string2)
+from dual;
+表示字符串 string2 去除前面|后面|前后面（leading|trailing|both）的字符 string1，默认去除方式为 both。
+
+select trim(leading 'd' from 'dfadsdd') from dual; -- fadsdd
+select trim(trailing 'd' from 'dfadsdd') from dual; -- dfads
+select trim(both 'd' from 'dfadsdd') from dual; -- fads
+select trim('d' from 'dfadsdd') from dual; -- fads
+注：trim 去除字符只能是单个字符，如果要去除的字符为字符集则报错。例如：
+
+select trim(trailing '12' from '123dasdf12') from dual;
+-- ORA-30001: 截取集仅能有一个字符
+ltrim、rtrim 语法
+select ltrim(string1, string2) from dual;
+select rtrim(string1, string2) from dual;
+表示字符串 string1 去除前面与 string2 字符集匹配的，若无匹配则结束返回。
+
+rtrim 与 ltrim 类似，只是去除的是右边算起匹配的字符。
+
+select rtrim('aaaaaaminb', 'main') from dual; -- aaaaaaminb
+-- 由于从右边算起，第一个字母是'b'没有与'main'匹配的字符，因此返回结果仍是'aaaaminb'
+select rtrim('aaaaminb', 'mainb') from dual; -- 返回为空
+select ltrim('ccbcminb', 'cb') from dual; -- minb
+主要看从左（右）是否有匹配字符集，开始去除，直到无法匹配为止。

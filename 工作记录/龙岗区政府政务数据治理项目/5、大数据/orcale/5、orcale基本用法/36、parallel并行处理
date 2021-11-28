@@ -1,0 +1,27 @@
+parallel并行处理
+在使用oracel查询时，可以通过并行提高查询速度。例如：
+
+select /*+parallel(a,6)*/ count(1) from table_name a;
+　　强行启用并行度来执行当前SQL。加上这个说明之后，可以强行启用Oracle的多线程处理功能，提高效率。但本身启动这个功能，也是要消耗资源与性能的。所有，一般都会在返回记录数大于100万时使用，效果也会比较明显。
+
+　　语法：
+
+　　　　/*+parallel(table_short_name, cash_number)*/
+
+　　可以加到insert、delete、update、select的后面来使用。
+
+insert /*+ append parallel(a,6) */ into table_name a;
+ 　　开启parallel功能（DML语句，用execute方式打开）：
+
+alter session enable parallel dml;
+　　parallel后面的数字越大，执行效率越高，与配置有关，增大到一定值，效果就不明显了，通常使用8,10,12,16等。
+
+　　parallel用于多表：
+
+　　　　/*+parallel(a,10)(b,10)*/
+
+　　总结：
+
+　　虽然parallel并行处理能够有效提高执行效率，但重点仍是要按照index的方法来提高效果，可以在执行之前，explain一下，查看SQL语句执行计划路线，实在没办法，再用parallel并行。
+
+　　特别在create table之后，考虑create index或primary key，不要过分依赖parallel并行。

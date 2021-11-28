@@ -1,0 +1,75 @@
+用于记录调度日志的存储过程
+在复杂的跑数过程中，往往需要执行比较多的步骤，并且跑数时间较长，可以利用存储过程配合linux下的 crontab 定时任务配置执行，但有时候发生故障，跑数异常的情况下，需要进行检查。
+
+因此有必要对跑数过程日志进行一个记录，结合今天学习到的序列（sequence）自增长，可以实践一下。
+
+二、准备工作
+1.创建序列
+-- 创建序列
+create sequence seq_id_cwh increment by 1 start with 1;
+
+-- 查询
+select seq_id_cwh.currval, seq_id_cwh.nextval from dual;
+2.创建日志记录表
+-- 创建日志表
+create table temp_cwh_seq_test
+(
+	seq_log_id number(15),    -- 自增长序列
+	run_name varchar2(500),   -- 调度名称、存储过程名称
+	run_param varchar2(100),  -- 运行参数，例如：统计时间等
+	run_time date,            -- 跑数时间
+	run_flag number,          -- 运行状态，0为正常，其他为异常
+	run_log varchar2(4000)    -- 具体运行日志信息
+)
+3.查看数据库对象
+-- 查看数据库对象
+select * from user_objects;
+/*
+TEMP_CWH_SEQ_TEST  74925  TABLE
+SEQ_ID_CWH  74924  SEQUENCE
+PRO_CWH_TEST  74926  PROCEDURE
+*/
+三、创建存储过程
+在建立好序列，用于记录日志的中间表之后，便可创建记录日志的存储过程，脚本为：
+
+-- 创建存储过程
+create or replace procedure pro_cwh_test(
+	is_run_name varchar2,
+	is_run_param varchar2,
+	is_run_flag number,
+	is_run_log varchar2
+)
+is
+	vcSeq_log_id number;
+	vcRun_log varchar2(4000); -- 4000最长 不能5000
+begin
+	select seq_id_cwh.nextval into vcSeq_log_id from dual;
+	vcRun_log := substr(is_run_log, 1, 4000);
+	insert into temp_cwh_seq_test(seq_log_id, run_name, run_param, run_time, run_flag, run_log)
+	values(vcSeq_log_id, is_run_name, is_run_param, sysdate, is_run_flag, vcRun_log);
+	commit;
+end pro_cwh_test;
+四、执行存储过程
+测试存储过程。
+
+-- 执行日志存储过程
+call pro_cwh_test('run_day_report', 'sysdate', 0, 'run_result:success!!!')
+
+-- 执行多次之后的结果
+select * from temp_cwh_seq_test
+/*
+2	run_day_report	sysdate	2020/5/30 22:51:12	0	run_result:success!!!
+3	run_day_report	sysdate	2020/5/30 22:51:26	0	run_result:success!!!
+4	run_day_report	sysdate	2020/5/30 22:51:27	0	run_result:success!!!
+5	run_day_report	sysdate	2020/5/30 22:51:28	0	run_result:success!!!
+6	run_day_report	sysdate	2020/5/30 22:51:28	0	run_result:success!!!
+7	run_day_report	sysdate	2020/5/30 22:51:28	0	run_result:success!!!
+8	run_day_report	sysdate	2020/5/30 22:51:28	0	run_result:success!!!
+9	run_day_report	sysdate	2020/5/30 22:51:29	0	run_result:success!!!
+*/
+到此便结束了，在实际跑数过程中可以利用该存储过程记录跑数日志，将跑数中各个环节的结果作为参数传入，写入日志表即可。
+
+五、其他：查询存储过程函数
+可以使用以下脚本查询存储过程实际脚本：
+
+select dbms_lob.substr(dbms_metadata.get_ddl('PROCEDURE','PRO_CWH_TEST','HIDER')) from dual;

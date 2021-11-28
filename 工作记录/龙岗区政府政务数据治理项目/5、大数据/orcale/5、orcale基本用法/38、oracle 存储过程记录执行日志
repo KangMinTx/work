@@ -1,0 +1,188 @@
+oracle 存储过程记录执行日志
+本文主要介绍如何记录存储过程执行详细日志,统计存储过程执行时间,实现逻辑如下:
+
+创建一个序列,用于标识[存储过程,函数,触发器]执行先后顺序
+create sequence SEQ_PROGRAM_EXECUTE_LOG
+minvalue 1
+maxvalue 1000000000000
+start with 1
+increment by 1
+cache 100
+cycle
+order;
+
+
+
+创建日志表,用于存储[存储过程,函数,触发器]执行日志
+CREATE TABLE PROGRAM_EXECUTE_LOG
+(
+  PROGRAM_NAME      VARCHAR2(1000),
+  IS_SUCCEED        CHAR(1),
+  LOG_DATE          DATE,
+  EXECUTE_MSG       CLOB,
+  TIME_CONSUMING    NUMBER,
+  EXECUTE_ORDER     NUMBER,
+  EXECUTE_BEGINTIME TIMESTAMP(6),
+  EXECUTE_ENDTIME   TIMESTAMP(6),
+  PROCESS_FLAG      VARCHAR2(10) DEFAULT 'N'
+);
+-- Add comments to the table 
+comment on table PROGRAM_EXECUTE_LOG
+  is '过程、函数、触发器执行性能日志';
+-- Add comments to the columns 
+comment on column PROGRAM_EXECUTE_LOG.program_name
+  is '程序名称';
+comment on column PROGRAM_EXECUTE_LOG.is_succeed
+  is '执行结果(成功Y,失败N)';
+comment on column PROGRAM_EXECUTE_LOG.log_date
+  is '日志时间';
+comment on column PROGRAM_EXECUTE_LOG.execute_msg
+  is '执行详细信息';
+comment on column PROGRAM_EXECUTE_LOG.time_consuming
+  is '耗时';
+comment on column PROGRAM_EXECUTE_LOG.execute_order
+  is '流水号-SEQ_PROGRAM_EXECUTE_LOG';
+comment on column PROGRAM_EXECUTE_LOG.execute_begintime
+  is '执行开始时间';
+comment on column PROGRAM_EXECUTE_LOG.execute_endtime
+  is '执行结束时间';
+comment on column PROGRAM_EXECUTE_LOG.process_flag
+  is '处理标识(已处理Y,未处理N)';
+CREATE INDEX PROGRAM_EXECUTE_LOG_IDX1 ON PROGRAM_EXECUTE_LOG (EXECUTE_ORDER);
+CREATE INDEX PROGRAM_EXECUTE_LOG_IDX2 ON PROGRAM_EXECUTE_LOG (TIME_CONSUMING);
+
+
+创建计算耗时的函数
+CREATE OR REPLACE FUNCTION F_TIMESTAMP_DIFF(ENDTIME   IN TIMESTAMP,
+                                            STARTTIME IN TIMESTAMP)
+  RETURN INTEGER AS
+  STR      VARCHAR2(50);
+  MISECOND INTEGER;
+  SECONDS  INTEGER;
+  MINUTES  INTEGER;
+  HOURS    INTEGER;
+  DAYS     INTEGER;
+BEGIN
+  STR      := TO_CHAR(ENDTIME - STARTTIME);
+  MISECOND := TO_NUMBER(SUBSTR(STR, INSTR(STR, ' ') + 10, 3));
+  SECONDS  := TO_NUMBER(SUBSTR(STR, INSTR(STR, ' ') + 7, 2));
+  MINUTES  := TO_NUMBER(SUBSTR(STR, INSTR(STR, ' ') + 4, 2));
+  HOURS    := TO_NUMBER(SUBSTR(STR, INSTR(STR, ' ') + 1, 2));
+  DAYS     := TO_NUMBER(SUBSTR(STR, 1, INSTR(STR, ' ')));
+  RETURN DAYS * 24 * 60 * 60 * 1000 + HOURS * 60 * 60 * 1000 + MINUTES * 60 * 1000 + SECONDS * 1000 + MISECOND;
+END;
+
+创建日志记录过程
+CREATE OR REPLACE PROCEDURE SYS_SAVELOG(PROGRAM_NAME VARCHAR2, --过程名称
+                                         IS_SUCCEED   VARCHAR2, --是否执行成功 Y|N
+                                         EXECUTE_MSG  CLOB, --过程执行信息
+                                         BEGIN_TIME   TIMESTAMP --过程开始执行TIMESTAMP
+                                         ) AS
+  V_PROGRAM_NAME VARCHAR2(1000) := SUBSTRB(PROGRAM_NAME, 1, 1000); --过程名称
+  V_IS_SUCCEED   CHAR(1) := SUBSTR(IS_SUCCEED, 1, 1); --过程执行成功表示 Y N
+  V_BEGIN_TIME   TIMESTAMP := BEGIN_TIME;
+  PRAGMA AUTONOMOUS_TRANSACTION; --日志开启自治事务，不影响业务逻辑事务
+  /*
+  调用方式：
+  1.正常日志：PROC_SAVELOG(V_PROC_NAME, 'Y', '执行成功。。。',V_BEGIN_TIME);
+  2.异常日志：PROC_SAVELOG(V_PROC_NAME, 'N', SQLERRM,V_BEGIN_TIME);
+  */
+BEGIN
+  INSERT INTO PROGRAM_EXECUTE_LOG
+    (PROGRAM_NAME,
+     IS_SUCCEED,
+     LOG_DATE,
+     EXECUTE_MSG, --已改为CLOB
+     TIME_CONSUMING,
+     --EXECUTE_ORDER,
+     EXECUTE_BEGINTIME,
+     EXECUTE_ENDTIME)
+  VALUES
+    (V_PROGRAM_NAME,
+     V_IS_SUCCEED,
+     SYSDATE,
+     EXECUTE_MSG,
+     F_TIMESTAMP_DIFF(SYSTIMESTAMP, V_BEGIN_TIME),
+     --PROGRAM_EXECUTE_LOG_SEQ.NEXTVAL,
+     V_BEGIN_TIME,
+     SYSTIMESTAMP);
+  COMMIT;
+EXCEPTION
+  WHEN OTHERS THEN
+    ROLLBACK;
+END;
+
+异常日志处理存储过程
+CREATE OR REPLACE PROCEDURE SYS_PROCESS_ERRMSG(PROC_NAME  VARCHAR2, --过程信息
+                                                EXE_MSG    CLOB, --执行信息
+                                                ERR_MSG    VARCHAR2, --错误信息
+                                                BEGIN_TIME TIMESTAMP, --过程开始执行TIMESTAMP
+                                                RESULT     OUT VARCHAR2) AS
+  /*faith@2016.11.24用于处理异常信息,方便后续扩展
+  1.执行信息中添加ERR_MSG
+  2.执行记录日志过程
+  3.错误信息赋值给返回结果RESULT
+  调用方式：
+  SYS_PROCESS_ERRMSG(V_PROC_NAME, V_EXE_MSG,V_ERR_MSG,V_BEGIN_TIME,RESULT);
+  */
+
+  V_EXE_MSG CLOB := EXE_MSG;
+BEGIN
+  RESULT := 'OK';
+  --如果错误信息长度为0,返回OK
+  IF LENGTH(ERR_MSG) = 0 OR ERR_MSG IS NULL THEN
+    RETURN;
+  END IF;
+  DBMS_LOB.APPEND(V_EXE_MSG, ERR_MSG || CHR(10));
+  SYS_SAVELOG(PROC_NAME, 'I', V_EXE_MSG, BEGIN_TIME);
+  ROLLBACK;
+  RESULT := ERR_MSG;
+EXCEPTION
+  WHEN OTHERS THEN
+    RESULT := '处理异常信息发生错误!';
+END;
+
+使用样例
+  PROCEDURE SYS_SAVELOG_EXAMPLE(PLAN_DATE IN DATE,
+                                CONFIRM   IN VARCHAR2,
+                                RESULT    OUT VARCHAR2) AS
+    V_PLAN_DATE  DATE := PLAN_DATE;
+    V_CONFIRM    VARCHAR2(10) := CONFIRM; --CONFIRM标识, Y:报工确认  N：报工解锁
+    V_ERR_MSG    VARCHAR2(1000);
+    V_BEGIN_TIME TIMESTAMP := SYSTIMESTAMP;
+    V_PROC_NAME  VARCHAR2(1000) := 'SYS_SAVELOG_EXAMPLE/' ||
+                                   TO_CHAR(V_PLAN_DATE,
+                                           'YYYY-MM-DD HH24:MI:SS') || '/' ||
+                                   V_CONFIRM;
+    V_EXE_MSG    CLOB;
+  
+  BEGIN
+  
+    DBMS_LOB.CREATETEMPORARY(V_EXE_MSG, TRUE); --初始化CLOB
+    RESULT := 'OK';
+  
+    IF V_CONFIRM = 'Y' THEN
+      V_ERR_MSG := '不允许确认今天或者今天之后的数据!'; --今天或者
+      GOTO PROCESS_ERRMSG;
+    END IF;
+  
+    COMMIT;
+    DBMS_LOB.APPEND(V_EXE_MSG, '执行成功!');
+  
+    SYS_SAVELOG(V_PROC_NAME, 'Y', V_EXE_MSG, V_BEGIN_TIME);
+    --异常处理
+    RETURN; --若为顺序执行到此位置，则直接返回
+    <<PROCESS_ERRMSG>>
+    SYS_PROCESS_ERRMSG(V_PROC_NAME,
+                       V_EXE_MSG,
+                       V_ERR_MSG,
+                       V_BEGIN_TIME,
+                       RESULT);
+  EXCEPTION
+    WHEN OTHERS THEN
+      V_ERR_MSG := SUBSTR(SQLERRM, 1, 160);
+      DBMS_LOB.APPEND(V_EXE_MSG, V_ERR_MSG);
+      SYS_SAVELOG(V_PROC_NAME, 'N', V_EXE_MSG, V_BEGIN_TIME);
+      RESULT := V_ERR_MSG; --错误号对应的信息
+  END;
+

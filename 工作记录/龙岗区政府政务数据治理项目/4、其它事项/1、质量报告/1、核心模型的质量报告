@@ -1,0 +1,304 @@
+1、DM认证产品（dm_scjy_rzcp）
+select * from dwd_jbxx_frjcxx;
+select * from dwd_scjy_rzcp;--源表fileno,valdate为空
+--统一社会信用代码有重复，因为同一家公司，有多个认证产品
+2、抽查抽检信息（dm_scjy_cccjxx）--来源：dwd_scjy_cccjxx，dwd_jbxx_frjcxx
+产品规格型号,空值过高，因为，大多为农产品，农产品基本没有产品规格型号
+检查日期，空值过高，因为dwd_jbxx_frjcxx表中的数据，检查日期空值不少
+3、法人库_资本资产_DM政府资助（dm_zbzc_zfzzxx）
+资助编号、空值校验 99.28%  dwd_zbzc_zfzzxx（std_qfzggj_t_busi_zscqj_patimburse） 源表：ahacnum，空：99.42%
+统一社会信用代码 唯一性核验规则   99.28%	同一家公司，多项发明，多项资助，来源std_qfzggj_aic_base、std_schzljgw_sszt_jbxx110497、std_qzfw_view_qy_jcxx
+组织机构代码	  唯一性核验规则	99.28%	 同一家公司，多项发明，多项资助，来源std_qfzggj_aic_base、std_schzljgw_sszt_jbxx110497、std_qzfw_view_qy_jcxx
+
+
+4、法人库_资本资产_DM专利信息（dm_zczb_zlxx）
+dwd_zczb_zlxx（std_qfzggj_t_busi_zscqj_patimburse、std_qfzggj_xylg_scjgj_advent）
+zllx	专利类型	空值校验 99.86%	      null ( std_qfzggj_t_busi_zscqj_patimburse)
+                                        zllb as zllx(std_qfzggj_xylg_scjgj_advent)
+dlr	    代理人	    空值校验	100.00%	    null as dlr（std_qfzggj_t_busi_zscqj_patimburse、                                                           std_qfzggj_xylg_scjgj_advent）
+zlzy	专利摘要	空值校验   100.00%	  null zlzy  (std_qfzggj_t_busi_zscqj_patimburse、                                                               std_qfzggj_xylg_scjgj_advent)
+zlzt	专利状态	空值校验   100.00%	 null as zlzt (std_qfzggj_t_busi_zscqj_patimburse、                                                               std_qfzggj_xylg_scjgj_advent)
+tyshxydm 统一社会信用代码	唯一性核验规则	98.85%	同一家公司，多项专利
+
+5、法人库_资本资产_DM产品标准登记信息（dm_zczb_cpbzdjxx）
+统一社会信用代码、组织机构代码重复过高，同一家公司、多项产品登记
+
+6、法人库_资本资产_DM获取高新企业详情数据（dm_fr_hqgxqyxqsj）dwd_frzz_gxqysj（std_qfzggj_t_busi_xxb_hightechent、std_qkjcxj_qkjcxjlgqgjgxjsqymd_v1）
+build_code  空值校验  24.74%  取dwd_frdzxx的楼栋编码，空值过多，但dwd_frdzxx的楼栋编码取std_qzfw_view_ywk_sszt_hc（ods_qzfw_view_ywk_sszt_hc）中的JZWTYDZBM（空值为0），且与其它表进行关联，所以导致一些关联不上，故有空值
+community_code、community_nam、szjd   6.61%
+7、法人库_资质许可_法人资质信息（dm_frzz_frzzxx）来源表为：dwd_frzz_frzzxx，
+1、zsmc	证书名称	空值校验 100.00%  取dwd_frzz_frzzxx中的std_sdzzwzyzx_sszt_zzzsxx_10_1023184725（ods_sdzzwzyzx_sszt_zzzsxx_10_1023184725）字段，字段的空值为5.22%
+2、zzlb	资质类别	空值校验 100.00%  取dwd_frzz_frzzxx中的std_sdzzwzyzx_sszt_zzzsxx_10_1023184725（ods_sdzzwzyzx_sszt_zzzsxx_10_1023184725）字段，字段的空值为0.25%
+3、zzyxq	资质有效期  空值校验	 49.28%	 取dwd_frzz_frzzxx中的std_sdzzwzyzx_sszt_zzzsxx_10_1023184725（ods_sdzzwzyzx_sszt_zzzsxx_10_1023184725）字段，字段的空值为69.03%
+dm_frzz_frzzxx中证书名称、资质类别、资质有效期空值高，是因为加了TYSHXYDM is not null（统一社会信用代码）这个条件
+
+8、法人库_资本资产_DM认证企业信息(dm_zzxk_rzqyxx)
+1、rzdj	认证等级	空值校验 99.90%	 
+--来源于dwd_zzxk_rzqyxx表，其中：std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd、std_qfzggj_t_busi_hg_highauthen、std_qfzggj_t_busi_mgj_entcertxx有认证字段外，std_qfzggj_t_busi_xxb_hightechent、std_qfzggj_t_busi_zjj_entcer、std_qfzggj_t_busi_yjj_gpscog、std_qfzggj_t_busi_yjj_gmpprodu、std_qfzggj_t_busi_zxzx_entinfo没有认证字段，null as rzdj,
+且--null 38816
+--国家级 2
+--高级认证 293
+--市级  19
+2、zsbh	证书编号 空值校验 85.45% 其中：std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd、std_qfzggj_t_busi_hg_highauthen
+std_qfzggj_t_busi_zjj_entcer、std_qfzggj_t_busi_zxzx_entinfo和std_qfzggj_t_busi_mgj_entcertxx没有证书编号字段， 
+null as zsbh。std_qfzggj_t_busi_xxb_hightechent、std_qfzggj_t_busi_yjj_gpscog、std_qfzggj_t_busi_yjj_gmpprodu有证书编号，且取最大分区，空值为33426，不为空的5704，
+3、zskssj 认证开始日期	空值校验 100.00%	
+其中：std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd字段为空、 std_qfzggj_t_busi_hg_highauthen、std_qfzggj_t_busi_xxb_hightechent、std_qfzggj_t_busi_zjj_entcer、std_qfzggj_t_busi_yjj_gpscog、std_qfzggj_t_busi_yjj_gmpprodu、std_qfzggj_t_busi_zxzx_entinfo、std_qfzggj_t_busi_mgj_entcertxx有认证开始日期字段
+4、yxqx	有效期限  89.20%
+其中：std_qfzggj_t_busi_hg_highauthen、std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd、std_qfzggj_t_busi_zxzx_entinfo为没有这个字段、  std_qfzggj_t_busi_zjj_entcer、std_qfzggj_t_busi_yjj_gpscog、std_qfzggj_t_busi_yjj_gmpprodu、std_qfzggj_t_busi_mgj_entcertxx有有效期限字段。
+tyshxydm	统一社会信用代码	唯一性核验规则	12.77% 重复的原因，一家企业，对应多认证内容，如既是高新技术企业认证，也是电子商务企业认证或证书编号（zsbh）不一样，从dwd_zzxk_rzqyxx及dm_zzxk_rzqyxx逻辑可以看出
+
+9、法人库_法人荣誉_法人荣誉信息（dm_frry_frryxx）
+rywh	荣誉文号	空值核验规则		100.00%	取std_qfzggj_t_busi_hbj_jghbryxx中的rywh
+ryjb	荣誉级别	空值核验规则		100.00%	取std_qfzggj_t_busi_hbj_jghbryxx中的ryjb
+原因：
+dm_frry_frryxx--来源于dwd_frry_frryxx--来源于std_qfzggj_t_busi_hbj_jghbryxx和dwd_jbxx_frjcxx表
+其中
+1、ods_qfzggj_t_busi_hbj_jghbryxx【机构环保荣誉信息】
+zch	注册号	空值核验规则	100.00%	
+tyshxydm 统一社会信用代码	空值核验	100.00%
+rywh	荣誉文号	空值核验规则		100.00%	
+ryjb	荣誉级别	空值核验规则		100.00%	
+另外：dwd_jbxx_frjcxx的tyshxydm tyshxydm 统一社会信用代码，空值为0.00%
+其源表对应的：tyshxydm
+dm_frry_frryxx-ods_schzljgw_sszt_jbxx110497_20210909  tyshxydm	统一社会信用代码	空值校验		0.08%	
+dm_frry_frryxx_ods_qzfw_view_qy_jcxx tyshxydm	统一社会信用代码	空值校验		0.00%	
+dm_frry_frryxx--ods_qfzggj_aic_base_20210909  entsccode	统一社会信用代码	空值校验	14.49%	
+
+10、法人库_风险负面_DM行政强制（dm_jk_frfm_xzqz）
+源于：dwd_xzqzxx、dwd_jbxx_frjcxx
+jgmc	行政强制机关名称	空值校验		49.02%
+sxmc	行政强制事项名称	空值校验		53.92%	
+yj	行政强制依据	空值校验	50.98%	
+qzrq	行政强制日期	空值校验		50.98%	
+zxqk	行政强制执行情况	空值校验	50.00%	
+astatus	状态	空值校验		100.00%  表没有这个字段，故null as astatus
+xzqz_jcwh	解除强制执行文号	空值校验	100.00%	   表没有这个字段 null as  xzqz_jcwh
+xzqz_jcrq	解除强制执行时间	空值校验	100.00%	   其它表没有这个字段 null as xzqz_jcrq    
+但std_qyjglj_anbookpunishapprovalthree和std_qyjglj_anbookpunishapprovaltwo有jcqzsj字段   jcqzsj as  xzqz_jcrq
+dwd_xzqzxx表，xzqz_jcrq有不为的数，但业务逻辑加上了xzqzjdwsbh is not null（行政强制决定文书编号），导致xzqz_jcrq都为空;
+sqdm	社区代码	空值校验	15.69%	
+sqmc	社区名称	空值校验	19.61%	
+jddm	街道代码	空值校验	19.61%
+jdmc	街道名称	空值校验	19.61%	
+tyshxydm	统一社会信用代码	11.76%	
+zzjgdm	组织机构代码	         9.80%	
+zzjgdm	组织机构代码	组织机构代码校验		2.94%	
+qzrq	行政强制日期	日期时间校验			50.98%	
+
+源于：dm_jk_frfm_xzqz_ods_qfzggj_xylg_gaj_administrationqzinfo
+qzname as jgmc  空值校验		0.0%
+
+11、法人_风险负面_DM锁定限制企业（dm_jk_frfm_sdxzqy）
+dm_jk_frfm_sdxzqy源于：dwd_fxfm_sdxzqy和dwd_frdzxx
+其中dwd_fxfm_sdxzqy源于其中一张表：ods_qfzggj_tdxzsdinfo1（std_qfzggj_tdxzsdinfo1）
+1、xzkssj	限制开始时间	空值校验	100.00%	
+来源于：ods_qfzggj_tdxzsdinfo1（std_qfzggj_tdxzsdinfo1）的字段limittimebegin，探查源表发现，limittimebegin	限制开始时间	空值校验	100.00%
+2、sqdm	社区代码	空值校验	37.00%	
+3、sqmc	社区名称	空值校验	37.00%	
+4、jddm	街道代码	空值校验	37.00%	
+5、jdmc	街道名称	空值校验	37.00%
+tyshxydm	统一社会信用代码	唯一性核验规则	68.11%，有重复的，是因为同一家公司，有多种限制原因、限制内容或限制类别
+
+ 12、法人_风险负面_DM黑名单（dm_jk_frfm_hmd）
+1、wsbh	[主键]文书编号	空值校验 99.54%	（dwd_hmdxx）
+一源于：std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd（ods_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd）ah as wsbh  ah	案号	空值校验	99.87%
+二、std_qfzggj_t_busi_aic_spaqhmd，cfqk as wsbh,cfqk	处罚情况	空值校验	空值数据过滤	0.00%
+三、std_qyjglj_blacklist 没有这个字段 null as wsbh
+2、tyshxydm	统一社会信用代码	空值校验	92.68%	（dwd_hmdxx、dwd_frdzxx）关联条件以std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd为主表，关联dwd_jbxx_frjcxx，条件trim(a.sxzt)=trim(b.lgl_name)，其中dwd_jbxx_frjcxx表tyshxydm（统一社会信用代码）没有空值，但因std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd为主表，且取的tyshxydm是dwd_jbxx_frjcxx表中的tyshxydm，所以关联不上的，都为空，导致了出现空值。
+注：dwd_hmdxx的业务逻辑是否有问题？
+3、zzjgdm	组织机构代码	空值校验	92.68%	（dwd_jbxx_frjcxx，dwd_hmdxx）
+std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd为主表，关联dwd_jbxx_frjcxx，条件trim(a.sxzt)=trim(b.lgl_name)，其中dwd_jbxx_frjcxx表zzjgdm没有空值，但因std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd为主表，且取的zzjgdm是dwd_jbxx_frjcxx表中的zzjgdm，所以关联不上的，都为空，导致了出现空值。
+注：dwd_hmdxx的业务逻辑是否有问题？
+4、fddbrxm	法定代表人姓名	空值校验   92.50% （dwd_jbxx_frjcxx，dwd_hmdxx）
+同上
+5、fddbrzjlx	法定代表人证件类型	93.12%	（dwd_jbxx_frjcxx，dwd_hmdxx）
+同上
+6、fddbrzjhm	法定代表人证件号码	92.88%   （dwd_jbxx_frjcxx，dwd_hmdxx）
+同上
+7、rdbm	认定部门	88.52%	（dwd_hmdxx）
+一、源于：std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd（ods_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd）zcpjjg as rdbm  
+zcpjjg	判决做出机关	空值校验	99.68%
+二、std_qfzggj_t_busi_aic_spaqhmd，没有这个字段 null as rdbm
+三、std_qyjglj_blacklist，fillunit	空值校验	7.14%	fillunit as rdbm
+8、lrsy	列入名单事由	88.75% （dwd_hmdxx）
+一、源于：std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd（ods_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd）zm as lrsy
+zm	罪名	空值校验	100.00%	
+二、std_qfzggj_t_busi_aic_spaqhmd，没有这个字段 null as lrsy
+三、std_qyjglj_blacklistd有badinformation_name字段 badinformation_name as lrsy,但ods_qyjglj_blacklistd没有badinformation_name
+9、sjje	涉及金额（元）	空值校验 99.25%	（dwd_hmdxx）
+1、std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd，取saje as sjje
+saje	涉案金额（不公开）	空值校验	99.87%
+2、其它的表如果没有这个字段，直接 null as sjje,所以导致空值高
+10、sqdm	社区代码	空值校验	96.66%	（dwd_frdzxx）
+同上
+11、sqmc	社区名称	空值校验	96.66%	（dwd_frdzxx）
+同上
+12、jddm	街道代码	空值校验	96.66%  （dwd_frdzxx）
+同上
+13、jdmc	街道名称	空值校验	96.66%  （dwd_frdzxx）
+规范性：
+tyshxydm	统一社会信用代码	统一社会信用代码校验		92.68%
+zzjgdm	组织机构代码	组织机构代码校验		92.68%
+
+因有tyshxydm 92.68%的空值，所以不规范为92.68%
+
+13、法人_风险负面_DM企业失信（dm_jk_frfm_qysx）
+来源于：dwd_sxqyxx、dwd_frdzxx、dwd_jbxx_frjcxx
+1、cfmc	处罚名称	空值校验	99.19%	
+取dwd_sxqyxx的cfmc,其中没有这个字段的表，都用null as  cfmc
+取dwd_sxqyxx的cflx，其中没有这个字段的表，都用null as cflxdm，只有一张有这个字段，std_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb（ods_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb）且的数量只有68条数据
+2、cflx	处罚类型	空值校验	99.19%
+取dwd_sxqyxx的cflx，其中没有这个字段的表，都用null as cflxdm，只有一张有这个字段，std_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb（ods_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb）且的数量只有68条数据
+3、sqdm	社区代码	空值校验	28.44%	
+4、sqmc	社区名称	空值校验	28.44%	
+5、jddm	街道代码	空值校验	28.44%
+6、jdmc	街道名称	空值校验	28.44%
+tyshxydm	统一社会信用代码	唯一性核验规则	67.60%
+zzjgdm	组织机构代码	唯一性核验规则	67.41%	
+同一家公司，有多条企业失信记录
+
+--------------------------------------------------整理----------------------------------------------------
+一、DM政府资助信息	dm_zbzc_zfzzxx
+1、--统一社会信用代码有重复，因为同一家公司，有多个认证产品
+2、产品规格型号,空值过高，因为，大多为农产品，农产品基本没有产品规格型号
+检查日期，空值过高，因为dwd_jbxx_frjcxx表中的数据，检查日期空值不少
+3、资助编号、空值校验 99.28%  dwd_zbzc_zfzzxx（std_qfzggj_t_busi_zscqj_patimburse） 源表：ahacnum，空：99.42%
+统一社会信用代码 唯一性核验规则   99.28%	同一家公司，多项发明，多项资助，来源std_qfzggj_aic_base、std_schzljgw_sszt_jbxx110497、std_qzfw_view_qy_jcxx
+组织机构代码	  唯一性核验规则	99.28%	 同一家公司，多项发明，多项资助，来源std_qfzggj_aic_base、std_schzljgw_sszt_jbxx110497、std_qzfw_view_qy_jcxx
+
+二、法人库_资本资产_DM专利信息（dm_zczb_zlxx）
+dwd_zczb_zlxx（std_qfzggj_t_busi_zscqj_patimburse、std_qfzggj_xylg_scjgj_advent）
+zllx	专利类型	空值校验 99.86%	      null ( std_qfzggj_t_busi_zscqj_patimburse)
+                                        zllb as zllx(std_qfzggj_xylg_scjgj_advent)
+dlr	    代理人	    空值校验	100.00%	    null as dlr（std_qfzggj_t_busi_zscqj_patimburse、                                                           std_qfzggj_xylg_scjgj_advent）
+zlzy	专利摘要	空值校验   100.00%	  null zlzy  (std_qfzggj_t_busi_zscqj_patimburse、                                                               std_qfzggj_xylg_scjgj_advent)
+zlzt	专利状态	空值校验   100.00%	 null as zlzt (std_qfzggj_t_busi_zscqj_patimburse、                                                               std_qfzggj_xylg_scjgj_advent)
+空值过高，因多张表没有这些字段，且为设为 null
+tyshxydm 统一社会信用代码	唯一性核验规则	98.85%	同一家公司，多项专利
+
+三、法人库_资本资产_DM产品标准登记信息（dm_zczb_cpbzdjxx）
+统一社会信用代码、组织机构代码重复过高，同一家公司、多项产品登记
+
+四、法人库_资本资产_DM获取高新企业详情数据（dm_fr_hqgxqyxqsj）dwd_frzz_gxqysj（std_qfzggj_t_busi_xxb_hightechent、std_qkjcxj_qkjcxjlgqgjgxjsqymd_v1）
+build_code  空值校验  24.74%  取dwd_frdzxx的楼栋编码，空值过多，但dwd_frdzxx的楼栋编码取std_qzfw_view_ywk_sszt_hc（ods_qzfw_view_ywk_sszt_hc）中的JZWTYDZBM（空值为0），且与其它表进行关联，所以导致一些关联不上，故有空值
+community_code、community_nam、szjd   6.61%
+
+
+五、法人库_资质许可_法人资质信息（dm_frzz_frzzxx）来源表为：dwd_frzz_frzzxx，
+1、zsmc	证书名称	空值校验 100.00%  取dwd_frzz_frzzxx中的std_sdzzwzyzx_sszt_zzzsxx_10_1023184725（ods_sdzzwzyzx_sszt_zzzsxx_10_1023184725）字段，字段的空值为5.22%
+2、zzlb	资质类别	空值校验 100.00%  取dwd_frzz_frzzxx中的std_sdzzwzyzx_sszt_zzzsxx_10_1023184725（ods_sdzzwzyzx_sszt_zzzsxx_10_1023184725）字段，字段的空值为0.25%
+3、zzyxq	资质有效期  空值校验	 49.28%	 取dwd_frzz_frzzxx中的std_sdzzwzyzx_sszt_zzzsxx_10_1023184725（ods_sdzzwzyzx_sszt_zzzsxx_10_1023184725）字段，字段的空值为69.03%
+dm_frzz_frzzxx中证书名称、资质类别、资质有效期空值高，是因为加了TYSHXYDM is not null（统一社会信用代码）这个条件
+
+六、法人库_资本资产_DM认证企业信息(dm_zzxk_rzqyxx)
+1、rzdj	认证等级	空值校验 99.90%	 
+--来源于dwd_zzxk_rzqyxx表，其中：std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd、std_qfzggj_t_busi_hg_highauthen、std_qfzggj_t_busi_mgj_entcertxx有认证字段外，std_qfzggj_t_busi_xxb_hightechent、std_qfzggj_t_busi_zjj_entcer、std_qfzggj_t_busi_yjj_gpscog、std_qfzggj_t_busi_yjj_gmpprodu、std_qfzggj_t_busi_zxzx_entinfo没有认证字段，null as rzdj,
+且--null 38816
+--国家级 2
+--高级认证 293
+--市级  19
+2、zsbh	证书编号 空值校验 85.45% 其中：std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd、std_qfzggj_t_busi_hg_highauthen
+std_qfzggj_t_busi_zjj_entcer、std_qfzggj_t_busi_zxzx_entinfo和std_qfzggj_t_busi_mgj_entcertxx没有证书编号字段， 
+null as zsbh。std_qfzggj_t_busi_xxb_hightechent、std_qfzggj_t_busi_yjj_gpscog、std_qfzggj_t_busi_yjj_gmpprodu有证书编号，且取最大分区，空值为33426，不为空的5704，
+3、zskssj 认证开始日期	空值校验 100.00%	
+其中：std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd字段为空、 std_qfzggj_t_busi_hg_highauthen、std_qfzggj_t_busi_xxb_hightechent、std_qfzggj_t_busi_zjj_entcer、std_qfzggj_t_busi_yjj_gpscog、std_qfzggj_t_busi_yjj_gmpprodu、std_qfzggj_t_busi_zxzx_entinfo、std_qfzggj_t_busi_mgj_entcertxx有认证开始日期字段
+4、yxqx	有效期限  89.20%
+其中：std_qfzggj_t_busi_hg_highauthen、std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd、std_qfzggj_t_busi_zxzx_entinfo为没有这个字段、  std_qfzggj_t_busi_zjj_entcer、std_qfzggj_t_busi_yjj_gpscog、std_qfzggj_t_busi_yjj_gmpprodu、std_qfzggj_t_busi_mgj_entcertxx有有效期限字段。
+tyshxydm	统一社会信用代码	唯一性核验规则	12.77% 重复的原因，一家企业，对应多认证内容，如既是高新技术企业认证，也是电子商务企业认证或证书编号（zsbh）不一样，从dwd_zzxk_rzqyxx及dm_zzxk_rzqyxx逻辑可以看出
+
+七、法人库_法人荣誉_法人荣誉信息（dm_frry_frryxx）
+rywh	荣誉文号	空值核验规则		100.00%	取std_qfzggj_t_busi_hbj_jghbryxx中的rywh
+ryjb	荣誉级别	空值核验规则		100.00%	取std_qfzggj_t_busi_hbj_jghbryxx中的ryjb
+原因：
+dm_frry_frryxx--来源于dwd_frry_frryxx--来源于std_qfzggj_t_busi_hbj_jghbryxx和dwd_jbxx_frjcxx表
+其中
+1、ods_qfzggj_t_busi_hbj_jghbryxx【机构环保荣誉信息】
+zch	注册号	空值核验规则	100.00%	
+tyshxydm 统一社会信用代码	空值核验	100.00%
+rywh	荣誉文号	空值核验规则		100.00%	
+ryjb	荣誉级别	空值核验规则		100.00%	
+另外：dwd_jbxx_frjcxx的tyshxydm tyshxydm 统一社会信用代码，空值为0.00%
+其源表对应的：tyshxydm
+dm_frry_frryxx-ods_schzljgw_sszt_jbxx110497_20210909  tyshxydm	统一社会信用代码	空值校验		0.08%	
+dm_frry_frryxx_ods_qzfw_view_qy_jcxx tyshxydm	统一社会信用代码	空值校验		0.00%	
+dm_frry_frryxx--ods_qfzggj_aic_base_20210909  entsccode	统一社会信用代码	空值校验	14.49%	
+
+八、法人库_风险负面_DM行政强制（dm_jk_frfm_xzqz）
+源于：dwd_xzqzxx、dwd_jbxx_frjcxx
+jgmc	行政强制机关名称	空值校验		49.02%
+sxmc	行政强制事项名称	空值校验		53.92%	
+yj	行政强制依据	空值校验	50.98%	
+qzrq	行政强制日期	空值校验		50.98%	
+zxqk	行政强制执行情况	空值校验	50.00%	
+astatus	状态	空值校验		100.00%  表没有这个字段，故null as astatus
+xzqz_jcwh	解除强制执行文号	空值校验	100.00%	   表没有这个字段 null as  xzqz_jcwh
+xzqz_jcrq	解除强制执行时间	空值校验	100.00%	   其它表没有这个字段 null as xzqz_jcrq    
+但std_qyjglj_anbookpunishapprovalthree和std_qyjglj_anbookpunishapprovaltwo有jcqzsj字段   jcqzsj as  xzqz_jcrq
+dwd_xzqzxx表，xzqz_jcrq有不为的数，但业务逻辑加上了xzqzjdwsbh is not null（行政强制决定文书编号），导致xzqz_jcrq都为空;
+源于：dm_jk_frfm_xzqz_ods_qfzggj_xylg_gaj_administrationqzinfo
+qzname as jgmc  空值校验		0.0%
+
+九、法人_风险负面_DM锁定限制企业（dm_jk_frfm_sdxzqy）
+dm_jk_frfm_sdxzqy源于：dwd_fxfm_sdxzqy和dwd_frdzxx
+其中dwd_fxfm_sdxzqy源于其中一张表：ods_qfzggj_tdxzsdinfo1（std_qfzggj_tdxzsdinfo1）
+1、xzkssj	限制开始时间	空值校验	100.00%	
+来源于：ods_qfzggj_tdxzsdinfo1（std_qfzggj_tdxzsdinfo1）的字段limittimebegin，探查源表发现，limittimebegin	限制开始时间	空值校验	100.00%
+tyshxydm	统一社会信用代码	唯一性核验规则	68.11%，有重复的，是因为同一家公司，有多种限制原因、限制内容或限制类别
+
+十、法人_风险负面_DM黑名单（dm_jk_frfm_hmd）
+1、wsbh	[主键]文书编号	空值校验 99.54%	（dwd_hmdxx）
+源于1：std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd（ods_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd）ah as wsbh  ah	案号	空值校验	99.87%
+源于2、std_qfzggj_t_busi_aic_spaqhmd，cfqk as wsbh,cfqk	处罚情况	空值校验	空值数据过滤	0.00%
+源于3、std_qyjglj_blacklist 没有这个字段 null as wsbh
+2、tyshxydm	统一社会信用代码	空值校验	92.68%	（dwd_hmdxx、dwd_frdzxx）关联条件以std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd为主表，关联dwd_jbxx_frjcxx，条件trim(a.sxzt)=trim(b.lgl_name)，其中dwd_jbxx_frjcxx表tyshxydm（统一社会信用代码）没有空值，但因std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd为主表，且取的tyshxydm是dwd_jbxx_frjcxx表中的tyshxydm，所以关联不上的，都为空，导致了出现空值。
+注：dwd_hmdxx的业务逻辑是否有问题？
+3、zzjgdm	组织机构代码	空值校验	92.68%	（dwd_jbxx_frjcxx，dwd_hmdxx）
+std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd为主表，关联dwd_jbxx_frjcxx，条件trim(a.sxzt)=trim(b.lgl_name)，其中dwd_jbxx_frjcxx表zzjgdm没有空值，但因std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd为主表，且取的zzjgdm是dwd_jbxx_frjcxx表中的zzjgdm，所以关联不上的，都为空，导致了出现空值。
+注：dwd_hmdxx的业务逻辑是否有问题？
+4、fddbrxm	法定代表人姓名	空值校验   92.50% （dwd_jbxx_frjcxx，dwd_hmdxx）
+同上
+5、fddbrzjlx	法定代表人证件类型	93.12%	（dwd_jbxx_frjcxx，dwd_hmdxx）
+同上
+6、fddbrzjhm	法定代表人证件号码	92.88%   （dwd_jbxx_frjcxx，dwd_hmdxx）
+同上
+7、rdbm	认定部门	88.52%	（dwd_hmdxx）
+源于1：std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd（ods_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd）zcpjjg as rdbm  
+zcpjjg	判决做出机关	空值校验	99.68%
+源于2：std_qfzggj_t_busi_aic_spaqhmd，没有这个字段 null as rdbm
+源于3：std_qyjglj_blacklist，fillunit	空值校验	7.14%	fillunit as rdbm
+8、lrsy	列入名单事由	88.75% （dwd_hmdxx）
+源于1：源于：std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd（ods_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd）zm as lrsy
+zm	罪名	空值校验	100.00%	
+源于2：std_qfzggj_t_busi_aic_spaqhmd，没有这个字段 null as lrsy
+源于3：std_qyjglj_blacklistd有badinformation_name字段 badinformation_name as lrsy,但ods_qyjglj_blacklistd没有badinformation_name
+9、sjje	涉及金额（元）	空值校验 99.25%	（dwd_hmdxx）
+1、std_qfzggj_dm_lhjc_hhmd_fgw_sjrhmd，取saje as sjje
+saje	涉案金额（不公开）	空值校验	99.87%
+2、其它的表如果没有这个字段，直接 null as sjje,所以导致空值高
+10、sqdm	社区代码	空值校验	96.66%	（dwd_frdzxx）
+同上
+11、sqmc	社区名称	空值校验	96.66%	（dwd_frdzxx）
+同上
+12、jddm	街道代码	空值校验	96.66%  （dwd_frdzxx）
+同上
+13、jdmc	街道名称	空值校验	96.66%  （dwd_frdzxx）
+规范性：
+tyshxydm	统一社会信用代码	统一社会信用代码校验		92.68%
+zzjgdm	组织机构代码	组织机构代码校验		92.68%
+
+因有tyshxydm 92.68%的空值，所以不规范为92.68%
+
+
+十一、法人_风险负面_DM企业失信（dm_jk_frfm_qysx）
+来源于：dwd_sxqyxx、dwd_frdzxx、dwd_jbxx_frjcxx
+1、cfmc	处罚名称	空值校验	99.19%	
+取dwd_sxqyxx的cfmc,其中没有这个字段的表，都用null as  cfmc
+取dwd_sxqyxx的cflx，其中没有这个字段的表，都用null as cflxdm，只有一张有这个字段，std_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb（ods_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb）且的数量只有68条数据
+2、cflx	处罚类型	空值校验	99.19%
+取dwd_sxqyxx的cflx，其中没有这个字段的表，都用null as cflxdm，只有一张有这个字段，std_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb（ods_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb）且的数量只有68条数据
+tyshxydm	统一社会信用代码	唯一性核验规则	67.60%
+zzjgdm	组织机构代码	唯一性核验规则	67.41%	
+同一家公司，有多条企业失信记录
+
+

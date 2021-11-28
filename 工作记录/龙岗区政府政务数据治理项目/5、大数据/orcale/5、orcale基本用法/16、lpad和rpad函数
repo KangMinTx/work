@@ -1,0 +1,67 @@
+lpad和rpad函数
+一、lpad函数：从左至右填充
+使用格式：
+
+select lpad(string, padded_length, [pad_string])
+-- 被填充的字符
+-- 填充之后字符长度
+-- 填充字符串 缺省值为空格
+注意：如果填充之后的长度比原字符串的长度短，lpad函数将会把字符串截取成从左到右的n个字符。
+
+-- 实例 --
+select lpad('I love you!', 20, '0') from dual;
+-- 000000000I love you!
+二、rpad函数：从右至左填充
+使用格式：
+
+select rpad(string, padded_length, [pad_string])
+-- 同上
+-- 实例 --
+select rpad('I love you!', 20, '0') from dual;
+-- I love you!000000000
+三、一些其他应用
+在 oracle 中，rownum 函数可以返回当前行值。
+
+select '2020-' || lpad(rownum, 2, '0') as col from temp_cwh_city;
+-- 一个21行数据的表
+/*
+2020-01
+2020-02
+2020-03
+2020-04
+2020-05
+2020-06
+2020-07
+2020-08
+2020-09
+2020-10
+2020-11
+2020-12
+2020-13
+2020-14
+2020-15
+2020-16
+2020-17
+2020-18
+2020-19
+2020-20
+2020-21
+*/
+智能点，优化下。
+
+-- 采用 connect by
+select '2020-' || lpad(rownum, 2, '0') as col from dual connect by level <= 12;
+/*
+2020-01
+2020-02
+2020-03
+2020-04
+2020-05
+2020-06
+2020-07
+2020-08
+2020-09
+2020-10
+2020-11
+2020-12
+*/ \

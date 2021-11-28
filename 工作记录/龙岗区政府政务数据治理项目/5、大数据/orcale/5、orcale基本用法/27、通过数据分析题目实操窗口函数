@@ -1,0 +1,195 @@
+通过数据分析题目实操窗口函数
+题目一
+某顶尖外卖平台数据分析师面试题。现有交易数据表temp_cwh_wm如下：
+
+user_name 用户名
+goods_kind 用户订购的的外卖品类
+现在老板想知道每个用户购买的外卖品类偏好分布，并取出每个用户购买最多的外卖品类是哪个？
+
+输出要求如下：
+
+user_name 用户名
+goods_kind 该用户购买的最多外卖品类
+思路：利用窗口函数 row_number 求得每个用户各自购买品类数量排行分布，并取出排行第一的品类即该用户购买最多的外卖品类。
+
+-- 创建临时表
+create table temp_cwh_wm
+(
+  user_name varchar(20),
+  goods_kind varchar(10));
+  
+-- 插入数据
+insert into temp_cwh_wm values('小王','A');
+insert into temp_cwh_wm values('小王','A');
+insert into temp_cwh_wm values('小王','A');
+insert into temp_cwh_wm values('小王','B');
+insert into temp_cwh_wm values('李逵','C');
+insert into temp_cwh_wm values('李逵','B');
+insert into temp_cwh_wm values('李逵','A');
+insert into temp_cwh_wm values('李逵','B');
+
+-- 查询
+select * from temp_cwh_wm;
+
+-- 结果
+1	小王	A
+2	小王	A
+3	小王	A
+4	小王	B
+5	李逵	C
+6	李逵	B
+7	李逵	A
+执行报错版本（可能在hive SQL中支持，不过因为我在hive环境中也没测通，无法验证）。
+
+-- oracle 执行报错
+select b.user_name,
+       b.goods_kind
+from
+(
+select user_name,
+       goods_kind,
+  	   row_number() over(partition by user_name order by count(goods_kind) desc) as rank
+from temp_cwh_wm) b
+where b.rank = 1
+修改之后版本又可以了
+
+select b.user_name,
+       b.goods_kind
+from
+(
+select user_name,
+       goods_kind,
+  	   row_number() over(partition by user_name order by count(goods_kind) desc) as rank
+from temp_cwh_wm 
+group by user_name, goods_kind) b  -- 添加分组之后可以
+where b.rank = 1
+另外的写法
+
+-- 每个用户购买的外卖品类偏好分布
+select user_name,
+       goods_kind,
+       row_number() over(partition by user_name order by cnt desc) as rank
+from 
+(
+  select user_name,
+         goods_kind,
+         count(1) as cnt
+  from temp_cwh_wm
+  group by user_name,
+           goods_kind
+)
+-- 取出排行第一品类 即该用户购买最多的外卖品类
+select user_name,
+       goods_kind
+from 
+(
+  select user_name,
+         goods_kind,
+         row_number() over(partition by user_name order by cnt desc) as rank
+  from 
+  (
+    select user_name,
+           goods_kind,
+           count(1) as cnt
+    from temp_cwh_wm
+    group by user_name,
+             goods_kind
+  )
+)
+where rank = 1;
+在oracle中修改，执行通过。
+
+-- 结果
+1	李逵	B
+2	小王	A
+题目二
+某顶尖支付平台数据分析面试题。现有交易数据表temp_cwh_zf如下：
+
+user_name 用户名
+pay_amount 用户支付额度
+现在老板想知道支付金额在前20%的用户。
+
+输出要求如下：
+
+user_name 用户名（前20%的用户）
+思路：利用窗口函数 ntile 将每个用户和对应的支付金额分成5组（这样每组就有1/5），取分组排名第一的用户组即前支付金额在前20%的用户（注意这里是求前20%的用户而不是求支付排在前20的用户）。
+
+-- 创建临时表
+create table temp_cwh_zf
+(
+  user_name varchar(20),
+  pay_amount number
+);
+
+-- 插入数据
+insert into temp_cwh_zf values('C',50);
+insert into temp_cwh_zf values('A',56);
+insert into temp_cwh_zf values('D',6);
+insert into temp_cwh_zf values('G',80);
+insert into temp_cwh_zf values('H',35);
+insert into temp_cwh_zf values('T',26);
+insert into temp_cwh_zf values('K',93);
+insert into temp_cwh_zf values('M',100);
+insert into temp_cwh_zf values('N',53);
+insert into temp_cwh_zf values('Q',12);
+
+-- 查询
+select * from temp_cwh_zf;
+针对用户与pay_amount一一对应的情况下
+
+-- 取数结果
+select b.user_name,
+       b.pay_amount
+from 
+(
+  select user_name,
+         pay_amount,
+         ntile(5) over(order by pay_amount desc) as level2
+  from temp_cwh_zf
+) b
+where b.level2 = 1
+假设一个用户下对应多个pay_amount，则采用
+
+-- 一对多 进行求和操作
+select b.user_name
+from 
+(
+  select user_name,
+         ntile(5) over(order by sum(pay_amount) desc) as level2
+  from temp_cwh_zf
+  group by user_name
+) b
+where b.level2 = 1
+
+题目三
+某顶尖小视频平台数据分析面试题。现有用户登陆表temp_cwh_xsp如下：
+
+user_name 用户名
+date 用户登陆时间
+现在老板想知道连续7天都登陆平台的重要用户。
+
+输出要求如下：
+
+user_name 用户名（连续7天都登陆的用户数）
+思路：首先利用偏移窗口函数 lead 求得每个用户在每个登陆时间向后偏移7行的登陆时间，再计算每个用户在每个登陆时间滞后7天的登陆时间，如果每个用户向后偏移7行的登陆时间正好等于滞后7天的时间，说明该用户连续登陆了7天。
+
+select b.user_name
+from
+(
+  select user_name,
+         date2,
+         lead(date2, 7) over (partition by user_name order by date2 desc) as date_7
+  from temp_cwh_xsp
+) b
+where b.date is not null
+and date_sub(cast(b.date as date,7)) = cast(b.date_7 as date)
+
+
+这道题测试数据构造起来太麻烦了，就不测试啦！
+
+汗，看到date_sub函数，果然这些题目的测试环境用的是hive，呜呼。
+
+总结
+从数据分析题目中了解窗口函数的实际应用场景。
+
+窗口函数的使用也确实可以衡量作为数据分析师对sql能力的掌握程度，当然不管是学习何种用法都要结合实际应用背景思考为何需要这种分析函数。

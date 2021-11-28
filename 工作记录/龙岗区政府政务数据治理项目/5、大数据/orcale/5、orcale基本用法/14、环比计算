@@ -1,0 +1,85 @@
+环比计算
+、构建测试表
+-- 创建表
+create table temp_cwh_test
+(
+	date_time date,
+	cnt number
+);
+-- 插入测试数据
+insert into temp_cwh_test values (to_date('2019-01-05','yyyy-mm-dd'), 25);
+insert into temp_cwh_test values (to_date('2019-02-05','yyyy-mm-dd'), 20);
+insert into temp_cwh_test values (to_date('2019-03-05','yyyy-mm-dd'), 63);
+insert into temp_cwh_test values (to_date('2019-04-05','yyyy-mm-dd'), 96);
+insert into temp_cwh_test values (to_date('2019-05-05','yyyy-mm-dd'), 25);
+insert into temp_cwh_test values (to_date('2019-07-05','yyyy-mm-dd'), 12);
+insert into temp_cwh_test values (to_date('2019-08-05','yyyy-mm-dd'), 39);
+insert into temp_cwh_test values (to_date('2019-09-05','yyyy-mm-dd'), 250);
+insert into temp_cwh_test values (to_date('2019-11-05','yyyy-mm-dd'), 1);
+insert into temp_cwh_test values (to_date('2019-12-05','yyyy-mm-dd'), 525);
+二、环比计算
+概念
+环比 = （第n月 - 第n-1月）/ 第n-1月 * 100%
+
+同比 = （今年第n月 - 去年第n月）/ 去年第n月 * 100%
+
+计算
+因部分数据缺失，某些月份没有数据，此时可以构造一个基础表。
+
+select '2019-' || lpad(rownum, 2, '0') as col from dual connect by level <= 12;
+/*
+2019-01
+2019-02
+2019-03
+2019-04
+2019-05
+2019-06
+2019-07
+2019-08
+2019-09
+2019-10
+2019-11
+2019-12
+*/
+再进行左关联即可。
+
+使用 lag 窗口函数进行数据偏移，即可计算。
+
+select date_time,
+       cnt,
+	   cnt_lag,
+	   cnt_diff,
+	   case when (round((case when cnt = 0 then null
+	          else cnt_diff/decode(cnt_lag, 0, 1, cnt_lag) end ) * 100, 2) is
+			  || '%' as rate
+from 
+(
+select a.date_time,
+       nvl(b.cnt, 0) as cnt,
+	   lag(nvl(b.cnt, 0), 1) over ( order by a.date_time) as cnt_lag,
+ 	   nvl(b.cnt, 0) - lag(nvl(b.cnt, 0), 1) over ( order by a.date_time) as cnt_diff	  
+from
+(
+	select '2019-' || lpad(rownum, 2, '0') as date_time 
+	from dual 
+	connect by level <= 12
+) a
+left join temp_cwh_test b
+on a.date_time = to_char(b.date_time,'yyyy-mm')
+order by a.date_time
+) d
+order by date_time
+/*
+1	2019-01	25			
+2	2019-02	20	25	-5	-20
+3	2019-03	63	20	43	215
+4	2019-04	96	63	33	52.38
+5	2019-05	25	96	-71	-73.96
+6	2019-06	0	25	-25	
+7	2019-07	12	0	12	1200
+8	2019-08	39	12	27	225
+9	2019-09	250	39	211	541.03
+10	2019-10	0	250	-250	
+11	2019-11	1	0	1	100
+12	2019-12	525	1	524	52400                 
+*/

@@ -1,0 +1,74 @@
+wm_concat函数合并字段
+在Oracle中使用wm_concat(column)可以实现字段的分组合并，逗号分隔。
+
+　　例如，现有表temp_cwh_test：
+
+
+-- 创建临时表
+create table temp_cwh_test
+(
+    u_id varchar(10),
+    goods varchar(32),
+    num number(5)
+)
+
+-- 插入数据
+insert into temp_cwh_test(u_id, goods, num)
+values('1','苹果',2);
+insert into temp_cwh_test(u_id, goods, num)
+values('2','梨子',5);
+insert into temp_cwh_test(u_id, goods, num)
+values('1','西瓜',4);
+insert into temp_cwh_test(u_id, goods, num)
+values('3','葡萄',1);
+insert into temp_cwh_test(u_id, goods, num)
+values('3','香蕉',1);
+insert into temp_cwh_test(u_id, goods, num)
+values('1','橘子',3);
+
+-- 查看表
+select * from temp_cwh_test;
+
+
+
+　　1.想按u_id分组，进行goods合并
+
+-- 使用wm_concat函数实现字段合并
+select u_id,wm_concat(goods) goods_sum
+from temp_cwh_test
+group by u_id;
+　　得到：
+
+
+
+　　2.想按u_id分组，进行goods和num合并
+
+select u_id,wm_concat(goods ||'(' || num ||'斤）') goods_sum
+from temp_cwh_test
+group by u_id;
+　　得到：
+
+
+
+ 
+
+　　3.以“|”进行分隔合并
+
+select u_id, replace(wm_concat(goods),',','|') as goods_sum
+from temp_cwh_test
+group by u_id
+　　得到：
+
+
+
+　　4.其他
+
+　　Oracle 11g后，推荐使用listagg函数。
+
+　　-- 该函数不是oracle公开的系统函数，它的用户是wmsys，而不是sys或者system，oracle很有可能在版本升级或者补丁的时候取消或者修改这个函数甚至用户，这种变化oracle是不会公开的。所有可能会由于这个变化而导致异常。
+
+　　-- 大量使用这个函数也会导致临时表空间爆满，这是因为在10.2.0.5中，使用wmsys.wm_concat返回的结果格式是CLOB，CLOB占用的临时表空间只有在连接释放后才会释放，部分通过连接池连接数据库的长连接很有可能导致CLOB占用临时表空间不断累积增大，会导致临时表空间爆满的故障。
+
+　　-- 如果是在程序中大量使用这个函数的话会引起enq:TT的锁，可能会导致某些对象被锁。 
+
+

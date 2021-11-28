@@ -1,0 +1,61 @@
+在 Oracle 中可以利用系统表 user_tables 和 all_talbes 判断表是否存在，但有时在存储过程中确认表是否存在并不方便，因此有必要封装一个函数，进行调用。
+
+下面是函数的内容：
+
+-- 判断表是否存在
+create or replace function temp_is_table_exists(is_table_name varchar2, is_owner_name varchar2 default null)
+	return boolean is
+
+	vcproc_name varchar2(100) := 'TEMP_IS_TABLE_EXISTS';
+	vncount number(10);
+	vnerr_code number;
+	vcerr_text varchar2(2000);
+	
+	vcowner_name varchar2(1000);
+	vctable_name varchar2(1000);
+	
+begin
+	vncount := 0;
+	
+	vcowner_name := is_owner_name;
+	vctable_name := is_table_name;
+	
+	if vcowner_name is null then 
+		select count(1) into vncount
+		from user_tables
+		where table_name = upper(vctable_name);
+	else
+		select count(1) into vncount
+		from all_tables
+		where owner = upper(vcowner_name)
+		and table_name = upper(vctable_name);
+	end if;
+	
+	if vncount > 0 then 
+		return true;
+	else 
+		return false;
+	end if;
+
+exception
+	when others then 
+		vnerr_code := sqlcode;
+		vcerr_text := sqlerrm;
+		-- 记录异常以备查
+		pro_cwh_test(vcproc_name, vctable_name, vnerr_code, vcerr_text);
+		rollback;
+		commit;
+end temp_is_table_exists;
+其中，入参为：表名 + 用户名，用户名可缺省。
+
+最后面 exception 为异常抛出部分，记录进日志表。
+
+-- 异常抛出
+exception when others then 
+-- sqlcode 异常编码  -12170
+-- sqlerrm 信号字符串  ORA-12170: TNS:Connect timeout occurred
+经测试验证，return 为布尔型的函数不能够直接通过 select 执行。
+
+select temp_is_table_exists('temp_cwh_city') from dual;
+-- 报错
+该函数只能用于存储过程中。

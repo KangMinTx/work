@@ -1,0 +1,576 @@
+CREATE OR REPLACE procedure LQGSM.p_dm_rkk_log
+(error_id varchar2,
+data_dt varchar2,
+work_name varchar2 ,
+work_step varchar2 ,
+start_dt_time varchar2,
+v_Sqlstate varchar2 ,
+v_Sqlcode  varchar2 ,
+v_errortext varchar2 ,
+tab_conuts varchar2 ,
+v_des varchar2
+)
+is end_dt_time varchar2(32);
+BEGIN
+select TO_CHAR(SYSDATE,'yyyy-mm-dd hh24:mi:ss') into end_dt_time FROM dual;
+
+insert into dm_rkk_log
+(
+error_id,
+data_dt,
+work_name ,
+work_step ,
+start_dt_time,
+end_dt_time  ,
+v_Sqlstate  ,
+v_Sqlcode  ,
+v_errortext , 
+tab_conuts  ,
+v_des )
+select 
+error_id,
+data_dt,
+work_name ,
+work_step ,
+start_dt_time,
+end_dt_time  ,
+v_Sqlstate  ,
+v_Sqlcode  ,
+v_errortext , 
+tab_conuts  ,
+v_des from dual;
+commit;
+end;
+
+----------------------------------------------------------------------
+create table dm_rkk_log
+(error_id string,
+data_dt string,
+work_name string,
+work_step string,
+start_dt_time string,
+end_dt_time string,
+v_Sqlstate string,
+v_Sqlcode  string,
+v_errortext string,
+tab_conuts string,
+v_des string
+)
+comment on table dm_rkk_log is '人口库日志表';
+comment on column dm_rkk_log.error_id  is '出错编号';
+comment on column dm_rkk_log.data_dt  is '出错数据日期';
+comment on column dm_rkk_log.work_name  is '出错任务';
+comment on column dm_rkk_log.work_step  is '任务步骤';
+comment on column dm_rkk_log.start_dt_time  is '开始日期';
+comment on column dm_rkk_log.end_dt_time  is '结束日期';
+comment on column dm_rkk_log.v_Sqlstate  is 'sql执行';
+comment on column dm_rkk_log.v_Sqlcode  is '错误信息';
+comment on column dm_rkk_log.v_errortext  is '错误语句';
+comment on column dm_rkk_log.tab_conuts  is '表记录数';
+comment on column dm_rkk_log.v_des  is '备注';
+
+-----------------------------------------大数据平台-----------------------------------------
+create table dm_rkk_log
+(error_id string comment '出错编号',
+data_dt string comment '出错数据日期' ,
+work_name string comment '出错任务',
+work_step string comment '任务步骤',
+start_dt_time string comment '开始日期',
+end_dt_time string comment '结束日期',
+v_Sqlstate string comment 'sql执行',
+v_Sqlcode  string comment '错误信息',
+v_errortext string comment '错误语句',
+tab_conuts string comment '表记录数',
+v_des string comment '备注'
+);
+
+------------------------------------------------日志存储过程-------------------------------------------------
+create or replace procedure p_dm_rkk_log
+(error_id varchar2,
+data_dt varchar2,
+work_name varchar2 ,
+work_step varchar2 ,
+start_dt_time varchar2,
+end_dt_time varchar2 ,
+v_Sqlstate varchar2 ,
+v_Sqlcode  varchar2 ,
+v_errortext varchar2 ,
+tab_conuts varchar2 ,
+v_des varchar2
+)
+is end_dt_time varchar2(32)
+BEGIN
+select TO_CHAR(SYSDATE,'yyyy-mm-dd hh24:mi:ss') into end_dt_time FROM dual;
+
+insert into dm_rkk_log
+(
+error_id,
+data_dt,
+work_name ,
+work_step ,
+start_dt_time,
+end_dt_time  ,
+v_Sqlstate  ,
+v_Sqlcode  ,
+v_errortext , 
+tab_conuts  ,
+v_des )
+select 
+error_id,
+data_dt,
+work_name ,
+work_step ,
+start_dt_time,
+end_dt_time  ,
+v_Sqlstate  ,
+v_Sqlcode  ,
+v_errortext , 
+tab_conuts  ,
+v_des from dual;
+commit;
+end;
+
+
+
+create OR replace procedure p_DM_RKK_SYRKFYQK_1_cbk (etl_date is VARCHAR2)
+is 
+v_procedure_name VARCHAR2(64),
+v_error_id VARCHAR2(8),
+v_work_step VARCHAR2(512),
+v_sqlcode NUMBER,
+v_sqlerrm VARCHAR2(2000),
+start_dt_time VARCHAR2(32),
+V_TAB_CONUTS NUMBER
+begin 
+/*日志赋值参数*/
+v_procedure_name:='p_DM_RKK_SYRKFYQK_1_cbk';
+/*开始时间*/
+select TO_CHAR(sysdate,'yyyy-mm-dd hh24:mi:ss') into start_dt_time from dual;
+/*删除当日重跑数据*/
+delete from cbk_2021 where sjsd=etl_date;
+commit;
+/*步骤sql序号*/
+v_error_id:='1';
+v_work_step:='1-码表计算';
+/*货币表*/
+MERGE INTO LQGSM.DM_RKK_SYRKFYQK_1_cbk A
+USING (SELECT
+ZJLX
+,ZJHM
+,BM
+,XM
+,GJ
+,GATBZ
+,CSNY
+,XB
+,MZ
+,JG
+,ZJXY
+,LSRQ
+,HYZK
+,CHRQ
+,SWRQ
+,JKZK
+,BYYX
+,HY
+,ZHY
+,ZC
+,YSR
+,SG
+,ZY
+,BY1
+,XX
+,XW
+,YHZGX
+,HJLX
+,YHJ
+,HKLX
+,HKXZ
+,SFDS
+,WHCD
+,ZZMM
+,HKSZD
+,GLLB
+,XZQHID
+,SFTJ
+,GXBZ
+,ZJHM2
+,XGLJGID
+,LKYY
+,CKQK
+,BYDT
+,SYDT
+,YX
+,SJ
+,ZZDH
+,ZSLB
+,GZDW
+,DWDZ
+,BGDH
+,BLR
+,BLSJ
+,XGZ
+,XGSJ
+,CJSJ
+,CJZ
+,BZ
+,DJR
+,DJSJ
+,CRSJ
+,YXX
+,YXRQ
+,JDBM
+,JDMC
+,SQBM
+,SQMC
+,WGBM
+,WGMC
+,HOUSE_CODE
+,BUILDING_CODE
+,LXDH
+,TZR
+,HSJCSJ
+,YMJZSJ
+,LYB
+,LYJG
+,YXSJ
+,SYRKJZDZ
+,FWMC
+,JCJG
+,BGRQ
+,JSRQ
+,BBLX
+,JCJIEGUO
+,DRPC
+,BYZD1
+,BYZD2
+,BYZD3
+,BYZD4
+,BYZD5
+,BYZD6
+,BYZD7
+,BYZD8
+,BYZD9
+,BYZD10
+,sjsd
+FROM LQGSM.DM_RKK_SYRKFYQK_ZLER_HS_cbk ) B
+ON (A.ZJHM=B.ZJHM AND substr(A.HSJCSJ,1,10)=substr(B.HSJCSJ,1,10) AND A.xm=B.xm )
+WHEN MATCHED
+THEN
+UPDATE SET
+--A.HSJCSJ=B.HSJCSJ
+--A.ZJHM=B.ZJHM
+--A.XM=B.XM
+A.ZJLX=B.ZJLX
+,A.BM=B.BM
+,A.GJ=B.GJ
+,A.GATBZ=B.GATBZ
+,A.CSNY=B.CSNY
+,A.XB=B.XB
+,A.MZ=B.MZ
+,A.JG=B.JG
+,A.ZJXY=B.ZJXY
+,A.LSRQ=B.LSRQ
+,A.HYZK=B.HYZK
+,A.CHRQ=B.CHRQ
+,A.SWRQ=B.SWRQ
+,A.JKZK=B.JKZK
+,A.BYYX=B.BYYX
+,A.HY=B.HY
+,A.ZHY=B.ZHY
+,A.ZC=B.ZC
+,A.YSR=B.YSR
+,A.SG=B.SG
+,A.ZY=B.ZY
+,A.BY1=B.BY1
+,A.XX=B.XX
+,A.XW=B.XW
+,A.YHZGX=B.YHZGX
+,A.HJLX=B.HJLX
+,A.YHJ=B.YHJ
+,A.HKLX=B.HKLX
+,A.HKXZ=B.HKXZ
+,A.SFDS=B.SFDS
+,A.WHCD=B.WHCD
+,A.ZZMM=B.ZZMM
+,A.HKSZD=B.HKSZD
+,A.GLLB=B.GLLB
+,A.XZQHID=B.XZQHID
+,A.SFTJ=B.SFTJ
+,A.GXBZ=B.GXBZ
+,A.ZJHM2=B.ZJHM2
+,A.XGLJGID=B.XGLJGID
+,A.LKYY=B.LKYY
+,A.CKQK=B.CKQK
+,A.BYDT=B.BYDT
+,A.SYDT=B.SYDT
+,A.YX=B.YX
+,A.SJ=B.SJ
+,A.ZZDH=B.ZZDH
+,A.ZSLB=B.ZSLB
+,A.GZDW=B.GZDW
+,A.DWDZ=B.DWDZ
+,A.BGDH=B.BGDH
+,A.BLR=B.BLR
+,A.BLSJ=B.BLSJ
+,A.XGZ=B.XGZ
+,A.XGSJ=B.XGSJ
+,A.CJSJ=B.CJSJ
+,A.CJZ=B.CJZ
+,A.BZ=B.BZ
+,A.DJR=B.DJR
+,A.DJSJ=B.DJSJ
+,A.CRSJ=B.CRSJ
+,A.YXX=B.YXX
+,A.YXRQ=B.YXRQ
+,A.JDBM=B.JDBM
+,A.JDMC=B.JDMC
+,A.SQBM=B.SQBM
+,A.SQMC=B.SQMC
+,A.WGBM=B.WGBM
+,A.WGMC=B.WGMC
+,A.HOUSE_CODE=B.HOUSE_CODE
+,A.BUILDING_CODE=B.BUILDING_CODE
+,A.LXDH=B.LXDH
+,A.TZR=B.TZR
+,A.YMJZSJ=B.YMJZSJ
+,A.LYB=B.LYB
+,A.LYJG=B.LYJG
+,A.YXSJ=B.YXSJ
+,A.SYRKJZDZ=B.SYRKJZDZ
+,A.FWMC=B.FWMC
+,A.JCJG=B.JCJG
+,A.BGRQ=B.BGRQ
+,A.JSRQ=B.JSRQ
+,A.BBLX=B.BBLX
+,A.JCJIEGUO=B.JCJIEGUO
+,A.DRPC=B.DRPC
+,A.BYZD1=B.BYZD1
+,A.BYZD2=B.BYZD2
+,A.BYZD3=B.BYZD3
+,A.BYZD4=B.BYZD4
+,A.BYZD5=B.BYZD5
+,A.BYZD6=B.BYZD6
+,A.BYZD7=B.BYZD7
+,A.BYZD8=B.BYZD8
+,A.BYZD9=B.BYZD8
+,A.BYZD10=B.BYZD10
+,A.sjsd=B.sjsd
+WHEN NOT MATCHED
+THEN
+  INSERT (
+ A.ZJLX
+,A.ZJHM
+,A.BM
+,A.XM
+,A.GJ
+,A.GATBZ
+,A.CSNY
+,A.XB
+,A.MZ
+,A.JG
+,A.ZJXY
+,A.LSRQ
+,A.HYZK
+,A.CHRQ
+,A.SWRQ
+,A.JKZK
+,A.BYYX
+,A.HY
+,A.ZHY
+,A.ZC
+,A.YSR
+,A.SG
+,A.ZY
+,A.BY1
+,A.XX
+,A.XW
+,A.YHZGX
+,A.HJLX
+,A.YHJ
+,A.HKLX
+,A.HKXZ
+,A.SFDS
+,A.WHCD
+,A.ZZMM
+,A.HKSZD
+,A.GLLB
+,A.XZQHID
+,A.SFTJ
+,A.GXBZ
+,A.ZJHM2
+,A.XGLJGID
+,A.LKYY
+,A.CKQK
+,A.BYDT
+,A.SYDT
+,A.YX
+,A.SJ
+,A.ZZDH
+,A.ZSLB
+,A.GZDW
+,A.DWDZ
+,A.BGDH
+,A.BLR
+,A.BLSJ
+,A.XGZ
+,A.XGSJ
+,A.CJSJ
+,A.CJZ
+,A.BZ
+,A.DJR
+,A.DJSJ
+,A.CRSJ
+,A.YXX
+,A.YXRQ
+,A.JDBM
+,A.JDMC
+,A.SQBM
+,A.SQMC
+,A.WGBM
+,A.WGMC
+,A.HOUSE_CODE
+,A.BUILDING_CODE
+,A.LXDH
+,A.TZR
+,A.HSJCSJ
+,A.YMJZSJ
+,A.LYB
+,A.LYJG
+,A.YXSJ
+,A.SYRKJZDZ
+,A.FWMC
+,A.JCJG
+,A.BGRQ
+,A.JSRQ
+,A.BBLX
+,A.JCJIEGUO
+,A.DRPC
+,A.BYZD1
+,A.BYZD2
+,A.BYZD3
+,A.BYZD4
+,A.BYZD5
+,A.BYZD6
+,A.BYZD7
+,A.BYZD8
+,A.BYZD9
+,A.BYZD10
+,A.sjsd)
+VALUES (
+ B.ZJLX
+,B.ZJHM
+,B.BM
+,B.XM
+,B.GJ
+,B.GATBZ
+,B.CSNY
+,B.XB
+,B.MZ
+,B.JG
+,B.ZJXY
+,B.LSRQ
+,B.HYZK
+,B.CHRQ
+,B.SWRQ
+,B.JKZK
+,B.BYYX
+,B.HY
+,B.ZHY
+,B.ZC
+,B.YSR
+,B.SG
+,B.ZY
+,B.BY1
+,B.XX
+,B.XW
+,B.YHZGX
+,B.HJLX
+,B.YHJ
+,B.HKLX
+,B.HKXZ
+,B.SFDS
+,B.WHCD
+,B.ZZMM
+,B.HKSZD
+,B.GLLB
+,B.XZQHID
+,B.SFTJ
+,B.GXBZ
+,B.ZJHM2
+,B.XGLJGID
+,B.LKYY
+,B.CKQK
+,B.BYDT
+,B.SYDT
+,B.YX
+,B.SJ
+,B.ZZDH
+,B.ZSLB
+,B.GZDW
+,B.DWDZ
+,B.BGDH
+,B.BLR
+,B.BLSJ
+,B.XGZ
+,B.XGSJ
+,B.CJSJ
+,B.CJZ
+,B.BZ
+,B.DJR
+,B.DJSJ
+,B.CRSJ
+,B.YXX
+,B.YXRQ
+,B.JDBM
+,B.JDMC
+,B.SQBM
+,B.SQMC
+,B.WGBM
+,B.WGMC
+,B.HOUSE_CODE
+,B.BUILDING_CODE
+,B.LXDH
+,B.TZR
+,B.HSJCSJ
+,B.YMJZSJ
+,B.LYB
+,B.LYJG
+,B.YXSJ
+,B.SYRKJZDZ
+,B.FWMC
+,B.JCJG
+,B.BGRQ
+,B.JSRQ
+,B.BBLX
+,B.JCJIEGUO
+,B.DRPC
+,B.BYZD1
+,B.BYZD2
+,B.BYZD3
+,B.BYZD4
+,B.BYZD5
+,B.BYZD6
+,B.BYZD7
+,B.BYZD8
+,B.BYZD9
+,B.BYZD10
+,B.sjsd);
+V_TAB_CONUTS:=sql%rowcount;
+commit;
+p_dm_rkk_log
+(
+v_procedure_name,
+v_error_id ,
+eld_date,
+v_work_step,
+start_dt_time,
+'1',
+'成功',
+'SUCCESSFUL',
+V_TAB_CONUTS,
+'');
+COMMIT;
+END;
+
+

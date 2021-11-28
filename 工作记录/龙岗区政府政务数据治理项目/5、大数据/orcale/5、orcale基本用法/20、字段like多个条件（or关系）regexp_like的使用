@@ -1,0 +1,58 @@
+字段like多个条件（or关系）regexp_like的使用
+在Oracle中，有时候需要写like多条件的时候，总觉得很冗余，特别繁琐，例如：
+
+select * from table_test
+where col like '%abc%'
+   or col like '%bcd%'
+   or col like '%cde%'
+   or col like '%ghi%';
+遂考虑，有没有简洁的解决方案。
+
+最后找到 regexp_like 尝试一番。
+
+-- 创建测试表
+create table temp_cwh_test
+(
+ id varchar2(20),
+ name varchar2(30)
+);
+-- 插入数据
+insert into temp_cwh_test values (1,'黄盖');
+insert into temp_cwh_test values(2,'吕布');
+insert into temp_cwh_test values(3,'貂蝉');
+insert into temp_cwh_test values(4,'鲁智深');
+insert into temp_cwh_test values(5,'诸葛亮');
+-- 查询
+select * from temp_cwh_test;
+缩写为：
+
+select * from temp_cwh_test
+where name like '%布%'
+or name like '%亮%'
+or name like '%貂%'
+
+select * from temp_cwh_test
+where regexp_like(name, '(貂|布|亮)')
+如果要匹配以字符串开头，可以：
+
+select * from temp_cwh_test
+where regexp_like(name, '^(貂|布|亮)')
+-- 1	3	貂蝉
+如果要匹配以字符串结尾，可以：
+
+select * from temp_cwh_test
+where regexp_like(name, '(貂|布|亮)$')
+-- 1	2	吕布
+-- 2	5	诸葛亮
+总结
+全模糊匹配：regexp_like(字段名, '(匹配字符串1|匹配字符串2|匹配字符串3|...)')
+
+左模糊匹配：regexp_like(字段名, '(匹配字符串1|匹配字符串2|匹配字符串3|...)$')
+
+右模糊匹配：regexp_like(字段名, '^(匹配字符串1|匹配字符串2|匹配字符串3|...)')
+
+额外报错记录
+在插入数据的时候 Oracle 报了一个错：Oracle ORA-00984: column not allowed here ，一开始以为是建表的时候类型选得不对，int、varchar2(20) 改了又改，还是不行。
+
+原来是双引号错了，当数据以 char 的形式存在时，应加单引号，则插入数据库就不会出现错误。
+

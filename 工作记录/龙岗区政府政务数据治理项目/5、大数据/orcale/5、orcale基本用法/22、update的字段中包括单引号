@@ -1,0 +1,29 @@
+update的字段中包括单引号
+平时update的时候直接更改字段内的值，例如：
+
+update table_temp set name = 'Hider' where id = 100;
+但更新后的值中包括单引号，则不能按以上方式进行更新，会报错。
+
+遂测试之。
+
+-- 建立测试表
+create table temp_cwh_test_1219
+(
+  id varchar2(10),
+  name varchar2(20)
+);
+
+-- 插入数据
+insert into temp_cwh_test_1219 values (1,'Nick');
+insert into temp_cwh_test_1219 values (2,'Tom');
+
+-- 更新数据
+update temp_cwh_test_1219 set name = '''xxxx''' where id = 1;
+-- 1	1	'xxxx'
+-- 2	2	Tom
+
+-- 删除测试表
+drop table temp_cwh_test_1219;
+效果如预期。
+
+原理：只需将需插入或更新的内容中的单引号替换为两个单引号即可。

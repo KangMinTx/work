@@ -1,0 +1,20 @@
+   ---v_month_start的时间需要注意，如现在为2021年10份了，所以v_month_start为202109
+   declare
+             v_table varchar2(64):='DM_YQ_HSJCJG_1027';
+             v_month_start varchar2(8) := '202109';
+             v_month_end   varchar2(8) := '202301';
+             i     varchar2(8);
+             v_sql varchar2(5000);
+             v_nmon varchar2(8);
+            begin
+                    i := v_month_start;
+              while i <= v_month_end loop
+                v_nmon := to_char(add_months(to_date(i,'yyyymm'),1),'yyyymm');
+                v_sql := 'alter table '||v_table||' add partition PT_'||i||' values less than ('''||v_nmon||''')'; 
+                execute immediate v_sql ;
+                i := to_char(add_months(to_date(i,'yyyymm'),1),'yyyymm');
+              end loop;
+              commit;
+            end;
+            
+

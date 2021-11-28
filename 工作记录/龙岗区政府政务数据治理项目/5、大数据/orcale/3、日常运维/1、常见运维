@@ -1,0 +1,194 @@
+----------------------------------------在太极平台查表所在的用户-------------------------------------------
+SELECT * FROM all_tables WHERE TABLE_NAME='T_BUSI_SBJ_ARREAR_NEW';
+SELECT * FROM all_tables WHERE TABLE_NAME='T_BUSI_SBJ_ARREAR';
+SELECT * FROM all_tables WHERE TABLE_NAME LIKE '%T_BUSI_SBJ_ARREAR%';
+
+SELECT * FROM USER_TABLES WHERE TABLE_NAME='T_BUSI_SBJ_ARREAR_NEW';
+-------------------------------------------查看数据库的版本-----------------------------------------------
+ SELECT version FROM product_component_version WHERE substr(product, 1, 6) = 'Oracle'; 
+
+-----------------------------------------查看数据库的创建日期和归档方式-------------------------------------
+ SELECT created, log_mode, log_mode FROM v$database;
+
+----------------------------------------------------查看表空间----------------------------------------------
+1、Oracle查询temp表空间的使用率
+select tablespace_name,round(free_space/1024/1024/1024,2) "free(GB)",round(tablespace_size/1024/1024/1024,2) "total(GB)",round(nvl(free_space,0)*100/tablespace_size,3) "Free percent"
+from dba_temp_free_space;
+2、Oracle查询temp表空间的名字和位置
+select tablespace_name,file_name from dba_temp_files;
+select TABLESPACE_NAME,FILE_NAME,BYTES/1024/1024/1024 total_gb,USER_BYTES/1021/1024/1024 gb from dba_temp_files;
+
+方法一
+SELECT a.tablespace_name "表空间名", 
+total "表空间大小", 
+free "表空间剩余大小", 
+(total - free) "表空间使用大小", 
+total / (1024 * 1024 * 1024) "表空间大小(G)", 
+free / (1024 * 1024 * 1024) "表空间剩余大小(G)", 
+(total - free) / (1024 * 1024 * 1024) "表空间使用大小(G)", 
+round((total - free) / total, 4) * 100 "使用率 %" 
+FROM (SELECT tablespace_name, SUM(bytes) free 
+FROM dba_free_space 
+GROUP BY tablespace_name) a, 
+(SELECT tablespace_name, SUM(bytes) total 
+FROM dba_data_files 
+GROUP BY tablespace_name) b 
+WHERE a.tablespace_name = b.tablespace_name;
+
+方法二
+SELECT UPPER(F.TABLESPACE_NAME) "表空间名",
+       D.TOT_GROOTTE_MB "表空间大小(M) ",
+       D.TOT_GROOTTE_MB - F.TOTAL_BYTES "已使用空间(M) ",
+       TO_CHAR(ROUND((D.TOT_GROOTTE_MB - F.TOTAL_BYTES) / D.TOT_GROOTTE_MB * 100,
+                     2),
+               '990.99') "使用比",
+       F.TOTAL_BYTES "空闲空间(M) ",
+       F.MAX_BYTES "最大块(M) "
+  FROM (SELECT TABLESPACE_NAME,
+               ROUND(SUM(BYTES) / (1024 * 1024), 2) TOTAL_BYTES,
+               ROUND(MAX(BYTES) / (1024 * 1024), 2) MAX_BYTES
+          FROM SYS.DBA_FREE_SPACE
+         GROUP BY TABLESPACE_NAME) F,
+       (SELECT DD.TABLESPACE_NAME,
+               ROUND(SUM(DD.BYTES) / (1024 * 1024), 2) TOT_GROOTTE_MB
+          FROM SYS.DBA_DATA_FILES DD
+         GROUP BY DD.TABLESPACE_NAME) D
+ WHERE D.TABLESPACE_NAME = F.TABLESPACE_NAME
+ ORDER BY 4 DESC;
+ 
+ 2、查看oracle是否开启自动扩展
+ SELECT T.TABLESPACE_NAME,
+       D.FILE_NAME,
+       D.AUTOEXTENSIBLE,
+       D.BYTES,
+       D.MAXBYTES,
+       D.STATUS
+  FROM DBA_TABLESPACES T, DBA_DATA_FILES D
+ WHERE T.TABLESPACE_NAME = D.TABLESPACE_NAME
+ ORDER BY TABLESPACE_NAME, FILE_NAME;
+ 
+ 3、查看表空间和物理文件路径
+ select tablespace_name, file_id, file_name from dba_data_files order by tablespace_name;
+ 4、开启表空间自动扩展功能
+ alter database datafile '/home/oracle/app/oracle/oradata/orcl/sysaux01.dbf' autoextend on;
+ 5、关闭表空间自动扩展功能
+ alter database datafile '/home/oracle/app/oracle/oradata/orcl/sysaux01.dbf' autoextend off;
+ 
+ --20211121 在14物理机上，自动扩展users用户下的表空间
+ 先查看表空间
+ SELECT UPPER(F.TABLESPACE_NAME) "表空间名",
+       D.TOT_GROOTTE_MB "表空间大小(M) ",
+       D.TOT_GROOTTE_MB - F.TOTAL_BYTES "已使用空间(M) ",
+       TO_CHAR(ROUND((D.TOT_GROOTTE_MB - F.TOTAL_BYTES) / D.TOT_GROOTTE_MB * 100,
+                     2),
+               '990.99') "使用比",
+       F.TOTAL_BYTES "空闲空间(M) ",
+       F.MAX_BYTES "最大块(M) "
+  FROM (SELECT TABLESPACE_NAME,
+               ROUND(SUM(BYTES) / (1024 * 1024), 2) TOTAL_BYTES,
+               ROUND(MAX(BYTES) / (1024 * 1024), 2) MAX_BYTES
+          FROM SYS.DBA_FREE_SPACE
+         GROUP BY TABLESPACE_NAME) F,
+       (SELECT DD.TABLESPACE_NAME,
+               ROUND(SUM(DD.BYTES) / (1024 * 1024), 2) TOT_GROOTTE_MB
+          FROM SYS.DBA_DATA_FILES DD
+         GROUP BY DD.TABLESPACE_NAME) D
+ WHERE D.TABLESPACE_NAME = F.TABLESPACE_NAME
+ ORDER BY 4 DESC;
+ 
+再执行查询语句
+  select tablespace_name, file_id, file_name from dba_data_files order by tablespace_name;
+再执行扩展语句
+ alter database datafile '/u01/oradata/orcl/orcl/users01.dbf' autoextend off;
+ alter database datafile '/u01/oradata/orcl/orcl/users01.dbf' autoextend on;
+ alter database datafile '/u01/oradata/orcl/orcl/users08.dbf' autoextend on;
+ alter database datafile '/u01/oradata/orcl/orcl/users07.dbf' autoextend on;
+ alter database datafile '/u01/oradata/orcl/orcl/users06.dbf' autoextend on;
+ alter database datafile '/u01/oradata/orcl/orcl/users05.dbf' autoextend on;
+ alter database datafile '/u01/oradata/orcl/orcl/users04.dbf' autoextend on;
+ alter database datafile '/u01/oradata/orcl/orcl/users03.dbf' autoextend on;
+ alter database datafile '/u01/oradata/orcl/orcl/users02.dbf' autoextend on;
+ alter database datafile '/u01/oradata/orcl/orcl/users10.dbf' autoextend on;
+查看表空间是否开启
+select tablespace_name,file_id,autoextensible from dba_data_files;
+为yes的，就是已经开启了表空间扩展功能
+
+
+查看一张表，所占用的空间
+SELECT * FROM dba_segments WHERE owner='LQGSM' AND SEGMENT_NAME='DM_RKK_SYRKKB_TJT';
+
+SELECT owner,SEGMENT_NAME,TABLESPACE_NAME,HEADER_FILE,HEADER_BLOCK,BYTES/(1024*1024*1024) AS "表空间大小(G)" FROM dba_segments WHERE owner='LQGSM' AND SEGMENT_NAME='DM_RKK_SYRKKB_TJT';
+
+删除垃圾日志文件
+先连接到后台，执行df -h
+查看存储占用
+再执行history，找执行过的命令
+再执行cd /u01/oradata/orcl/arch
+进入这个命令，执行ls命令
+再执行history | grep rm
+再执行rm -f `ls 1_6*`
+[root@orayf01 arch]# rm -f `ls 1_6*`
+再执行
+[root@orayf01 arch]# rm -f `ls 1_7*`
+再执行ls
+再查看df -h
+待存储释放
+
+
+
+
+--------------------------------------------查看锁表及解决方法-----------------------------------------------
+3、查看被锁的表
+select * from v$session t1, v$locked_object t2 where t1.sid = t2.SESSION_ID; 
+select b.owner,b.object_name,a.session_id,a.locked_mode from v$locked_object a,dba_objects b where b.object_id = a.object_id;
+4、查看那个用户那个进程照成死锁
+select b.username,b.sid,b.serial#,logon_time from v$locked_object a,v$session b where a.session_id = b.sid order by b.logon_time;
+5、杀掉锁表进程： 记录下SID和serial# ，分别替换掉下面的1155,39095，即可解除锁表
+alter system kill session '1155,39095'; 
+方法二
+SELECT s.sid, s.serial#, s.username, s.schemaname, s.osuser, s.process, s.machine,
+s.terminal, s.logon_time, l.type
+FROM v$session s, v$lock l
+WHERE s.sid = l.sid
+AND s.username IS NOT NULL
+ORDER BY sid;
+--杀掉进程 sid,serial#
+alter system kill session'210,11562';
+6、查看连接的进程
+SELECT sid, serial#, username, osuser FROM v$session;
+--(1)锁表查询的代码有以下的形式：
+select count(*) from v$locked_object;
+select * from v$locked_object;
+--(2)查看哪个表被锁
+select b.owner,b.object_name,a.session_id,a.locked_mode from v$locked_object a,dba_objects b where b.object_id = a.object_id;
+--(3)查看是哪个session引起的
+select b.username,b.sid,b.serial#,logon_time from v$locked_object a,v$session b where a.session_id = b.sid order by b.logon_time;
+--(4)查看是哪个sql引起的
+select b.username,b.sid,b.serial#,c.* from v$locked_object a,v$session b,v$sql c where a.session_id = b.sid
+and b.SQL_ID = c.sql_id and c.sql_id = ''
+order by b.logon_time;
+------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------定时任务----------------------------------------------------------
+1.创建表
+CREATE TABLE TEST_A(TEST_ADD_DATA DATE); 
+2.创建一个自定义存储过程 
+CREATE OR REPLACE PROCEDURE TEST_PRO AS
+BEGIN
+    INSERT INTO TEST_A VALUES (SYSDATE);
+END;
+3.创建JOB
+复制代码
+DECLARE
+    jobno NUMBER;
+BEGIN
+    dbms_job.submit(
+            jobno, --定时器ID，系统自动获得
+            'TEST_PRO;', --what执行的过程名
+            SYSDATE, --next_date,定时器开始执行的时间，这样写表示立即执行
+            'TRUNC(sysdate,''mi'') + 1/ (24*60)' --interval,设置定时器执行的频率，这样写每隔1分钟执行一次
+        );
+    COMMIT;
+END;
+
+

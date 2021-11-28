@@ -1,0 +1,25 @@
+一个简单的行转列例子
+一个简单的行列转换例子，原始数据。
+--创建一个表
+create table temp_cwh_student
+(
+ name varchar2(20),
+ subject varchar2(20),
+ score number(5)
+)
+
+--查询
+select * from temp_cwh_student
+
+
+
+-- 行转列
+select name as "姓名",
+       max(case when subject = '语文' then score else 0 end ) as "语文",
+       max(case when subject = '数学' then score else 0 end ) as "数学",
+       max(case when subject = '英语' then score else 0 end ) as "英语",
+       sum(score) as "总分",
+       avg(score) as "平均分"
+from temp_cwh_student
+group by name
+

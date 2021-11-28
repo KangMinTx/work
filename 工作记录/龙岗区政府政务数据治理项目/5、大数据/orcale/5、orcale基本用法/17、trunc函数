@@ -1,0 +1,29 @@
+trunc函数
+在 Oracle 中可以使用 trunc() 函数进行日期截取和数字截取。
+
+一、日期截取
+使用语法：
+
+trunc(date, [fmt])
+-- 实例 --
+select trunc(sysdate) from dual; -- 2018/11/14 返回当前的日期
+select trunc(sysdate,'yyyy') from dual; -- 2018/1/1 返回当年第一天
+select trunc(sysdate,'yy') from dual; -- 同上
+select trunc(sysdate,'mm') from dual; -- 2018/11/1 返回当月第一天
+select trunc(sysdate,'d') from dual; -- 2018/11/11 返回当周第一天 即周日
+select trunc(sysdate,'dd') from dual; -- 2018/11/14 返回当前的日期 同省略格式
+select trunc(sysdate,'HH24') from dual; -- 2018/11/14 刚好12点 所以00:00:00 省略
+select trunc(to_date('20180513 12:30:19','yyyymmdd hh24:mi:ss'),'hh24') from dual; -- 2018/5/13 12:00:00 返回本小时的开始时间
+select trunc(sysdate,'MI') from dual; -- 2018/11/14 0:32:00 返回本分钟的开始时间
+二、数字截取
+使用语法：
+
+trunc(number,[decimal])
+其中，decimal 指明需要保留小数点后的位数，忽略则截去小数部分。
+
+注意截取时并不对数据进行四舍五入，不同于round、floor和ceil等函数。
+
+-- 实例 --
+select trunc(123.567,2) from dual; -- 123.56
+select trunc(123.456,-2) from dual; -- 100 第二个参数可以为负数 表示将小数点左边指定位数后面的部分截去 均以0记
+select trunc(123.567) from dual; -- 123 默认截去小数点后面的部分
