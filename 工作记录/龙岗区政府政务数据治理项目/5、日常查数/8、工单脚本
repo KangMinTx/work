@@ -1,0 +1,48 @@
+1.问题工单 实有人口身份证件号和出生年月日不对应
+select * from ods_qzfw_zfw_resident1_2  a
+   where dt=(select max(dt) from ods_qzfw_zfw_resident1_2) and length(cardno)=18 and replace(substr(cardno,7,8), replace(substr(birthday,1,10),'-',''),'1') <> '1';
+   
+2.龙岗政法委法人数据_注册所在房屋编码（BUILDINGHOUSECODE）为空
+select count(1) from lgqzfw.zfw_enterpriseinfomanage1 where buildinghousecode is null;
+select * from lgqzfw.zfw_enterpriseinfomanage1 where buildinghousecode is null;
+
+3、实有人口信息详情：身份证为空或者是位数低于两位
+select count(case when length(CARDNO)>2 then null else 1 end) 
+from lgqzfw.zfw_resident1
+where islogout=0;--7357
+
+备注：该类数据是市网格办采集系统业务逻辑可容许的，未成年人或港澳台人员等证件号码不受此限制。
+
+4、zfw_resident1.houseid=zfw_house.id	人口与房屋不能关联
+select count(distinct a.id)
+from (select *  from lgqzfw.zfw_resident1 aa where islogout=0) a
+left join (select * from lgqzfw.zfw_house1 where delmark=0) b
+on a.houseid=b.id
+where b.id is null; --134
+
+备注：在区工作网数据库中也核对了的确存在这两类数据，我已经反馈给市网格办了，这些数据源头来自于市网格办。
+
+5、zfw_house.buildingid=zfw_building.id	房屋与楼栋不能关联
+select count(a.buildingid)
+from (select * from  lgqzfw.zfw_house1 where delmark=0)a
+left join ( select * from lgqzfw.zfw_building1 where delmark=0)b
+on a.buildingid=b.id
+where b.id is null;--160
+
+备注：在区工作网数据库中也核对了的确存在这两类数据，我已经反馈给市网格办了，这些数据源头来自于市网格办。
+
+6、房屋信息	工作网格ID为空
+select count(*) 
+from lgqzfw.zfw_building1 
+where teamid is null and delmark=0;--27
+
+备注：龙岗区的工作网格目前在调整中，存在极少数区域没有绘制工作网格绘制，对应区域的房屋则无法与网格关联。
+
+7、zfw_building.teamid=zfw_wg_misgis.misid	房屋与网格信息不能关联（除去zfw_building.teamid为空）
+select count(a.teamid) from(
+select * from lgqzfw.zfw_building1 where delmark=0) a
+left join lgqzfw.zfw_wg_misgis b
+on a.teamid=b.misid
+where b.misid is null;--63
+
+备注：龙岗区的工作网格来源于市网格办GIS平台，但是市网格办GIS平台的工作网格是2000坐标系，对应于龙岗系统目前使用的本地坐标系无法展示，工作网格空间数据的更新需修改区工作网对应的地图功能后才可人工定期更新。
