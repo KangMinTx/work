@@ -1,0 +1,2 @@
+---mysql日期改为字符串
+select DATE_FORMAT(now(),'%Y-%m-%d %H:%i:%s'); 

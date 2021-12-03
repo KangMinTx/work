@@ -1,0 +1,8 @@
+--定时调度器
+CREATE EVENT event_Table_Data_Statistic_Frk_NEW
+ON SCHEDULE EVERY 1 DAY
+STARTS '2021-12-04 22:50:00.000'
+ON COMPLETION PRESERVE
+ENABLE
+COMMENT '运营统计报表事件_一企一档及法人负面'
+DO call Table_Data_Statistic_Frk_NEW();

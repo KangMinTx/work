@@ -1,0 +1,250 @@
+1、修改存储过程
+CREATE DEFINER=`root`@`%` PROCEDURE `lgfrk`.`Table_Data_Statistic_Frk_NEW`()
+begin
+	/*
+过程名:Table_Data_Statistic_Frk_NEW (表数据量统计_Frk)
+作者:HE
+创建日期:2021-12-03
+版本:V1.0
+用途:用于统计提供太极做接口的(lgfrk)中,各表的数据量以及最新更新情况
+统计表数量：56(1202统计)
+*/
+/*声明变量
+		v_table_name_cn : 表中文名
+		v_table_name_en : 表英文名
+		v_table_data    : 表数据量
+		v_table_yxsj    : 表运行时间
+		v_create_time   : 记录创建时间
+		v_limit         : Limit 用于限制返回条数(多条返回记录无法赋值给变量)
+		v_offset        : Offset 用于限制偏移量,每次循环 + 1
+		v_cnt						: 用于统计需要统计的表的数量
+	*/
+	DECLARE v_table_name_cn VARCHAR(100) DEFAULT '';
+	DECLARE v_table_name_en VARCHAR(100) DEFAULT '';
+	DECLARE v_table_data bigint DEFAULT 0;
+	DECLARE v_table_yxsj VARCHAR(100) DEFAULT null;
+	DECLARE v_create_time VARCHAR(100) DEFAULT null;
+	DECLARE v_limit int default 1;
+	DECLARE v_offset int default 0;
+	DECLARE v_cnt int default 0;
+	DECLARE v_table_ddsj varchar(100) default null;
+
+
+/*统计一共有多少表.便于跳出循环*/	
+select
+	count( 1 ) into v_cnt 
+from
+	information_schema.tables t1 
+where
+	table_schema = 'lgfrk' 
+and table_name in ('dm_jk_frfm_xzcf',
+'dm_jk_frfm_xzqz',
+'dm_jk_frfm_hmd',
+'dm_jk_frfm_sfaj',
+'dm_jk_frfm_qysx',
+'dm_jk_frfm_qsqfqx',
+'dm_jk_frfm_jyyc',
+'dm_jk_frfm_sdxzqy',
+'dm_jk_frfm_sgyh',
+'dm_jk_frfm_frlb',
+'dm_jk_frfm_yhz_sr',
+'dm_jk_jbxx_frjcxx',
+'dm_jk_jbxx_frbgxx',
+'dm_jk_jbxx_lsqy',
+'dm_jk_jbxx_ycfrxx',
+'dm_jk_jbxx_yzbaxx',
+'dm_jk_jbxx_hgqydjxx',
+'dm_jk_jbxx_nsxx',
+'dm_jk_jbxx_frsbjc',
+'dm_jk_jbxx_zfgjjjc',
+'dm_jk_frfm_gjjwgsj',
+'dm_jk_cyxx_qycyxx',
+'dm_jk_cyxx_fddbrxx',
+'dm_jk_cyxx_ggxx',
+'dm_jk_zbzc_gdcz',
+'dm_jk_cyxx_lxr',
+'dm_jk_frry_frryxx',
+'dm_jk_fxfm_cjccbhg',
+'dm_jk_fxfm_yhxx',
+'dm_jk_fxfm_btsxx',
+'dm_jk_fxfm_xyqs',
+'dm_jk_zbzc_zfzzxx',
+'dm_jk_zczb_frdkqq',
+'dm_jk_zbzc_dcxx',
+'dm_jk_zczb_bdcxx',
+'dm_jk_zczb_cpbzdjxx',
+'dm_jk_zczb_sbzcxx',
+'dm_jk_zczb_zlxx',
+'dm_jk_zzxk_frxkzdjxx',
+'dm_jk_frzz_frzzxx',
+'dm_jk_zzxk_rzqyxx',
+'dm_jk_zzxk_xypjxx',
+'dm_jk_fxfm_zcfz',
+'dm_jk_scjy_cccjxx',
+'dm_jk_scjy_qynbxx',
+'dm_jk_scjy_rzcp',
+'dm_jk_scjy_xmxx',
+'dm_jk_bqxx_bqxxb',
+'dm_building_info_sf',
+'dm_jk_frfm_ymx_dtl',
+'dm_jk_frzz_gxqyxqsj',
+'dm_jk_zfwldxx',
+'dm_fw_fwsj',
+'dm_jk_fw_gjldcxrkxx',
+'dm_jk_rk_cjrxx',
+'dm_jk_jczl_gamjsjhwgrksjbd',
+'dm_frk_dwmycbjfqk',
+'dm_fr_frjcxxjk',
+'dm_jk_jbxx_frdz',
+'dm_jk_fxfm_sgxx',
+'dm_cyxx_fssgfgstgggxx',
+'dm_frk_ssztjbxxjd',
+'dm_fr_hqgxqyxqsj',
+'dm_zbzc_fssgdgsxx'
+);
+ 
+/*循环开始*/ 
+test_loop:LOOP
+
+ /*从 information_schema.tables 查出表中文名(注释),表英文名 并赋值给对应参数 [此处可以统计表数据量]*/
+ 
+select
+	table_name,
+	table_comment into v_table_name_en,
+	v_table_name_cn 
+from
+	information_schema.tables t1 
+where
+	table_schema = 'lgfrk' 
+and table_name in ('dm_jk_frfm_xzcf',
+'dm_jk_frfm_xzqz',
+'dm_jk_frfm_hmd',
+'dm_jk_frfm_sfaj',
+'dm_jk_frfm_qysx',
+'dm_jk_frfm_qsqfqx',
+'dm_jk_frfm_jyyc',
+'dm_jk_frfm_sdxzqy',
+'dm_jk_frfm_sgyh',
+'dm_jk_frfm_frlb',
+'dm_jk_frfm_yhz_sr',
+'dm_jk_jbxx_frjcxx',
+'dm_jk_jbxx_frbgxx',
+'dm_jk_jbxx_lsqy',
+'dm_jk_jbxx_ycfrxx',
+'dm_jk_jbxx_yzbaxx',
+'dm_jk_jbxx_hgqydjxx',
+'dm_jk_jbxx_nsxx',
+'dm_jk_jbxx_frsbjc',
+'dm_jk_jbxx_zfgjjjc',
+'dm_jk_frfm_gjjwgsj',
+'dm_jk_cyxx_qycyxx',
+'dm_jk_cyxx_fddbrxx',
+'dm_jk_cyxx_ggxx',
+'dm_jk_zbzc_gdcz',
+'dm_jk_cyxx_lxr',
+'dm_jk_frry_frryxx',
+'dm_jk_fxfm_cjccbhg',
+'dm_jk_fxfm_yhxx',
+'dm_jk_fxfm_btsxx',
+'dm_jk_fxfm_xyqs',
+'dm_jk_zbzc_zfzzxx',
+'dm_jk_zczb_frdkqq',
+'dm_jk_zbzc_dcxx',
+'dm_jk_zczb_bdcxx',
+'dm_jk_zczb_cpbzdjxx',
+'dm_jk_zczb_sbzcxx',
+'dm_jk_zczb_zlxx',
+'dm_jk_zzxk_frxkzdjxx',
+'dm_jk_frzz_frzzxx',
+'dm_jk_zzxk_rzqyxx',
+'dm_jk_zzxk_xypjxx',
+'dm_jk_fxfm_zcfz',
+'dm_jk_scjy_cccjxx',
+'dm_jk_scjy_qynbxx',
+'dm_jk_scjy_rzcp',
+'dm_jk_scjy_xmxx',
+'dm_jk_bqxx_bqxxb',
+'dm_building_info_sf',
+'dm_jk_frfm_ymx_dtl',
+'dm_jk_frzz_gxqyxqsj',
+'dm_jk_zfwldxx',
+'dm_fw_fwsj',
+'dm_jk_fw_gjldcxrkxx',
+'dm_jk_rk_cjrxx',
+'dm_jk_jczl_gamjsjhwgrksjbd',
+'dm_frk_dwmycbjfqk',
+'dm_fr_frjcxxjk',
+'dm_jk_jbxx_frdz',
+'dm_jk_fxfm_sgxx',
+'dm_cyxx_fssgfgstgggxx',
+'dm_frk_ssztjbxxjd',
+'dm_fr_hqgxqyxqsj',
+'dm_zbzc_fssgdgsxx'
+)
+order by
+	table_name 
+	limit v_limit offset v_offset;
+	update dm_jk_frzz_gxqyxqsj set yxsj =now() where yxsj is null;
+ /*拼接查询语句,查询各个表中的 运行时间和数据量,排序后取最大一条
+ EMR中 yxsj 都是一个值,社保2000w条记录,yxsj都为一个*/
+ 
+ set @strsql = CONCAT('select ifnull((select count(1) from ',v_table_name_en,' group by yxsj order by yxsj desc limit 1),0) into @v_table_data');
+ /*预编译语句*/
+ PREPARE stmt FROM @strsql; 
+ /*执行语句*/
+ EXECUTE stmt;
+ /*释放预编译资源*/
+ deallocate prepare stmt; 
+ 
+ set @strsql_2 = CONCAT('select ifnull((select yxsj from ',v_table_name_en,' group by yxsj order by yxsj desc limit 1),0) into @v_table_yxsj');
+ /*预编译语句*/
+ PREPARE stmt_1 FROM @strsql_2; 
+ /*执行语句*/
+ EXECUTE stmt_1;
+ /*释放预编译资源*/
+ deallocate prepare stmt_1; 
+ 
+ set @strsql_3 = CONCAT('select ddsj into @v_table_ddsj from table_scheduling_log where table_name="',v_table_name_en,'"');
+ /*预编译语句*/
+ PREPARE stmt_2 FROM @strsql_3; 
+ /*执行语句*/
+ EXECUTE stmt_2;
+ /*释放预编译资源*/
+ deallocate prepare stmt_2; 
+ 
+ /*将结果插入到 table_data_log_NEW 表中*/
+ insert into table_data_log_NEW(table_name_cn,table_name_en,table_data,table_yxsj,ddsj,create_time) values(v_table_name_cn,v_table_name_en,@v_table_data,@v_table_yxsj,@v_table_ddsj,CURRENT_TIMESTAMP);
+
+/*判断偏移量+1是否等于总记录数,是则跳出循环*/
+IF v_offset +1 = v_cnt
+THEN LEAVE test_loop; 
+/*设置偏移量每次增加一*/
+ELSE
+set v_offset = v_offset+1;
+
+
+
+END IF;
+END loop;
+END
+
+
+---mysql日期改为字符串
+select DATE_FORMAT(now(),'%Y-%m-%d %H:%i:%s'); 
+
+--日期格式
+select now(); 
+
+--更新字段
+update dm_jk_frzz_gxqyxqsj set yxsj =now() where yxsj is null;
+
+
+--定时调度器
+CREATE EVENT event_Table_Data_Statistic_Frk_NEW
+ON SCHEDULE EVERY 1 DAY
+STARTS '2021-12-04 22:50:00.000'
+ON COMPLETION PRESERVE
+ENABLE
+COMMENT '运营统计报表事件_一企一档及法人负面'
+DO call Table_Data_Statistic_Frk_NEW();
+

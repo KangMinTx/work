@@ -1,0 +1,2 @@
+--更新字段
+update dm_jk_frzz_gxqyxqsj set yxsj =now() where yxsj is null;
