@@ -1,0 +1,10 @@
+Scala版Flink程序编写
+
+本项目使用的Flink版本为最新版本，也就是1.11.0。现在提供maven项目的配置文件。
+
+使用Intellij IDEA创建一个Maven新项目
+勾选Create from archetype，然后点击Add Archetype按钮
+GroupId中输入org.apache.flink，ArtifactId中输入flink-quickstart-scala，Version中输入1.11.0，然后点击OK
+点击向右箭头，出现下拉列表，选中flink-quickstart-scala:1.11.0，点击Next
+Name中输入FlinkTutorial，GroupId中输入com.atguigu，ArtifactId中输入FlinkTutorial，点击Next
+最好使用IDEA默认的Maven工具 Bundled（Maven 3），点击Finish，等待一会儿，项目就创建好了

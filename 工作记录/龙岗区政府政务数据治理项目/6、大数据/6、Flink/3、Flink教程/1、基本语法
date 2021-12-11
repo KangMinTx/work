@@ -1,0 +1,3 @@
+// 创建运行时环境
+val env = StreamExecutionEnvironment.getExecutionEnvironment
+// 使用事件时间
