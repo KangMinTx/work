@@ -1,0 +1,22 @@
+package com.chenbk.day1
+
+//import com.chenbk.day2.SensorReading
+//import com.chenbk.day2.SensorReading
+import org.apache.flink.streaming.api.scala._
+case class SensorsReading(id:String,timestamp: Long,temperature:Double)
+object SourceTest{
+  def main(args: Array[String]): Unit = {
+    //创建执行环境
+    val env=StreamExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(1)
+
+
+
+    //2、从文件中读取数据
+
+    var stream2:DataStream[String]=env.readTextFile("/Users/kang/Documents/Flink_2021/src/main/scala/com/chenbk/word.txt")
+    stream2.print("stream2")
+    env.execute("source test job")
+  }
+
+}

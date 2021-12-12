@@ -1,0 +1,19 @@
+Mac版setting.xml
+文件夹在 /Applications/IntelliJ IDEA.app/Contents/plugins/maven/lib/maven3/conf/
+
+添加
+<mirror>
+		<id>alimaven</id>
+		<name>aliyun maven</name>
+		<url>http://maven.aliyun.com/nexus/content/repositories/central/</url>
+		<mirrorOf>central</mirrorOf>
+	</mirror>
+
+	<!-- junit镜像地址 -->
+	<mirror>
+		<id>junit</id>
+		<name>junit Address/</name>
+		<url>http://jcenter.bintray.com/</url>
+		<mirrorOf>central</mirrorOf>
+	</mirror>
+

@@ -1,0 +1,25 @@
+package com.chenbk.day1
+
+import org.apache.flink.streaming.api.scala._
+
+object StreamWordCount{
+  def main(args: Array[String]): Unit = {
+    //创建流式处理执行环境
+    val env:StreamExecutionEnvironment=StreamExecutionEnvironment.getExecutionEnvironment
+    //接爱socket文本流
+    val inputDataStream:DataStream[String]=env.socketTextStream("localhost",9999,'\n')
+
+
+    //定义转换操作，word count
+    val resultDataStream:DataStream[(String,Int)]=inputDataStream
+      .flatMap(_.split("\\s")) // 以空格分词，打散得到所有的word
+      .filter(_.nonEmpty)
+      .map((_,1))    // 转换成(word, count)二元组
+      .keyBy(0) // 按照第一个元素分组
+      .sum(1) // 按照第二个元素求和
+
+    resultDataStream.print()
+    env.execute("stream word count jod")
+
+  }
+}

@@ -1,0 +1,26 @@
+package com.chenbk.day1
+
+//import com.chenbk.day2.SensorReading
+//import com.chenbk.day2.SensorReading
+import org.apache.flink.streaming.api.scala._
+case class SensorsReading(id:String,timestamp: Long,temperature:Double)
+object SourceTest{
+  def main(args: Array[String]): Unit = {
+    //创建执行环境
+    val env=StreamExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(1)
+
+    //1、从集合中读取数据
+    val stream1:DataStream[SensorsReading]=env.fromCollection(List(
+        SensorsReading("sensor_1", 1547718199, 35.8),
+        SensorsReading("sensor_6", 1547718201, 15.4),
+        SensorsReading("sensor_7", 1547718202, 6.7),
+        SensorsReading("sensor_10", 1547718205, 38.1),
+        SensorsReading("sensor_1", 1547718207, 37.2),
+        SensorsReading("sensor_1", 1547718212, 33.5),
+        SensorsReading("sensor_1", 1547718215, 38.1)
+    ))
+    stream1.print("stream1")
+    env.execute("source test job")
+  }
+}

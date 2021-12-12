@@ -1,0 +1,8 @@
+1、Stream 流动
+2、ExecutionEnvironment 运行环境
+3、socket 插入
+4、execute 执行
+5、setParallelism 并行度
+6、split 切分
+7、filter 过滤
+8、nonEmpty 非空的
