@@ -1,0 +1,42 @@
+package com.chenbk.day2
+
+import org.apache.flink.api.java.functions.KeySelector
+import org.apache.flink.streaming.api.scala._
+
+
+object TransformTest {
+  def main(args: Array[String]): Unit = {
+    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(1)
+
+    //1、从文件读取数据
+    val inputStreamFormFlie:DataStream[String]=env.readTextFile("/Users/kang/Documents/Flink_2021/src/main/resources/sensor.txt")
+
+    //基本转换操作
+    val dataStream:DataStream[SensorReading]=inputStreamFormFlie.map(
+      data=>{
+        val dataArray=data.split(",")
+        SensorReading(dataArray(0),dataArray(1).toLong,dataArray(2).toDouble)
+      }
+    )
+
+    //2、分组滚动聚合
+    val aggStream:DataStream[SensorReading]=dataStream
+      .keyBy("id")
+//      .keyBy(data=>data.id)
+//      .keyBy(new MyIDselector())
+  //    .sum("temperature")
+   //   .min("temperature")
+      .reduce((curRes,newData)=>SensorReading(curRes.id,curRes.timestamp.max(newData.timestamp),curRes.temperature.min(newData.temperature))
+      )// 聚合出每个sensor的最大时间戳和最小温度值
+    dataStream.print()
+    env.execute()
+
+  }
+
+}
+
+
+class MyIDselector() extends KeySelector[SensorReading,String]{
+  override def getKey(in: SensorReading): String = in.id
+}

@@ -1,0 +1,89 @@
+package com.chenbk.day1
+import org.apache.flink.api.common.serialization.SimpleStringSchema
+import org.apache.flink.streaming.api.functions.source.SourceFunction
+import sun.misc.Version.print
+
+import java.util.Properties
+import scala.collection.immutable.Stream.Empty.print
+import scala.util.Random
+
+//import com.chenbk.day2.SensorReading
+//import com.chenbk.day2.SensorReading
+import org.apache.flink.streaming.api.scala._
+case class SensorsReading(id:String,timestamp: Long,temperature:Double)
+object SourceTest{
+  def main(args: Array[String]): Unit = {
+    //创建执行环境
+    val env=StreamExecutionEnvironment.getExecutionEnvironment
+    env.setParallelism(1)
+
+    //1、从集合中读取数据
+//    val stream1:DataStream[SensorsReading]=env.fromCollection(List(
+//        SensorsReading("sensor_1", 1547718199, 35.8),
+//        SensorsReading("sensor_6", 1547718201, 15.4),
+//        SensorsReading("sensor_7", 1547718202, 6.7),
+//        SensorsReading("sensor_10", 1547718205, 38.1),
+//        SensorsReading("sensor_1", 1547718207, 37.2),
+//        SensorsReading("sensor_1", 1547718212, 33.5),
+//        SensorsReading("sensor_1", 1547718215, 38.1)
+//    ))
+//    stream1.print("stream1")
+//    env.execute("source test job")
+
+    //2、从文件中读取数据
+//
+//    var stream2:DataStream[String]=env.readTextFile("/Users/kang/Documents/Flink_2021/src/main/scala/com/chenbk/word.txt")
+//    stream2.print("stream2")
+//    env.execute("source test job")
+
+    //3、从socket文本流
+    val stream3=env.socketTextStream("hadoop102",7777)
+
+//    //4、从kafka读取数据
+//    val properties = new Properties()
+//    properties.setProperty("bootstrap.servers", "hadoop104:9092")
+//    //properties.setProperty("group.id", "ab")
+//    properties.setProperty("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+//    properties.setProperty("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer")
+//    properties.setProperty("auto.offset.reset", "latest")
+//    val stream4 = env.addSource( new FlinkKafkaConsumer011[String]("b", new SimpleStringSchema(), properties) )
+//
+//    println(stream4)
+//    env.execute()
+
+    //5、自定义source
+    val stream5=env.addSource(new MySensorSource())
+    stream5.print()
+    env.execute()
+  }
+
+}
+//class FlinkKafkaConsumer011[T](str: String, schema: SimpleStringSchema, properties: Properties)
+ class MySensorSource() extends SourceFunction[SensorsReading]{
+
+  var running:Boolean=true
+
+  override def cancel(): Unit = running =false
+  override def run(sourceContext: SourceFunction.SourceContext[SensorsReading]): Unit = {
+    val rand =new Random()
+
+    var curTemps=1.to(10).map(
+      i =>("sensor_"+i,60+rand.nextGaussian()*20)
+    )
+
+    while (running){
+      curTemps=curTemps.map(
+        data=>(data._1,data._2+rand.nextGaussian())
+      )
+      val curTs=System.currentTimeMillis()
+      curTemps.foreach(
+        data=>sourceContext.collect(SensorsReading(data._1,curTs,data._2))
+      )
+      Thread.sleep(1000L)
+    }
+
+  }
+}
+
+
+
