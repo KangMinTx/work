@@ -1,0 +1,28 @@
+前言 为了重装，先彻底删除
+
+ 
+
+第1步 在访达中将idea移到垃圾桶
+
+ 
+
+第2步 删除缓存
+
+在iTerm中先后输入如下语句，打开相应文件夹，删除对应文件
+
+
+kang@kangdeMacBook-Pro JetBrains % cd /Users/kang/Library/Caches/JetBrains
+kang@kangdeMacBook-Pro JetBrains % open .
+
+把IntelliJIdea2021.2文件，移到垃圾桶
+
+
+
+第3步 删除应用的一些信息
+
+在iTerm中先后输入如下语句，打开相应文件夹，删除对应文件
+
+kang@kangdeMacBook-Pro Application Support % cd /Users/kang/Library/Application\ Support/JetBrains 
+kang@kangdeMacBook-Pro JetBrains % open .
+
+ 把IntelliJIdea2021.2文件，移到垃圾桶
