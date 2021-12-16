@@ -113,6 +113,14 @@ SELECT UPPER(F.TABLESPACE_NAME) "表空间名",
 select tablespace_name,file_id,autoextensible from dba_data_files;
 为yes的，就是已经开启了表空间扩展功能
 
+创建新的表空间存储
+create tablespace USERS datafile '/u01/oradata/orcl/orcl/users21.dbf' size 22480M;
+create tablespace USERS datafile '/u01/oradata/orcl/orcl/users22.dbf' size 22480M;
+
+自动扩展，每次扩展2T(可能有问题)
+ALTER DATABASE DATAFILE '/u01/oradata/orcl/orcl/users01.dbf' AUTOEXTEND ON NEXT 22480M ;
+ALTER DATABASE DATAFILE '/u01/oradata/orcl/orcl/users08.dbf' AUTOEXTEND ON NEXT 22480M ;
+
 
 查看一张表，所占用的空间
 SELECT * FROM dba_segments WHERE owner='LQGSM' AND SEGMENT_NAME='DM_RKK_SYRKKB_TJT';
@@ -191,4 +199,14 @@ BEGIN
     COMMIT;
 END;
 
+
+oracle帐号密码重置
+
+alter user LGQSM_YXY identified BY 123456;
+alter user lqgsm identified BY 123456;
+alter user LGQQH identified BY lgqqh123;
+alter user LGQRCGS identified BY lgqrcgs123;
+alter user sf_user identified BY smsf123456;
+alter user LGQCXS identified BY lgqcxs123;
+alter user lgqtj identified BY lgqtj123;
 
