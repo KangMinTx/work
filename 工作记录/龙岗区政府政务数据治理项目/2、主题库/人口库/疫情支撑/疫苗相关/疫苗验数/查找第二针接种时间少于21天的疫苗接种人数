@@ -1,0 +1,8 @@
+ --查找第二针接种时间少于21天的疫苗接种人数
+ SELECT * from DM_RKK_YQFMYMBQB  where NOT (ZC=1 AND SFYWC =1) AND 
+ TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')<21 
+ --查找这些第二针接种时间大多数是在哪个时间
+ SELECT COUNT(DISTINCT sfz),substr(DEZJZSJ,1,10)  FROM (
+ SELECT * from DM_RKK_YQFMYMBQB  where NOT (ZC=1 AND SFYWC =1) AND 
+ TO_DATE(substr(DEZJZSJ,1,10),'yyyy-mm-dd')- TO_DATE(substr(DYZJZSJ,1,10),'yyyy-mm-dd')<21 ) 
+ GROUP BY substr(DEZJZSJ,1,10) ORDER BY COUNT(DISTINCT sfz) DESC;
