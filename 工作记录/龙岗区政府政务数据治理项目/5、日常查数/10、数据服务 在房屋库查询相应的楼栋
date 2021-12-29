@@ -1,0 +1,2 @@
+--楼栋地址信息
+select * from dwd_buildingaddress_info where building_name Like '%万汇%' and dt=2021122;
