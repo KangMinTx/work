@@ -1,0 +1,3 @@
+UPDATE cbk_test_20211227 set yxsj='2021-12-26 08:32:33.17' where substr(yxsj,1,10)='2021-12-27';
+
+commit;

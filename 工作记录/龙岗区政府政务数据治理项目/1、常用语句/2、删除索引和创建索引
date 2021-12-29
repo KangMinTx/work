@@ -6,6 +6,11 @@ alter table table_name drop primary key ;
 
 alter table tbl_name add primary key (column_list)；
 
+--20211223 删除索引
+drop index LGQBM.index633476186956200;
+drop index LGQBM.index634467618696620;
+
+
 -----删除索引 
 drop index  SYRKYQFKBQB_IND_SFZHS;
 drop index  SYRKYQFKBQB_IND_ZLBS;
