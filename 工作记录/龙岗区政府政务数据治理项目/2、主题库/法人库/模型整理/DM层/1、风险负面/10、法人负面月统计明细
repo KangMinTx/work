@@ -1,0 +1,18 @@
+truncate table dm_jk_frfm_ymx_dtl;
+insert into table dm_jk_frfm_ymx_dtl  
+select 
+uuid() agency_key,           --代理主键
+zxfmyf month,           --月份
+sqdm,           --社区代码
+sqmc,			--社区名称
+jddm,           --街道代码
+jdmc,			--街道名称
+fmxxlb,           --负面信息类别
+tyshxydm,           --统一社会信用代码
+max(frmc)frmc,           --法人名称/字号
+count(1) ts,           --数量(条数)
+now() yxsj           --运行时间
+from dm_jk_frfm_frlb
+where months_between(to_date(current_date,'yyyy-MM-dd'),to_date(zxfmrq,'yyyy-MM-dd'))<=12
+group by tyshxydm,fmxxlb,jddm,sqdm,zxfmyf,sqmc,jdmc
+

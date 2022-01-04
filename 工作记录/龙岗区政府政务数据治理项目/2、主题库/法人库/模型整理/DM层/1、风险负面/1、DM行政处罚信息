@@ -1,0 +1,115 @@
+ --SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-14 18:48:22
+--1229 修改 ,关键字段取数优先级 先去法人基本信息 后取业务信息作为补充
+--0119 增加字段 sqmc 和 jdmc
+--_********************************************************_
+--修改时间：2021-03-17
+--修改处罚生效期，处罚截止期时间格式为YYYY-MM-DD hh24:mi:ss
+--修改时间：2021-10-26
+--修改根据业务组合主键,去重
+truncate table dm_jk_frfm_xzcf;
+insert into table dm_jk_frfm_xzcf 
+
+select 
+agency_key --代理主键 
+,xzcfjdwsh --[主键]行政处罚决定书文号 
+,tyshxydm --统一社会信用代码 
+,zzjgdm --组织机构代码 
+,gsmc --法人名称/字号 
+,fddbrxm --法定代表人姓名 
+,fddbrzjlx --法定代表人证件类型
+,fddbrzjhm  --法定代表人证件号码
+,cflb --处罚类别 
+,cfsy --处罚事由 
+,cfyj --处罚依据 
+,cfnr --处罚内容 
+,fkje --罚款金额 
+,cfjg --处罚结果 
+,cfsxq--处罚生效期 
+,cfjzq --处罚截止期
+,dqzt --当前状态 
+,cfjgg --处罚机关 
+,fmxxlb --负面信息类别 
+,sqdm --社区代码 
+,sqmc --社区名称
+,jddm --街道代码
+,jdmc --街道名称 
+,yxsj --运行时间 
+,lyjg
+from
+(
+select 
+agency_key --代理主键 
+,xzcfjdwsh --[主键]行政处罚决定书文号 
+,tyshxydm --统一社会信用代码 
+,zzjgdm --组织机构代码 
+,frmc gsmc --法人名称/字号 
+,fddbrxm --法定代表人姓名 
+,fddbrzjlx --法定代表人证件类型
+,fddbrzjhm  --法定代表人证件号码
+,cflb --处罚类别 
+,cfsy --处罚事由 
+,cfyj --处罚依据 
+,cfnr --处罚内容 
+,fkje --罚款金额 
+,cfjg --处罚结果 
+,cfsxq cfsxq--处罚生效期 
+,cfjzq cfjzq --处罚截止期
+,dqzt --当前状态 
+,cfjgg --处罚机关 
+,fmxxlb --负面信息类别 
+,sqdm --社区代码 
+,sqmc --社区名称
+,jddm --街道代码
+,jdmc --街道名称 
+,yxsj --运行时间 
+,lyjg
+,row_number() over(partition by xzcfjdwsh, tyshxydm  order by cfsxq desc) rn  --根据业务组合主键进行去重
+from 
+(
+SELECT  uuid()                                                        AS agency_key --代理主键 
+       ,case when trim(b1.xzcfjdwsh) !='' then trim(b1.xzcfjdwsh)  else null end        AS xzcfjdwsh --[主键]行政处罚决定书文号 
+       ,nvl(b4.tyshxydm,TRIM(b1.tyshxydm))                            AS tyshxydm --统一社会信用代码 
+       ,nvl(b3.zzjgdm,b1.zzjgdm)                                       AS zzjgdm --组织机构代码 
+       ,nvl(nvl(b3.lgl_name,b4.lgl_name),b1.gsmc)                      AS frmc --法人名称/字号 
+       ,case when nvl(nvl(b3.LEGAL_PERSON_NAME,b4.LEGAL_PERSON_NAME),b1.fddbrxm) !='' then  nvl(nvl(b3.LEGAL_PERSON_NAME,b4.LEGAL_PERSON_NAME),b1.fddbrxm) else null end  AS fddbrxm --法定代表人姓名 
+  		,nvl(b1.fddbrzjlx,b3.legal_person_card_id) fddbrzjlx                     --法定代表人证件类型
+ 	 	,case when nvl(b1.fddbrzjhm,b3.legal_person_card_no) !='' then  nvl(b1.fddbrzjhm,b3.legal_person_card_no) else null end fddbrzjhm                     --法定代表人证件号码
+       ,case when b1.cflb  !='' then  b1.cflb  else null end       AS cflb --处罚类别 
+       ,case when b1.cfsy  !='' then  b1.cfsy  else null end       AS cfsy --处罚事由 
+       ,case when  b1.cfyj !='' then  b1.cfyj  else null end       AS cfyj --处罚依据 
+       ,case when  b1.cfnr !='' then  b1.cfnr  else null end       AS cfnr --处罚内容 
+       ,(replace(b1.fkje,'元','') || '元')                                                       AS fkje --罚款金额 
+       ,(replace(b1.cfjg,'元','')  || '元')                                                         AS cfjg --处罚结果 
+       ,b1.cfsxq                                                       AS cfsxq --处罚生效期 
+  	   ,b1.cfjzq                                                       as cfjzq --处罚截止期
+       ,b1.dqzt                                                        AS dqzt --当前状态 
+       ,case when b1.cfjguan !='' then b1.cfjguan else null end     AS cfjgg --处罚机关 
+       ,"行政处罚"                                                     AS fmxxlb --负面信息类别 
+       ,b2.sqcode                                                      AS sqdm --社区代码 
+       ,b2.sqname													   AS sqmc --社区名称
+	   ,b2.jdbm                                                        AS jddm --街道代码
+	   ,b2.jdmc														   AS jdmc --街道名称 
+       ,CURRENT_TIMESTAMP                                              AS yxsj --运行时间 
+  ,b1.lyjg
+	   ,row_number() over(partition by nvl(TRIM(b1.tyshxydm),b4.tyshxydm) ,trim(b1.xzcfjdwsh) order by b1.cflb asc nulls last,b1.cfsxq desc nulls first ) rn
+	   FROM (select * from  dwd_xzcfxx where dt=(select max(dt) from dwd_xzcfxx))b1
+left join (select distinct tyshxydm,sqcode,jdbm,sqname,jdmc from dwd_frdzxx where dt=(select max(dt) from dwd_frdzxx)) b2
+on b1.tyshxydm=b2.tyshxydm
+left join (
+	SELECT  legal_person_card_id,lgl_id,lgl_name,tyshxydm,zzjgdm,zch,LEGAL_PERSON_NAME,legal_person_card_no FROM dwd_jbxx_frjcxx
+	WHERE dt=(  SELECT  MAX(dt) FROM dwd_jbxx_frjcxx) ) b3
+on b1.tyshxydm=b3.tyshxydm
+left join (
+	SELECT  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,LEGAL_PERSON_NAME FROM dwd_jbxx_frjcxx
+	WHERE dt=(  SELECT  MAX(dt) FROM dwd_jbxx_frjcxx) ) b4
+on b1.zzjgdm=b4.zzjgdm
+where nvl(TRIM(b1.tyshxydm),b4.tyshxydm)  is not null and b1.xzcfjdwsh  is not null
+) where rn=1
+  ) where rn=1
+
+
+
+

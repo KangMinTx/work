@@ -1,0 +1,87 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-15 09:30:58
+--1229 he 新增关联法人基本信息表,关键字段(企业名称,法定代表人姓名,组织机构代码 已 法人基本信息表为主 原业务数据做补充)
+--0119 he 修改内容：新增两个字段 社区名称（sqmc），街道名称（jdmc） 取值来自于 法人地址信息表
+--_********************************************************_
+--修改时间：2021-03-17
+--去除列入日期的to_date
+--修改时间：2021-10-26
+--修改根据业务组合主键,去重
+truncate table dm_jk_frfm_hmd;
+insert into table dm_jk_frfm_hmd  
+Select
+agency_key,          --代理主键
+wsbh,          --[主键]文书编号
+tyshxydm,          --统一社会信用代码
+zzjgdm,          --组织机构代码
+gsmc,          --法人名称/字号
+fddbrxm,          --法定代表人姓名
+fddbrzjlx, --法定代表人证件类型
+fddbrzjhm, --法定代表人证件号码
+hmdlx,          --黑名单类型
+rdbm,          --认定部门
+lrsy,          --列入名单事由
+lrrq,          --列入日期
+sjje,          --涉及金额（元）
+fmxxlb,          --负面信息类别
+sqdm,          --社区代码
+sqmc,		--社区名称
+jddm,          --街道代码
+jdmc,	--街道名称
+yxsj,         --运行时间
+lyjg        --数据来源机构
+from(
+select
+agency_key,          --代理主键
+wsbh,          --[主键]文书编号
+tyshxydm,          --统一社会信用代码
+zzjgdm,          --组织机构代码
+gsmc,          --法人名称/字号
+fddbrxm,          --法定代表人姓名
+fddbrzjlx, --法定代表人证件类型
+fddbrzjhm, --法定代表人证件号码
+hmdlx,          --黑名单类型
+rdbm,          --认定部门
+lrsy,          --列入名单事由
+lrrq,          --列入日期
+sjje,          --涉及金额（元）
+fmxxlb,          --负面信息类别
+sqdm,          --社区代码
+sqmc,		--社区名称
+jddm,          --街道代码
+jdmc,	--街道名称
+yxsj,         --运行时间
+lyjg,         --数据来源机构
+row_number() over(partition by gsmc,hmdlx,lrrq order by lrrq desc) rn  --根据业务组合主键,去重
+from (
+select 
+uuid() agency_key,          --代理主键
+b1.wsbh wsbh,          --[主键]文书编号
+nvl(b1.tyshxydm,b2.tyshxydm) tyshxydm,          --统一社会信用代码
+nvl(b3.zzjgdm,b1.zzjgdm) zzjgdm,          --组织机构代码
+nvl(b3.lgl_name,b1.gsmc) gsmc,          --法人名称/字号
+case when nvl(b3.LEGAL_PERSON_NAME,b1.ztxm) !='' then  nvl(b3.LEGAL_PERSON_NAME,b1.ztxm)  else null end  fddbrxm,          --法定代表人姓名
+case when nvl(b1.ztzjlx,b3.legal_person_card_id) !='' then  nvl(b1.ztzjlx,b3.legal_person_card_id)  else null end fddbrzjlx, --法定代表人证件类型
+case when nvl(b1.ztzjhm,b3.legal_person_card_no) !='' then  nvl(b1.ztzjhm,b3.legal_person_card_no)  else null end  fddbrzjhm, --法定代表人证件号码
+b1.hmdlx hmdlx,          --黑名单类型
+b1.rdbm rdbm,          --认定部门
+b1.lrsy lrsy,          --列入名单事由
+b1.lrrq lrrq,          --列入日期
+b1.sjje sjje,          --涉及金额（元）
+"黑名单" fmxxlb,          --负面信息类别
+b2.SQCODE sqdm,          --社区代码
+b2.sqname as sqmc,		--社区名称
+b2.JDBM jddm,          --街道代码
+b2.jdmc as jdmc,	--街道名称
+now() yxsj,         --运行时间
+b1.lyjg lyjg         --数据来源机构
+from (select * from dwd_hmdxx where dt=(select max(dt) from   dwd_hmdxx)) b1
+left join (select DISTINCT tyshxydm,sqcode,jdbm,sqname,jdmc,zh from dwd_frdzxx where dt=(select max(dt) from dwd_frdzxx)) b2
+on b1.tyshxydm=b2.tyshxydm or b1.gsmc=b2.zh
+left join (SELECT  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,LEGAL_PERSON_NAME,legal_person_card_id,legal_person_card_no FROM  dwd_jbxx_frjcxx WHERE dt=( SELECT  MAX(dt) FROM dwd_jbxx_frjcxx) ) b3
+on b1.tyshxydm=b3.tyshxydm
+    )
+)
+where rn=1

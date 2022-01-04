@@ -1,0 +1,56 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-08 10:01:19.84
+--所属主题:风险负面_隐患信息
+--内容描述:风险负面_隐患信息(dwd层)1张表,加工至dm_fxfm_yhxx(隐患信息)
+
+--加载策略:全量
+--0316 He 修改 字段 zgrq,yhpcrq 格式为 YYYY-MM-DD hh24:mi:ss
+--_********************************************************_
+truncate table  dm_fxfm_yhxx;
+insert into table dm_fxfm_yhxx 
+select 
+	 uuid		--主键
+	,ztsfdm		--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,swdjh 		 --税务登记号
+	,gsmc		--公司名称
+	,yhbh		--隐患编号
+	,yhlxdm		--隐患类型代码
+	,yhlx		--隐患类型
+	,yhnr		--隐患内容
+	,zgcs		 --整改措施
+	,clzt		--处理状态
+	,zgrq as zgrq		--整改日期
+	,yhpcrq as yhpcrq		--隐患排查日期
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,substr(current_timestamp,1,19) as yxsj		--运行时间
+    from(
+select
+	 uuid		--主键
+	,ztsfdm		--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,swdjh 		 --税务登记号
+	,gsmc		--公司名称
+	,yhbh		--隐患编号
+	,yhlxdm		--隐患类型代码
+	,yhlx		--隐患类型
+	,yhnr		--隐患内容
+	,zgcs		 --整改措施
+	,clzt		--处理状态
+	,zgrq as zgrq		--整改日期
+	,yhpcrq as yhpcrq		--隐患排查日期
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,substr(current_timestamp,1,19) as yxsj		--运行时间
+    ,row_number() over(partition by concat_ws('',tyshxydm,gsmc,yhlxdm,yhnr) order by yhpcrq desc) rn
+ from dwd_fxfm_yhxx
+ where dt=(select max(dt) from dwd_fxfm_yhxx))where rn=1;

@@ -1,0 +1,20 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-15 16:55:37
+--_********************************************************_
+--truncate table dm_jk_frfm_yhz_sr;
+TRUNCATE table dm_jk_frfm_yhz_sr;
+insert into table dm_jk_frfm_yhz_sr  
+select 
+month,           --月份
+sqdm,           --社区代码
+sqmc,			--社区名称
+sum(ts) ts,           --数量(条数)
+jddm,           --街道代码
+jdmc,			--街道名称
+substr(CURRENT_TIMESTAMP,1,19) yxsj           --运行时间
+from dm_jk_frfm_ymx_dtl 
+--where dt=(select max(dt) from dm_jk_frfm_ymx_dtl)
+group by jddm,sqdm,month,jdmc,sqmc
+HAVING TRIM(month) is not null and TRIM(sqdm) is not NULL;

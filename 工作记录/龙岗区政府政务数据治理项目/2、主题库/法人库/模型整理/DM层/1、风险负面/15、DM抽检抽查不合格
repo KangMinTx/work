@@ -1,0 +1,30 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-07 15:13:49
+--1229 修改表名为 dm_fxfm_cjccbhg
+--_********************************************************_
+truncate table dm_fxfm_cjccbhg;
+insert into table dm_fxfm_cjccbhg 
+select
+uuid           ,--主键
+ztsfdm           ,--主体身份代码
+if(tyshxydm is null,'',tyshxydm)       ,--统一社会信用代码
+zzjgdm           ,--组织机构代码
+djo_rzch as zch           ,--登记/注册号
+gsmc           ,--公司名称
+bgbh           ,--报告编号
+cjrq           ,--抽检日期
+cjsm           ,--抽检说明
+cccpmc           ,--抽查产品名称
+bcsb           ,--标称商标
+ggxh           ,--规格型号
+scrq           ,--生产日期
+bhgx           ,--不合格项
+ggrq           ,--公告日期
+xxlylx           ,--信息来源类型
+lyb           ,--来源表
+lyjg           ,--来源机构
+current_timestamp yxsj           --运行时间
+from dwd_fxfm_cjccbhg
+where dt=(select max(dt) from dwd_fxfm_cjccbhg) ;

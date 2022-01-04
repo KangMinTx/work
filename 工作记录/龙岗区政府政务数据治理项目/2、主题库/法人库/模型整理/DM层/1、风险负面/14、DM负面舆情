@@ -1,0 +1,51 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-07 14:01:19.84
+--所属主题:负面舆情
+--内容描述:负面舆情1张表,加工至dm_fxfm_btsxx(负面舆情)
+
+
+--加载策略:全量
+--_********************************************************_
+truncate table  dm_fxfm_btsxx;
+insert into table dm_fxfm_btsxx 
+select
+	 uuid		--主键
+	,ztsfdm		--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,btsorzcdwmc--被投诉/仲裁单位名称
+	,ljtscsorzccs--累计投诉次数/仲裁次数
+	,tsorzcsy	--投诉/仲裁事由
+	,clzt		--处理状态
+	,tsorzcjg	--投诉/仲裁结果
+	,tscljdswh	--投诉处理决定书文号
+	,tssj as tssj		--投诉时间
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+select
+	uuid		--主键
+	,ztsfdm		--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,btsorzcdwmc--被投诉/仲裁单位名称
+	,ljtscsorzccs--累计投诉次数/仲裁次数
+	,tsorzcsy	--投诉/仲裁事由
+	,clzt		--处理状态
+	,tsorzcjg	--投诉/仲裁结果
+	,tscljdswh	--投诉处理决定书文号
+	,tssj		--投诉时间
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+ from dwd_fxfm_btsxx a
+ where a.dt=(select max(dt) from dwd_fxfm_btsxx)  
+ );

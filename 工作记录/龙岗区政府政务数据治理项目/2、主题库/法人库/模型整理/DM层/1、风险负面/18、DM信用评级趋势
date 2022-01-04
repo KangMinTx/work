@@ -1,0 +1,39 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-10 15:09:48
+--table_name : dm_fxfm_xyqs (信用评级趋势)
+--_********************************************************_
+truncate table dm_fxfm_xyqs;
+insert into table dm_fxfm_xyqs 
+select 
+	uuid() uuid --主键 
+    ,ztsfdm-- 主体身份代码 
+    ,tyshxydm--统一社会信用代码 
+    ,zzjgdm--组织机构代码 
+    ,gsmc--公司名称 
+    ,xydj --信用等级 
+    ,pjlx--评价类型
+	,jsgdjqs --较上个等级趋势 	
+    ,pjsj as pjsj--评级时间 
+    ,lyb --来源表 
+    ,lyjg --来源机构 
+    ,current_timestamp  as yxsj --运行时间
+from  
+(
+		select 
+			distinct
+			ztsfdm-- 主体身份代码 
+			,tyshxydm--统一社会信用代码 
+			,zzjgdm--组织机构代码 
+			,gsmc--公司名称 
+			,xydj --信用等级 
+			,pjlx--评价类型 
+			,jsgdjqs --较上个等级趋势 	
+			,pjsj--评级时间 
+			,lyb --来源表 
+			,lyjg --来源机构 
+		from dwd_fxxx_xyqs
+		where dt=(select max(dt) from dwd_fxxx_xyqs)
+		)
+

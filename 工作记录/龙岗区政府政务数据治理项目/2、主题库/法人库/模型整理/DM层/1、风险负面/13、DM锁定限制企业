@@ -1,0 +1,36 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-04 11:09:30
+--table_name : dm_jk_frfm_sdxzqy (法人负面-锁定限制企业)
+--use_tables : dwd_fxfm_sdxzqy (锁定限制企业)
+--			   dwd_frdzxx (法人地址信息)
+--取数逻辑  : dwd_fxfm_sdxzqy (锁定限制企业) 作为主表 通过 统一社会信用代码 关联 dwd_frdzxx (法人地址信息) 获取街道编码,社区编码
+--修改内容：0119 he 新增两个字段 社区名称（sqmc），街道名称（jdmc） 取值来自于 法人地址信息表
+--0316 He 修改 xzkssj,xzjssj,jcsj 字段格式为 YYYY-MM-DD hh24:mi:ss
+--_********************************************************_
+
+truncate table  dm_jk_frfm_sdxzqy;
+insert into dm_jk_frfm_sdxzqy
+SELECT  uuid()            AS uuid -- 主键 
+       ,t1.tyshxydm       AS tyshxydm -- 统一社会信用代码 
+       ,t1.gsmc           AS gsmc -- 公司名称 
+       ,t1.xzzt           AS xzzt -- 限制状态 
+       ,t1.xzyy           AS xzyy -- 限制原因 
+       ,t1.xznr           AS xznr -- 限制内容 
+       ,t1.xzlb           AS xzlb -- 限制类别 
+       ,t1.xzry           AS xzry -- 限制人员 
+       ,t1.xzkssj        AS xzkssj -- 限制开始时间 
+       ,t1.xzjssj        AS xzjssj -- 限制结束时间 
+       ,t1.jcsj          AS jcsj -- 解除时间 
+       ,'锁定限制'            AS fmxxlb -- 负面信息类别 
+       ,t2.sqcode         AS sqdm -- 社区代码 
+	   ,t2.sqname		  AS sqmc -- 社区名称
+       ,t2.jdbm           AS jddm -- 街道代码
+	   ,t2.jdmc			  AS jdmc -- 街道名称 
+       ,substr(CURRENT_TIMESTAMP,1,19) AS yxsj -- 运行时间
+	   ,t1.lyjg           AS lyjg -- 数据来源机构
+FROM (select tyshxydm,gsmc,xzzt,xzyy,xznr,xzlb,xzry,xzkssj,xzjssj,jcsj,lyjg from dwd_fxfm_sdxzqy where dt=(select max(dt) from dwd_fxfm_sdxzqy) ) t1
+left join 
+(select distinct jdbm,sqcode,tyshxydm,sqname,jdmc from dwd_frdzxx where dt=(select max(dt) from dwd_frdzxx)) t2
+ on t1.tyshxydm=t2.tyshxydm

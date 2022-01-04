@@ -1,0 +1,32 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-11-26 16:59:11
+--修改人:TZM
+--修改时间:20201128
+--修改内容:补充社会统一信用代码
+--0316 He 修改 lasj 格式为 YYYY-MM-DD hh24:mi:ss
+--_********************************************************_
+truncate table dm_frfm_gjjwgsj;
+insert into table  dm_frfm_gjjwgsj
+select
+	distinct
+	b.tyshxydm             ,--统一社会信用代码
+	b.zch             ,--注册号
+	b.zzjgdm             ,--组织机构代码
+	a.gjjh             ,--公积金号
+	nvl(b.lgl_name,a.gsmc) as gsmc             ,--企业名称
+	a.gszcdz             ,--工商注册地址
+	a.wgajhm             ,--违规案件号码
+	a.lasj  as lasj           ,--立案时间
+	a.dwwglx             ,--单位违规类型
+	a.dwwgnr             ,--单位违规内容
+	a.dwwgcljg             ,--单位违规处理结果
+	a.xxlylx             ,--信息来源类型
+	a.lyb             ,--来源表
+	a.lyjg             ,--来源机构
+	substr(now(),1,19) as yxsj             --运行时间
+from dwd_frfm_gjjwgsj a
+left join (select * from dwd_jbxx_frjcxx b where  b.dt=(select max(dt) from dwd_jbxx_frjcxx) and b.TYSHXYDM is not null )b
+on trim(a.gsmc)=trim(b.lgl_name)
+where a.dt=(select max(dt) from dwd_frfm_gjjwgsj) 

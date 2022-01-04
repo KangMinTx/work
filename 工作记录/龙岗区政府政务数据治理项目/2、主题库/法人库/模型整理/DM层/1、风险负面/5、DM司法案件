@@ -1,0 +1,101 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-15 11:20:00
+--update time: 2020-12-08 20:14:00
+--table_name : dm_jk_frfm_sfaj (法人负面-司法案件)
+--use_table  : dwd_sfajxx (法人负面-司法案件信息)
+--			   dwd_frdzxx (法人地址信息)
+--	    	   dwd_jbxx_frjcxx (法人基础信息)
+--取数逻辑   : 以dwd_sfajxx (法人负面-司法案件信息) 为主表 ,通过 法人名称 关联 dwd_frdzxx (法人地址信息) 获取社区及街道编码
+--			   通过 统一社会信用代码 法人名称 关联 dwd_jbxx_frjcxx (法人基础信息) 获取 组织机构代码,注册号等信息
+--去重逻辑   : 根据统一社会信用代码,案号 进行去重
+--修改记录   : He 12/08 增加 tyshxydm(统一社会信用代码),zzjgdm(组织机构代码),zch(登记/注册号),swdjh(税务登记号)	 字段
+--						修改 (法人名称/字号) 为 zh (法人名称/字号)
+--			   He 12/29 关键字段(企业名称,法定代表人姓名 以 法人基本信息表为主 原业务数据做补充)
+--ALL		  He 01/19  新增两个字段 社区名称（sqmc），街道名称（jdmc） 取值来自于 法人地址信息表
+--修改时间：2021-10-26
+--修改根据业务组合主键,去重
+--_********************************************************_
+truncate table dm_jk_frfm_sfaj;
+insert into table dm_jk_frfm_sfaj  
+
+SELECT  agency_key --代理主键 
+       ,tyshxydm --统一社会信用代码 
+       ,zzjgdm --组织机构代码 
+       ,zch --注册号 
+       ,swdjh --税务登记号 
+       ,gsmc--法人名称/字号 
+       ,fddbrxm --法人代表姓名 
+       ,dsrdw --当事人地位 
+       ,ah --案号 
+       ,ajlx --案件类型 
+       ,jaay --结案案由 
+       ,jafs --结案方式 
+       ,ajxclx --案件形成类型 
+       ,jarq--结案日期 
+       ,gdsrdw --各当事人地位 
+       ,fmxxlb --负面信息类别 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,yxsj --运行时间
+       ,lyjg
+FROM 
+(
+SELECT  agency_key --代理主键 
+       ,tyshxydm --统一社会信用代码 
+       ,zzjgdm --组织机构代码 
+       ,zch --注册号 
+       ,swdjh --税务登记号 
+       ,zh gsmc--法人名称/字号 
+       ,fddbrxm --法人代表姓名 
+       ,dsrdw --当事人地位 
+       ,ah --案号 
+       ,ajlx --案件类型 
+       ,jaay --结案案由 
+       ,jafs --结案方式 
+       ,ajxclx --案件形成类型 
+       ,to_date(jarq) jarq--结案日期 
+       ,gdsrdw --各当事人地位 
+       ,fmxxlb --负面信息类别 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,yxsj --运行时间
+       ,lyjg
+       ,row_number() over(partition by tyshxydm,ah,zh order by to_date(jarq) desc) rn  --根据业务组合主键,去重
+FROM 
+(
+SELECT  uuid()                      AS agency_key --代理主键 
+       ,nvl(b1.tyshxydm,b4.tyshxydm) AS tyshxydm --统一社会信用代码 
+       ,nvl(b3.zzjgdm,b4.zzjgdm)     AS zzjgdm --组织机构代码 
+       ,nvl(b3.zch,b4.zch)           AS zch --注册号 
+       ,null                         AS swdjh --税务登记号 
+       ,nvl(b3.lgl_name,b1.gsmc)     AS zh --法人名称/字号 
+       ,nvl(nvl(b3.LEGAL_PERSON_NAME,b4.LEGAL_PERSON_NAME),b1.fddbr)                      AS fddbrxm --法人代表姓名 
+       ,b1.dsrdw                     AS dsrdw --当事人地位 
+       ,b1.ah                        AS ah --案号 
+       ,b1.ajlx                      AS ajlx --案件类型 
+       ,b1.jaay                      AS jaay --结案案由 
+       ,b1.jafs                      AS jafs --结案方式 
+       ,b1.jaxcyy                    AS ajxclx --案件形成类型 
+       ,to_date(b1.jarq)             AS jarq --结案日期 
+       ,b1.gdsrdw                    AS gdsrdw --各当事人地位 
+       ,'司法案件'                    AS fmxxlb --负面信息类别 
+       ,b2.SQCODE                    AS sqdm --社区代码 
+	   ,b2.sqname					 AS sqmc --社区名称
+       ,b2.JDBM                      AS jddm --街道代码
+	   ,b2.jdmc					     AS jdmc --街道名称 
+       ,CURRENT_TIMESTAMP            AS yxsj --运行时间
+  ,lyjg
+       ,row_number() over(partition by nvl(b1.tyshxydm,b4.tyshxydm),nvl(b1.gsmc,b3.lgl_name),b1.ah,b1.jafs ORDER BY b2.SQCODE desc,b2.JDBM desc,to_date(b1.jarq) desc) rn
+FROM dwd_sfajxx b1
+left join (select DISTINCT tyshxydm,sqcode,jdbm,zh,sqname,jdmc from dwd_frdzxx where dt=(select max(dt) from dwd_frdzxx)) b2 on b1.gsmc=b2.zh
+left join (select tyshxydm,zzjgdm,lgl_name,zch,LEGAL_PERSON_NAME from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b3 on b1.tyshxydm=b3.tyshxydm
+left join (select tyshxydm,zzjgdm,lgl_name,zch,LEGAL_PERSON_NAME from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b4 on b1.gsmc=b4.lgl_name
+where b1.dt=(select max(dt) from dwd_sfajxx)
+	) where rn=1
+  )where rn=1
