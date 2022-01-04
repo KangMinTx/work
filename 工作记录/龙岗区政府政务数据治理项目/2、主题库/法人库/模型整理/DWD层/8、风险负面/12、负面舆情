@@ -1,0 +1,56 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-30 15:01:19.84
+--所属主题:负面舆情
+--内容描述:负面舆情1张表,加工至dwd_fxfm_btsxx(负面舆情)
+--			std_qfzggj_t_busi_zxzx_complaint(区发展改革局_众信投诉信息表)1
+
+
+--加载策略:全量
+--1229 修改获取关键字段顺序,企业名称 优先从法人基本信息中取值
+--0317 He 修改 字段 tssj 为 YYYY-MM-DD hh24:mi:ss
+--_********************************************************_
+--truncate table dwd_fxfm_btsxx;
+insert overwrite table dwd_fxfm_btsxx partition (dt='${DayBeforeStartTime}')
+
+select
+	uuid() uuid		--主键
+	,ztsfdm		--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,btsorzcdwmc--被投诉/仲裁单位名称
+	,ljtscsorzccs--累计投诉次数/仲裁次数
+	,tsorzcsy	--投诉/仲裁事由
+	,clzt		--处理状态
+	,tsorzcjg	--投诉/仲裁结果
+	,tscljdswh	--投诉处理决定书文号
+	,tssj		--投诉时间
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+select
+	entid ztsfdm		--主体身份代码
+	,b.tyshxydm	--统一社会信用代码
+	,b.zzjgdm		--组织机构代码
+	,b.zch		--登记/注册号
+	,nvl(b.lgl_name,a.entname) btsorzcdwmc--被投诉/仲裁单位名称
+	,count(*) over(partition by  entid,complainttime ) ljtscsorzccs--累计投诉次数/仲裁次数
+	,complainttitle tsorzcsy	--投诉/仲裁事由
+	,null	clzt		--处理状态
+	,complaintresult tsorzcjg	--投诉/仲裁结果
+	,null tscljdswh	--投诉处理决定书文号
+	,substr(complainttime,1,19) tssj		--投诉时间
+	,'权威' xxlylx		--信息来源类型
+ 	,'std_qfzggj_t_busi_zxzx_complaint' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,substr(current_timestamp,1,19) yxsj      --运行时间
+  ,row_number() over(partition by entid,b.tyshxydm,complainttitle,to_date(complainttime) order by to_date(complainttime) desc ) as rn
+ from (select * from std_qfzggj_t_busi_zxzx_complaint where dt=(select max(dt) from std_qfzggj_t_busi_zxzx_complaint)) a
+ left join (select tyshxydm,lgl_id,zzjgdm,lgl_name,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+ on trim(a.entid)=trim(b.lgl_id)
+ ) where rn=1

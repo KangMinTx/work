@@ -1,0 +1,29 @@
+--SparkSQL
+--_********************************************************_
+--author: 林志洪
+--create time: 2020-11-22 17:44:35
+--table_name:dwd_jbxx_sltz_info
+--use_tables:std_qfzggj_t_busi_ljs_gdxx(区发展改革局-非上市股份有限公司托管股东信息)
+--取数逻辑:直接从std_qfzggj_t_busi_ljs_gdxx单表获取数据
+--去重逻辑：无
+--_********************************************************_
+insert overwrite table dwd_zbzc_fssgdgsxx partition (dt='${DayBeforeStartTime}')
+SELECT  
+recordid --主键
+,zqdm --深柜代码
+,gdxm --股东名称
+,gdzjlb --股东证件类别
+,gdzjhm --股东证件号码
+,gdzzdmh --股东机构代码
+,gdgfye --股东持股数量
+,aicentcode --主体身份代码
+,'' --法人唯一标识
+,'补充' --信息来源类型
+,'std_qfzggj_t_busi_ljs_gdxx'  as lyb  --来源表
+,'区发展改革局'  as lyjg    --来源机构
+,CURRENT_TIMESTAMP  as yxrq    --运行时间
+from std_qfzggj_t_busi_ljs_gdxx
+where dt=(select max(dt) from std_qfzggj_t_busi_ljs_gdxx) 
+;
+
+

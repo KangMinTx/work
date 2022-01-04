@@ -1,0 +1,61 @@
+--SparkSQL
+--_********************************************************_
+--author: machuang
+--create time: 2021-07-19 15:29:44
+--table_name : dwd_cyxx_qycyxx_new(企业成员表新)
+--use_tables : std_srlzyhshbzj_sbgrxx128925(社保个人基本信息)
+--             
+--             
+--             
+--             ods_srlzyhshbzj_sbgrxx128925(社保个人基本信息)
+--
+--
+--_********************************************************_
+insert overwrite table dwd_cyxx_qycyxx_new partition (dt='${DayBeforeStartTime}')
+
+select 
+	    xm                   --姓名 
+	   ,xb_dm                --性别代码         
+	   ,xb                   --性别
+	   ,emp_card_id          --身份证件类型 
+	   ,emp_card_no          --身份证件号码
+	   ,emp_card_no_old      --清洗前身份证号码
+	   ,person_si_id         --个人社保唯一标识
+	   ,sbdwbh               --社保单位编号
+	   ,gsmc                 --公司名称
+	   ,tyshxydm             --统一社会信用代码
+	   ,cbzt                 --当前参保状态
+	   ,EMP_ENTRY_TIME       --入职时间
+	   ,EMP_RESIGNATION_TIME --离职时间
+	   ,JOB_TITLE            --职位	         
+	   ,xxlylx               --信息来源类型
+	   ,lyb	                 --来源表 
+	   ,lyjg	             --来源机构
+	   ,yxsj                 --运行时间
+                                                                                                    
+from(
+  select             
+              a.name	            as xm                --姓名 
+             ,a.sex_code	        as xb_dm             --性别代码               
+ 	         ,a.sex_code_name       as xb                --性别
+             ,a.id_code	            as emp_card_id       --身份证件类型 
+	         ,a.id_no	            as emp_card_no       --身份证件号码
+             ,b.id_no               as emp_card_no_old   --清洗前身份证号码
+             ,a.si_no               as person_si_id      --个人社保唯一标识
+			 ,a.unit_sno            as sbdwbh            --社保单位编号
+             ,a.si_unit_name        as gsmc              --公司名称
+             ,a.dwtyshxydm          as tyshxydm          --统一社会信用代码	         
+	         ,a.dqcbzt              as cbzt              --当前参保状态
+	         ,a.kstbrq              as EMP_ENTRY_TIME    --入职时间
+             ,cast(null as varchar(20))    as EMP_RESIGNATION_TIME --离职时间
+	         ,cast(null as varchar(200))   as JOB_TITLE  --职位	         
+	         ,'权威'                as xxlylx     --信息来源类型
+	         ,'std_srlzyhshbzj_sbgrxx128925' as lyb	    --来源表 
+             ,a.lyjg                as lyjg	    --来源机构
+	         ,current_timestamp   as yxsj       --运行时间
+             ,row_number()over(partition by a.id_no,a.unit_sno,a.kstbrq order by a.timeflag desc ) rn 
+        from (select a.* from std_srlzyhshbzj_sbgrxx128925 a  where dt=(select max(dt) from std_srlzyhshbzj_sbgrxx128925)and id_no is not null and si_no is not null) a
+   left join (select b.* from ods_srlzyhshbzj_sbgrxx128925 b  where dt=(select max(dt) from ods_srlzyhshbzj_sbgrxx128925)and id_no is not null and si_no is not null) b
+     on a.si_no=b.si_no ) 
+        where rn=1                         
+    

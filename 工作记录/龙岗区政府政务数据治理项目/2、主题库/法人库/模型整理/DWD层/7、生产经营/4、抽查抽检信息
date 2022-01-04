@@ -1,0 +1,102 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-30 15:01:19.84
+--所属主题:抽查抽检信息
+--内容描述:抽查抽检信息1张表,加工至dwd_scjy_cccjxx(抽查抽检信息)
+--			std_qfzggj_t_busi_xwh_bjsy(区发展改革局_产品的比较试验与评价)1
+--			std_qfzggj_t_busi_yjj_foodexamine(区发展改革局_农产品质量安全监测信息)2
+--			std_qfzggj_t_busi_zjj_quapass(区发展改革局_产品质量监督抽查合格信息)3
+--加载策略:全量
+--0317 修改jcrq字段格式为 YYYY-MM-DD
+--_********************************************************_
+--truncate table dwd_scjy_cccjxx;
+insert overwrite table dwd_scjy_cccjxx partition (dt='${DayBeforeStartTime}')
+
+select
+	uuid() uuid		--主键
+	,tyshxydm	--统一社会信用代码
+	,ztsfdm		--主体身份代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,gsmc		--公司名称
+	,jycpmc		--检验产品名称
+	,cpggxh		--产品规格型号
+	,jcrq		--检查日期
+	,scxx		--生产信息
+	,jcjg		--检查结果
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+	select
+		distinct
+		b.tyshxydm	--统一社会信用代码
+		,a.aicentcode ztsfdm		--主体身份代码
+		,b.zzjgdm zzjgdm		--组织机构代码
+		,b.zch zch		--登记/注册号
+		,b.lgl_name gsmc		--公司名称
+		,null jycpmc		--检验产品名称
+		,xh cpggxh		--产品规格型号
+		,null jcrq		--检查日期
+		,rqph scxx		--生产信息
+		,zp jcjg		--检查结果
+		,'std_qfzggj_t_busi_xwh_bjsy,dwd_jbxx_frjcxx' lyb       --来源表
+		,a.lyjg  lyjg    --来源机构
+		,substr(current_timestamp,1,19) as yxsj      --运行时间
+	from std_qfzggj_t_busi_xwh_bjsy a
+	left join dwd_jbxx_frjcxx b
+	on trim(a.aicentcode)=trim(b.lgl_id)
+	where a.dt=(select max(dt) from std_qfzggj_t_busi_xwh_bjsy) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+	union
+	select
+		distinct
+		b.tyshxydm	--统一社会信用代码
+		,a.aicentcode ztsfdm		--主体身份代码
+		,b.zzjgdm zzjgdm		--组织机构代码
+		,b.zch zch		--登记/注册号
+		,b.lgl_name gsmc		--公司名称
+		,proname jycpmc		--检验产品名称
+		,promodel cpggxh		--产品规格型号
+		,spchdate jcrq		--检查日期
+		,case when scdate like '%..' then replace(substr(scdate,1,7),'.','-')||'-01' 
+			  when scdate like '%.%' and length(scdate)<9 then replace(scdate,'.','-')||'-01'
+		      when scdate like '%.%' then to_date(scdate,'YYYY.MM.dd') 
+			  when scdate like '/' then null
+			  when scdate like '%/%' and substr(scdate,1,1)>2 then to_date(scdate,'dd/MM/yyyy')
+			  when scdate like '%/%' then to_date(scdate,'yyyy/MM/dd')  
+			  when scdate like '——' then null
+			  when scdate like '-' then null 
+			  when scdate ='9月-14' then null 
+		else scdate end scxx		--生产信息
+		,null jcjg		--检查结果
+		,'std_qfzggj_t_busi_zjj_quapass,dwd_jbxx_frjcxx' lyb       --来源表
+		,a.lyjg  lyjg    --来源机构
+		,substr(current_timestamp,1,19) as yxsj      --运行时间
+	from std_qfzggj_t_busi_zjj_quapass a
+	left join dwd_jbxx_frjcxx b
+	on trim(a.aicentcode)=trim(b.lgl_id)
+	where a.dt=(select max(dt) from std_qfzggj_t_busi_zjj_quapass) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+	union
+	select
+		distinct
+		b.tyshxydm	--统一社会信用代码
+		,a.aicentcode ztsfdm		--主体身份代码
+		,b.zzjgdm zzjgdm		--组织机构代码
+		,b.zch zch		--登记/注册号
+		,b.lgl_name gsmc		--公司名称
+		,proname jycpmc		--检验产品名称
+		,null cpggxh		--产品规格型号
+		,case when spchdate like '%.%' then to_date(replace(spchdate,'.',''),'yyyymmdd') else to_date(spchdate,'yyyymmdd')  end jcrq		--检查日期
+		,place scxx		--生产信息
+		,result jcjg		--检查结果
+		,'std_qfzggj_t_busi_yjj_foodexamine,dwd_jbxx_frjcxx' lyb       --来源表
+		,a.lyjg  lyjg    --来源机构
+		,substr(current_timestamp,1,19) as yxsj      --运行时间
+	from std_qfzggj_t_busi_yjj_foodexamine a
+	left join dwd_jbxx_frjcxx b
+	on trim(a.aicentcode)=trim(b.lgl_id)
+	where a.dt=(select max(dt) from std_qfzggj_t_busi_yjj_foodexamine) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+ )
+ 

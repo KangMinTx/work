@@ -1,0 +1,79 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-10 15:09:48
+--table_name : dwd_fxxx_xyqs (信用评级趋势)
+--use_tables : dwd_zzxk_xypjxx (信用评级信息)
+--			   dwd_jbxx_frjcxx (法人基本信息)
+--			   sg_dim_xypjdj (手工-信用评价等级) [说明:该表为等级码表,从AAA+ 到 C- 共27个等级,对应27个数字,数字越小,等级越高]
+--取数逻辑   : 每月1日分区对比上月1日分区等级信息，“上升”、“下降”、"持平"
+--			   1.在子查询内 根据统一社会信用代码 关联 法人基本信息,法人名称以法人基本信息为主,如法人基本信息没有,则用原表 nvl(lgl_name,gsmc)
+--			   2.从两表中取出对应字段,根据统一社会信用代码(tyshxydm),评价时间(pjsj),评价说明(pjsm) 三个字段进行去重[此处针对pjsj为空的记录,使用最新yxsj作为补充]
+--			   3.取出对应字段,根据统一社会信用代码,评级说明 ,根据评价时间正序排序
+--			   4.自己关联自己,条件是: t1.tyshxydm=t2.tyshxydm and t1.zzjgdm=t2.zzjgdm and t1.rn=t2.rn+1 and t1.pjsm=t2.pjsm
+--			   5.分别在关联 sg_dim_xypjdj (手工-信用评价等级) 获取等级对应的数字便于后续进行比较
+--			   6.取出对应字段,根据新补充的数字进行比较
+--_********************************************************_
+ 
+INSERT OVERWRITE TABLE dwd_fxxx_xyqs PARTITION (dt = '${DayBeforeStartTime}')
+SELECT  uuid()             AS id --主键 
+       ,ztsfdm             AS ztsfdm -- 主体身份代码 
+       ,tyshxydm           AS tyshxydm --统一社会信用代码 
+       ,zzjgdm             AS zzjgdm--组织机构代码 
+       ,gsmc               AS gsmc--公司名称 
+       ,replace(xydj,'级')  AS xydj --信用等级 
+       ,pjsm               AS pjlx--评价类型 
+       ,CASE WHEN a-b=0 THEN '持平' 
+             WHEN a-b<0 THEN '上升' 
+             WHEN a-b>0 THEN '下降' ELSE '-' END jsgdjqs --较上个等级趋势 
+       ,substr(pjsj_1,1,7) AS pjsj--评级时间 
+       ,'dwd_zzxk_xypjxx'  AS lyb --来源表 
+       ,lyjg               AS lyjg --来源机构 
+       ,substr(CURRENT_TIMESTAMP,1,19)  AS yxsj --运行时间
+FROM 
+(
+select t1.ztsfdm,t1.tyshxydm,t1.zzjgdm,t1.gsmc,t1.xydj,t1.pjsm,t1.pjsj as pjsj_1,t2.pjsj as pjsj_2,t1.rn,t2.rn,t3.xypjdj,t3.level a,t4.xypjdj,t4.level b,t1.lyjg
+from
+(select ztsfdm,tyshxydm,zzjgdm,zch,gsmc,pjsm,xydj,pjsj,lyjg,row_number() over(partition by tyshxydm,pjsm order by pjsj asc) rn 
+ 	from 
+ 	/*通过统一社会信用代码 关联法人基本信息表,获取较为准确的公司名称*/
+	(select nvl(t2.lgl_id,t1.ztsfdm) as ztsfdm
+     	   ,t1.tyshxydm as tyshxydm
+      	   ,nvl(t2.zzjgdm,t1.zzjgdm) as zzjgdm
+     	   ,nvl(t2.zch,t1.zch) as zch
+           ,nvl(t2.lgl_name,t1.gsmc) as gsmc
+           ,t1.pjsm as pjsm
+     	   ,t1.xydj as xydj
+      	   ,case when t1.pjsj is null then yxsj else t1.pjsj end as pjsj
+           ,t1.lyjg as lyjg
+           ,row_number() over(partition by t1.tyshxydm,case when t1.pjsj is null then yxsj else t1.pjsj end,t1.pjsm order by nvl(t2.lgl_name,t1.gsmc) desc,t1.xydj desc) rank 
+      from dwd_zzxk_xypjxx t1
+      left join (select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+      on t1.tyshxydm=t2.tyshxydm 
+      where dt=(select max(dt) from dwd_zzxk_xypjxx)  
+       ) where rank=1 ) t1
+left join 
+(select ztsfdm,tyshxydm,zzjgdm,zch,gsmc,pjsm,xydj,pjsj,lyjg,row_number() over(partition by tyshxydm,pjsm order by pjsj asc) rn 
+ 	from 
+ 	/*通过统一社会信用代码 关联法人基本信息表,获取较为准确的公司名称*/
+	(select nvl(t2.lgl_id,t1.ztsfdm) as ztsfdm
+           ,t1.tyshxydm as tyshxydm
+           ,nvl(t2.zzjgdm,t1.zzjgdm) as zzjgdm
+           ,nvl(t2.zch,t1.zch) as zch
+           ,nvl(t2.lgl_name,t1.gsmc) as gsmc
+           ,t1.pjsm as pjsm
+           ,t1.xydj as xydj
+           ,case when t1.pjsj is null then yxsj else t1.pjsj end as pjsj
+           ,t1.lyjg as lyjg
+           ,row_number() over(partition by t1.tyshxydm,case when t1.pjsj is null then yxsj else t1.pjsj end,t1.pjsm order by nvl(t2.lgl_name,t1.gsmc) desc,t1.xydj desc) rank 
+      from dwd_zzxk_xypjxx t1
+      left join (select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+      on t1.tyshxydm=t2.tyshxydm 
+      where dt=(select max(dt) from dwd_zzxk_xypjxx)   
+      ) where rank=1  ) t2
+on t1.tyshxydm=t2.tyshxydm and t1.zzjgdm=t2.zzjgdm and t1.rn=t2.rn+1 and t1.pjsm=t2.pjsm
+left join sg_dim_xypjdj t3 on replace(t1.xydj,'级')=t3.xypjdj
+left join sg_dim_xypjdj t4 on replace(t2.xydj,'级')=t4.xypjdj)  
+ 
+ 
+   

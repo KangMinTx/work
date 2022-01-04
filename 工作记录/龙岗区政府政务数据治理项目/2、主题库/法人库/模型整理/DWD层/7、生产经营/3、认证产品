@@ -1,0 +1,70 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-02 10:39:51
+--table_name : dwd_scjy_rzcp (认证产品)
+--use_tables : std_qfzggj_t_busi_zjj_nbpent (区发展改革局_获得国家、省名牌产品称号企业信息)
+--			   std_qfzggj_t_busi_aic_standardcert (区发展改革局_深圳标准认证产品信息) [无数据 暂用ods表]
+-- 取数逻辑  : 从两个表中取出对应字段,关联法人基本信息表.补充法人信息
+--筛选/去重逻辑:暂无
+--_********************************************************_
+
+insert overwrite table dwd_scjy_rzcp partition (dt='${DayBeforeStartTime}')
+select 
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,aicentcode as ztsfdm --主体身份代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,nvl(t1.entname,t2.lgl_name) as gsmc --公司名称
+,t1.promodel as promodel --产品规格型号
+,t1.proname as proname --产品名称
+,null as fileno --证书编号
+,'国家、省名牌产品' as gettitle --获得称号
+,t1.valdate as valdate --有效期限
+,'std_qfzggj_t_busi_zjj_nbpent' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from std_qfzggj_t_busi_zjj_nbpent t1
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2 
+on t1.aicentcode=t2.lgl_id
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_zjj_nbpent)
+
+union all
+
+select 
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,nvl(t1.entname,t2.lgl_name) as gsmc --公司名称
+,t1.model as promodel --产品规格型号
+,null as proname --产品名称
+,t1.fileno as fileno --证书编号
+,'深圳标准认证产品' as gettitle --获得称号
+,null as valdate --有效期限
+,'std_qfzggj_t_busi_aic_standardcert' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from ods_qfzggj_t_busi_aic_standardcert t1
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2 
+on t1.aicentcode=t2.lgl_id
+where t1.dt=(select max(dt) from ods_qfzggj_t_busi_aic_standardcert)
+
+
+

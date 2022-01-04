@@ -1,0 +1,758 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-19 10:58:47
+--table_name : dwd_jbxx_frjcxx (基本信息_法人基础信息)
+--use_tables : std_qfzggj_aic_base (区发展改革局_登记备案信息)
+--			   std_schzljgw_sszt_jbxx110497 (市场和质量监管委_商事主体基本信息)
+--			   std_qzfw_view_qy_jcxx (区政法委-企业基础信息)
+--			   std_qzfw_view_ywk_sszt_hc (区政法委块数据企业房屋信息)
+--			   std_qzfw_view_ywk_tydz (区政法委_统一地址表)
+--取数逻辑:用AIC_BASE作为主表 ,通过[统一社会信用代码,企业名称,注册号,组织机构代码](4者满足一条即可) 左关联 SSZT_JBXX110497 
+--         左关联 lgqzfw.view_rk_jcxx 左关联 lgqzfw.view_ywk_sszt_hc 补充其他相关信息
+--1123:筛选tyshxydm 长度大于1
+--1203:不加企业状态限制
+--1212:补充经营地址来源 从  std_schzljgw_sszt_jbxx110497 (市场和质量监管委_商事主体基本信息) 中取
+--1217:补充市监企业状态 字典参考 aic_base 的企业状态字典
+--0118:新增4个字段：机构类型名称（lgl_organization_name），行业门类代码（hymldm），币种代码（bzdm），行业名称（hymc）,行业名称暂空
+--插入语句在临时表下方👇
+--20210524 新增逻辑登记备案信息与工商登记监管信息表通过主体身份代码（entid）关联，
+--登记备案信息中限制主体状态（ENTSTATUS）字段为”存续（在营、开业、在册）”，工商登记监管信息表中限制监管机关编码为"4500",增加注册资本字段,还有之前登记备案信息和商事主体基本信息共同的业务字段,之前是取商事主体基本信息,现在以登记备案信息为主
+--_********************************************************_
+ 
+ 
+with table_all AS (
+SELECT  *
+FROM 
+(
+	SELECT  b1.a_lgl_id 
+	       ,b1.b_lgl_id 
+	       ,b2.lgl_id AS c_lgl_id 
+	       ,nvl(b1.lgl_name,b2.lgl_name) lgl_name 
+	       ,nvl(b1.tyshxydm,b2.tyshxydm) tyshxydm 
+	       ,nvl(b1.zch,b2.zch) zch 
+	       ,nvl(b1.zzjgdm,b2.zzjgdm) zzjgdm 
+	       ,nvl(b1.GLDM_CREATE_TIME,b2.GLDM_CREATE_TIME) GLDM_CREATE_TIME 
+	       ,nvl(b1.lyb,b2.lyb) lyb 
+	       ,row_number() over(partition by nvl(b1.lgl_name,b2.lgl_name) ,nvl(b1.tyshxydm,b2.tyshxydm) ORDER BY nvl(b1.GLDM_CREATE_TIME,b2.GLDM_CREATE_TIME) desc ) rank
+	FROM 
+	(
+		SELECT  * 
+		       ,row_number() over(partition by tyshxydm,lgl_name ORDER BY CASE WHEN lyb='std_qfzggj_aic_base' THEN '1' WHEN lyb='std_schzljgw_sszt_jbxx110497' THEN '2' end asc,GLDM_CREATE_TIME) rn
+		FROM 
+		(
+			SELECT  t1.lgl_id                                              AS a_lgl_id 
+			       ,nvl(nvl(nvl(t5.lgl_id,t4.lgl_id),t3.lgl_id),t2.lgl_id) AS b_lgl_id 
+			       ,nvl(nvl(nvl(nvl(t1.lgl_name,t5.lgl_name),t4.lgl_name),t3.lgl_name),t2.lgl_name) lgl_name 
+			       ,nvl(nvl(nvl(nvl(t1.tyshxydm,t5.tyshxydm),t4.tyshxydm),t2.tyshxydm),t3.tyshxydm) tyshxydm 
+			       ,nvl(nvl(nvl(nvl(t1.zch,t5.zch),t3.zch),t2.zch),t4.zch) zch 
+			       ,nvl(nvl(nvl(nvl(t1.zzjgdm,t4.zzjgdm),t3.zzjgdm),t2.zzjgdm),t5.zzjgdm) zzjgdm 
+			       ,t1.GLDM_CREATE_TIME 
+			       ,nvl(t2.lyb,t1.lyb) lyb
+			FROM 
+			(
+				SELECT  entid                 AS lgl_id 
+				       ,entname               AS lgl_name 
+				       ,entname               AS lgl_short_name 
+				       ,null                  AS lgl_english_name 
+				       ,entsccode             AS tyshxydm 
+				       ,entregno              AS zch 
+				       ,entorgcode            AS zzjgdm 
+				       ,datatime              AS GLDM_CREATE_TIME 
+				       ,datatime              AS GLDM_UPDATE_TIME 
+				       ,'std_qfzggj_aic_base' AS lyb
+				FROM std_qfzggj_aic_base
+				WHERE --entstatuscode='1' AND 
+                dt=(SELECT  MAX(dt) FROM std_qfzggj_aic_base) 
+			) t1
+			LEFT JOIN 
+			(
+				SELECT  recordid                       AS LGL_ID 
+				       ,qymc                           AS LGL_NAME 
+				       ,tyshxydm                       AS tyshxydm 
+				       ,zch                            AS zch 
+				       ,zzjgdm                         AS zzjgdm 
+				       ,timeflag                       AS GLDM_CREATE_TIME 
+				       ,timeflag                       AS GLDM_UPDATE_TIME 
+				       ,'std_schzljgw_sszt_jbxx110497' AS lyb
+				FROM std_schzljgw_sszt_jbxx110497
+				WHERE --yyzt=1 AND 
+                dt=(SELECT  MAX(dt) FROM std_schzljgw_sszt_jbxx110497) 
+			) t2
+			ON t1.LGL_NAME= t2.LGL_NAME
+			LEFT JOIN 
+			(
+				SELECT  recordid                       AS LGL_ID 
+				       ,qymc                           AS LGL_NAME 
+				       ,tyshxydm                       AS tyshxydm 
+				       ,zch                            AS zch 
+				       ,zzjgdm                         AS zzjgdm 
+				       ,timeflag                       AS GLDM_CREATE_TIME 
+				       ,timeflag                       AS GLDM_UPDATE_TIME 
+				       ,'std_schzljgw_sszt_jbxx110497' AS lyb
+				FROM std_schzljgw_sszt_jbxx110497
+				WHERE --yyzt=1 AND 
+                dt=(SELECT  MAX(dt) FROM std_schzljgw_sszt_jbxx110497) 
+			) t3
+			ON t1.tyshxydm=t3.tyshxydm
+			LEFT JOIN 
+			(
+				SELECT  recordid                       AS LGL_ID 
+				       ,qymc                           AS LGL_NAME 
+				       ,tyshxydm                       AS tyshxydm 
+				       ,zch                            AS zch 
+				       ,zzjgdm                         AS zzjgdm 
+				       ,timeflag                       AS GLDM_CREATE_TIME 
+				       ,timeflag                       AS GLDM_UPDATE_TIME 
+				       ,'std_schzljgw_sszt_jbxx110497' AS lyb
+				FROM std_schzljgw_sszt_jbxx110497
+				WHERE --yyzt=1 AND 
+                dt=(SELECT  MAX(dt) FROM std_schzljgw_sszt_jbxx110497) 
+			) t4
+			ON t1.zch = t4.zch
+			LEFT JOIN 
+			(
+				SELECT  recordid                       AS LGL_ID 
+				       ,qymc                           AS LGL_NAME 
+				       ,tyshxydm                       AS tyshxydm 
+				       ,zch                            AS zch 
+				       ,zzjgdm                         AS zzjgdm 
+				       ,timeflag                       AS GLDM_CREATE_TIME 
+				       ,timeflag                       AS GLDM_UPDATE_TIME 
+				       ,'std_schzljgw_sszt_jbxx110497' AS lyb
+				FROM std_schzljgw_sszt_jbxx110497
+				WHERE --yyzt=1 AND 
+                dt=(SELECT  MAX(dt) FROM std_schzljgw_sszt_jbxx110497) 
+			) t5
+			ON t1.zzjgdm=t5.zzjgdm 
+		) 
+	) b1
+	LEFT JOIN 
+	(
+		SELECT  frid                    AS LGL_ID 
+		       ,qymc                    AS LGL_NAME 
+		       ,qymc                    AS LGL_SHORT_NAME 
+		       ,null                    AS LGL_ENGLISH_NAME 
+		       ,tyshxydm                AS tyshxydm 
+		       ,zch                     AS zch 
+		       ,zzjgdm                  AS zzjgdm 
+		       ,ssztlx                  AS LGL_ORGANIZATION_CODE 
+		       ,fddbr                   AS LEGAL_PERSON_NAME 
+		       ,frsfzh                  AS LEGAL_PERSON_CARD_NO 
+		       ,jyfw                    AS BUSINESS_SCOPE 
+		       ,clrq                    AS ESTABLISH_DATE 
+		       ,jyqxq                   AS OPERATE_STATE_TIME 
+		       ,jyqxz                   AS OPERATE_END_TIME 
+		       ,timeflag                AS GLDM_CREATE_TIME 
+		       ,timeflag                AS GLDM_UPDATE_TIME 
+		       ,null                    AS LEGAL_PERSON_CARD_ID 
+		       ,qyzt                    AS LGL_ENTSTAUS_NO 
+		       ,hzrq                    AS LGL_AUTHDATE 
+		       ,null                    AS LGL_PBUITEM 
+		       ,djjgdh                  AS ADMIN_ORG_UNIT_NO 
+		       ,fzjg                    AS ADMIN_ORG_UNIT 
+		       ,null                    AS BUILDING_ID 
+		       ,null                    AS HOUSE_ID 
+		       ,bzdz                    AS ADDRESS_DETAIL 
+		       ,zcdz                    AS ZCDZ 
+		       ,zcdtydzbm               AS ZCDZ_CODE 
+		       ,jydz                    AS JYDZ 
+		       ,jydtydzbm               AS JYDZ_CODE 
+		       ,bzdz                    AS BGDZ 
+		       ,null                    AS BGDZ_CODE 
+		       ,null                    AS SCDZ 
+		       ,null                    AS SCDZ_CODE 
+		       ,'std_qzfw_view_qy_jcxx' AS lyb
+		FROM std_qzfw_view_qy_jcxx
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM std_qzfw_view_qy_jcxx) 
+	) b2
+	ON b1.tyshxydm=b2.tyshxydm
+	WHERE b1.rn=1  
+)
+WHERE rank=1 )
+,ssss as(
+select enterpriseno,organcode,substr(buildinghousecode,1,19) buildinghousecode,buildinghousecode buildinghousecode1,
+row_number()over(partition by enterpriseno order by buildinghousecode) enterpriseno_rn,
+row_number()over(partition by organcode order by buildinghousecode) organcode_rn
+from std_qzf_zfw_enterpriseinfomanage1 bb
+where dt = (select max(dt) from std_qzf_zfw_enterpriseinfomanage1)
+and length(buildinghousecode)>=19
+)
+
+insert overwrite table dwd_jbxx_frjcxx partition (dt='${DayBeforeStartTime}')
+SELECT  LGL_ID --法人唯一标识 
+       ,LGL_NAME --机构名称 
+       ,LGL_SHORT_NAME --机构简称 
+       ,LGL_ENGLISH_NAME --机构英文名称 
+       ,tyshxydm --统一社会信用代码 
+       ,zch --登记或注册号 
+       ,zzjgdm --组织机构代码 
+       ,LGL_ORGANIZATION_CODE --机构类型代码 
+       ,LGL_ORGANIZATION_NAME --机构类型
+       ,LEGAL_PERSON_NAME --法定代表人或负责人姓名 
+       ,LEGAL_PERSON_CARD_NO --法定代表人或负责人证件号码 
+       ,BUSINESS_SCOPE --经营范围 
+       ,ESTABLISH_DATE --成立日期 
+       ,OPERATE_STATE_TIME --经营期限自 
+       ,OPERATE_END_TIME --经营期限至
+	   /*========1223新增字段====================*/
+       ,hymldm  --行业门类代码 （0118新增）
+       ,hyml -- 行业门类
+       ,lsqymc -- 隶属企业名称
+       ,zczb   --注册资本
+	   ,lsqyzch -- 隶属企业注册号
+	   ,sbsszb -- 申报实收资本
+       ,bzdm    --币种代码
+	   ,bizhong -- 币种
+	   ,hydm -- 行业代码
+       ,hymc -- 行业名称（暂时空）
+	   ,jycs -- 经营场所
+	   ,njqk -- 年检情况
+	   ,ndbgxx -- 年度报告信息
+	   ,ssztlx -- 商事主体类型
+	   ,yyzt -- 企业状态
+	   /*===================*/
+       ,GLDM_CREATE_TIME --记录创建时间 
+       ,GLDM_UPDATE_TIME --记录更新时间 
+       ,LEGAL_PERSON_CARD_ID --法定代表人或负责人证件类型 
+       ,LGL_ENTSTAUS_NO --法人主体状态 
+       ,LGL_AUTHDATE --核准日期 
+       ,LGL_PBUITEM --许可经营项目 
+       ,ADMIN_ORG_UNIT_NO --登记管理部门代码 
+       ,ADMIN_ORG_UNIT --登记管理部门名称 
+       ,BUILDING_ID --楼栋编码 
+       ,HOUSE_ID --房屋编码 
+       ,ADDRESS_DETAIL --详细地址 
+       ,ZCDZ --注册地址 
+       ,ZCDZ_CODE --注册地统一地址编码 
+       ,JYDZ --经营地址 
+       ,JYDZ_CODE --经营地统一地址编码 
+       ,BGDZ --办公地址 
+       ,BGDZ_CODE --办公地址一地址编码 
+       ,SCDZ --生产地址 
+       ,SCDZ_CODE --生产地址一地址编码 
+       ,BRSJ --搬入时间 
+       ,BLSJ --搬离时间 
+       ,ZBX --坐标X 
+       ,ZBY --坐标Y 
+       ,lyb --来源表 
+       ,lyjg --来源机构 
+       ,yxsj --运行时间
+FROM 
+(
+	SELECT  t1.a_lgl_id                                            AS lgl_id 
+	       ,nvl(t2.lgl_name,t1.lgl_name)                           AS lgl_name 
+	       ,nvl(t2.lgl_name,t1.lgl_name)                           AS lgl_short_name 
+	       ,null                                                   AS lgl_english_name 
+	       ,t1.tyshxydm                                            AS tyshxydm 
+	       ,t1.zch                                                 AS zch 
+	       ,t1.zzjgdm                                              AS zzjgdm 
+	       ,nvl(t2.LGL_ORGANIZATION_CODE,t3.LGL_ORGANIZATION_CODE) AS LGL_ORGANIZATION_CODE 
+           ,nvl(t2.LGL_ORGANIZATION_NAME,t3.LGL_ORGANIZATION_NAME) as LGL_ORGANIZATION_NAME
+	       ,nvl(t2.LEGAL_PERSON_NAME,t3.LEGAL_PERSON_NAME)         AS LEGAL_PERSON_NAME 
+	       ,nvl(t2.LEGAL_PERSON_CARD_NO,t3.LEGAL_PERSON_CARD_NO)   AS LEGAL_PERSON_CARD_NO 
+	       ,nvl(t2.BUSINESS_SCOPE,t3.BUSINESS_SCOPE)               AS BUSINESS_SCOPE 
+	       ,nvl(t2.ESTABLISH_DATE,t3.ESTABLISH_DATE)               AS ESTABLISH_DATE 
+	       ,substr(nvl(t2.OPERATE_STATE_TIME,t3.OPERATE_STATE_TIME),1,19)       AS OPERATE_STATE_TIME 
+	       ,substr(nvl(t2.OPERATE_END_TIME,t3.OPERATE_END_TIME),1,19)           AS OPERATE_END_TIME 
+		   /*==========1223新增字段===========*/
+  		   ,t2.hymldm as hymldm --行业门类代码  
+           ,t2.hyml  as hyml -- 行业门类
+		   ,t3.lsqymc as lsqymc -- 隶属企业名称
+		   ,t3.lsqyzch as lsqyzch -- 隶属企业注册号
+		   ,t2.zczb    as zczb   --注册资本
+		   ,t3.sbsszb as sbsszb -- 申报实收资本
+		   ,t2.bzdm as bzdm       --币种代码
+           ,t2.bizhong as bizhong -- 币种
+		   ,t2.hydm as hydm -- 行业代码
+           ,t2.hymc as hymc -- 行业名称 
+		   ,t3.jycs as jycs -- 经营场所
+		   ,t3.njqk as njqk -- 年检情况
+		   ,t3.ndbgxx as ndbgxx -- 年度报告信息
+		   ,t2.ssztlx_name as ssztlx -- 商事主体类型
+		   ,t2.yyzt as yyzt -- 企业状态
+		   /*================================*/
+	       ,nvl(t2.GLDM_CREATE_TIME,t3.GLDM_CREATE_TIME)           AS GLDM_CREATE_TIME 
+	       ,nvl(t2.GLDM_UPDATE_TIME,t3.GLDM_UPDATE_TIME)           AS GLDM_UPDATE_TIME 
+	       ,null                                                   AS LEGAL_PERSON_CARD_ID 
+  		   /*1217补充市监企业状态*/
+	       ,nvl(t2.LGL_ENTSTAUS_NO,t3.LGL_ENTSTAUS_NO)			   AS LGL_ENTSTAUS_NO 
+	       ,nvl(t2.LGL_AUTHDATE,t3.LGL_AUTHDATE)                   AS LGL_AUTHDATE 
+	       ,t2.LGL_PBUITEM                                         AS LGL_PBUITEM 
+	       ,nvl(t2.ADMIN_ORG_UNIT_NO,t3.ADMIN_ORG_UNIT_NO)                                   AS ADMIN_ORG_UNIT_NO 
+	       ,nvl(t2.ADMIN_ORG_UNIT,t3.ADMIN_ORG_UNIT)                                    AS ADMIN_ORG_UNIT 
+	      -- ,COALESCE(t5.JZWTYDZBM,t6.jzwtydzbm,t7.jzwtydzbm,substr(t3.HOUSE_ID,1,19),substr(t9.zcdtydzbm,1,19))       AS BUILDING_ID 
+  	      	       ,COALESCE(
+						if(length(t5.JZWTYDZBM)<19,null,t5.JZWTYDZBM),
+						if(length(t6.jzwtydzbm)<19,null,t6.jzwtydzbm),
+						if(length(t7.jzwtydzbm)<19,null,t7.jzwtydzbm),
+						substr(if(length(t9.zcdtydzbm)<19,null,t9.zcdtydzbm),1,19),
+						if(length(substr(t3.HOUSE_ID,1,19))<19,null,substr(t3.HOUSE_ID,1,19)),
+						t10.buildinghousecode,t11.buildinghousecode )      AS BUILDING_ID 
+  
+	       ,COALESCE(
+                      if(length(t9.zcdtydzbm)>=25,t9.zcdtydzbm,null),
+                      if(length(t3.HOUSE_ID)>=25,t3.HOUSE_ID,null),
+                      if(length(t10.buildinghousecode1)>=25,t10.buildinghousecode1,null),
+                      if(length(t11.buildinghousecode1)>=25,t11.buildinghousecode1,null)
+                      )  AS HOUSE_ID   
+	       ,nvl(t2.ADDRESS_DETAIL,t3.ADDRESS_DETAIL)               AS ADDRESS_DETAIL 
+	       ,t4.ZCDZ                                                AS ZCDZ 
+	       ,t4.ZCDZ_CODE                                           AS ZCDZ_CODE 
+	       ,nvl(t3.ADDRESS_DETAIL,t4.JYDZ)                         AS JYDZ 
+	       ,t4.JYDZ_CODE                                           AS JYDZ_CODE 
+	       ,null                                                   AS BGDZ 
+	       ,null                                                   AS BGDZ_CODE 
+	       ,null                                                   AS SCDZ 
+	       ,null                                                   AS SCDZ_CODE 
+	       ,t4.BRSJ                                                AS BRSJ 
+	       ,t4.BLSJ                                                AS BLSJ 
+	       ,t8.lon                                                 AS ZBX 
+	       ,t8.lat                                                 AS ZBY 
+	       ,nvl(nvl(nvl(t1.lyb,t2.lyb),t3.lyb),t4.lyb)             AS lyb 
+	       ,nvl(nvl(t2.lyjg,t3.lyjg),t4.lyjg)                      AS lyjg 
+	       ,CURRENT_TIMESTAMP                                      AS yxsj 
+	       ,row_number() over(partition by  t1.tyshxydm ORDER BY t1.zch,t1.zzjgdm,nvl(t2.LGL_ORGANIZATION_CODE,t3.LGL_ORGANIZATION_CODE),nvl(t2.BUSINESS_SCOPE,t3.BUSINESS_SCOPE),nvl(t2.OPERATE_STATE_TIME,t3.OPERATE_STATE_TIME),nvl(t2.GLDM_CREATE_TIME,t3.GLDM_CREATE_TIME) desc ) rn
+	FROM (select * from table_all a where exists(
+										select 1 from
+											std_qfzggj_aic_jgbase b where b.dt=(select max(dt) from std_qfzggj_aic_jgbase) and a.a_lgl_id=b.entid and b.jgorgcode='4500'
+											)   
+										)t1
+	LEFT JOIN 
+	(
+		SELECT  entid                 AS lgl_id 
+		       ,entname               AS lgl_name 
+		       ,entname               AS lgl_short_name 
+		       ,null                  AS lgl_english_name 
+		       ,entsccode             AS tyshxydm 
+		       ,entregno              AS zch 
+		       ,entorgcode            AS zzjgdm 
+		       ,enttypecode           AS LGL_ORGANIZATION_CODE 
+               ,enttype          	  AS LGL_ORGANIZATION_NAME
+		       ,null                  AS LEGAL_PERSON_NAME 
+		       ,null                  AS LEGAL_PERSON_CARD_NO 
+		       ,null                  AS BUSINESS_SCOPE 
+		       ,estdate               AS ESTABLISH_DATE 
+		       ,opdatefrom            AS OPERATE_STATE_TIME 
+		       ,opdateto              AS OPERATE_END_TIME 
+			   ,bigindustrycode  as hymldm -- 行业门类代码
+               ,bigindustry as hyml --行业门类名称
+			   ,null as lsqymc -- 隶属企业名称
+			   ,null as lsqyzch -- 隶属企业注册号
+			   , case when currency='美元' then round(regcap*6.4354,4)
+when currency='欧元' then round(regcap*7.8434,4)
+when currency='挪威克朗' then round(regcap*0.76871,4)
+when currency='人民币' then round(regcap,4)
+when currency='新加坡元' then round(regcap*4.8305,4)
+when currency='香港元' then round(regcap*0.82828,4)
+when currency='泰国铢' then round(regcap*0.20505,4)
+when currency='日元' then round(regcap*0.059180,4)
+when currency='菲律宾比索' then round(regcap*0.13427,4)
+when currency='英镑' then round(regcap*9.1011,4)
+when currency='瑞士法郎' then round(regcap*7.1636,4)
+when currency='瑞典克朗' then round(regcap*0.77295,4)
+when currency='加元' then round(regcap*5.3279,4) else round(regcap,4) end as zczb -- 注册资本
+			   ,currency as bizhong -- 币种
+               ,currencycode as bzdm --币种代码
+			   ,smallindustrycode as hydm -- 行业代码
+      		   ,smallindustry as hymc --行业名称
+			   ,null as jycs -- 经营场所
+               ,null as njqk -- 年检情况
+               ,null as ndbgxx -- 年度报告信息
+               ,enttypecode as ssztlx -- 商事主体类型
+               ,enttype as ssztlx_name --商事主体类型名称
+			   ,entstatus yyzt-- 企业状态
+		       ,datatime              AS GLDM_CREATE_TIME 
+		       ,datatime              AS GLDM_UPDATE_TIME 
+		       ,null                  AS LEGAL_PERSON_CARD_ID 
+		       ,entstatus             AS LGL_ENTSTAUS_NO 
+		       ,authdate              AS LGL_AUTHDATE 
+		       ,pbuitem               AS LGL_PBUITEM 
+		       ,regorgcode            AS ADMIN_ORG_UNIT_NO 
+		       ,regorg                AS ADMIN_ORG_UNIT 
+		       ,null                  AS BUILDING_ID 
+		       ,null                  AS BOUSE_ID 
+		       ,addr                  AS ADDRESS_DETAIL 
+		       ,'std_qfzggj_aic_base' AS lyb 
+		       ,lyjg                  AS lyjg
+		FROM std_qfzggj_aic_base a
+		WHERE --entstatuscode='1'  AND 
+        dt=(SELECT  MAX(dt) FROM std_qfzggj_aic_base) and
+      exists(     select 1 from std_qfzggj_aic_jgbase b where b.dt=(select max(dt) from std_qfzggj_aic_jgbase) and a.entid=b.entid and b.jgorgcode='4500'
+											)   
+	) t2
+	ON t1.a_lgl_id=t2.lgl_id
+	LEFT JOIN 
+	(
+		SELECT  recordid                       AS LGL_ID 
+		       ,qymc                           AS LGL_NAME 
+		       ,qymc                           AS LGL_SHORT_NAME 
+		       ,NULL                           AS LGL_ENGLISH_NAME 
+		       ,tyshxydm                       AS tyshxydm 
+		       ,zch                            AS zch 
+		       ,zzjgdm                         AS zzjgdm 
+		       ,ssztlx                         AS LGL_ORGANIZATION_CODE 
+               ,ssztlx_name                    AS LGL_ORGANIZATION_NAME
+		       ,fddbr                          AS LEGAL_PERSON_NAME 
+		       ,swzh                           AS LEGAL_PERSON_CARD_NO 
+		       ,jyfw                           AS BUSINESS_SCOPE 
+		       ,clrq                           AS ESTABLISH_DATE 
+		       ,jyqxq                          AS OPERATE_STATE_TIME 
+		       ,jyqxz                          AS OPERATE_END_TIME 
+      		   /*===1223===新增字段*/
+			   ,lsqymc as lsqymc -- 隶属企业名称
+			   ,lsqyzch as lsqyzch -- 隶属企业注册号
+       		   ,sbsszb as sbsszb -- 申报实收资本
+			   ,jycs as jycs -- 经营场所
+               ,njqk as njqk -- 年检情况
+               ,ndbgxx as ndbgxx -- 年度报告信息
+               ,ssztlx as ssztlx -- 商事主体类型
+               ,ssztlx_name as ssztlx_name --商事主体类型名称
+			   ,case when yyzt='1' then '存续（在营、开业、在册）'
+  				     when yyzt='11' then '停业'
+    				 when yyzt='2' then '吊销'
+      				 when yyzt='3' then ''
+        			 when yyzt='4' then '注销'
+          			 when yyzt='6' then '迁出'
+            		 when yyzt='7' then '个体暂时吊销'
+              		 when yyzt='8' then '撤销登记'
+                else null end as yyzt -- 企业状态
+      		   /*==========*/
+		       ,timeflag                       AS GLDM_CREATE_TIME 
+		       ,timeflag                       AS GLDM_UPDATE_TIME 
+		       ,null                           AS LEGAL_PERSON_CARD_ID 
+		       /*1217补充营业状态-企业状态,数据元参考aic_base的字典*/
+      		   ,case when yyzt='1' then '存续（在营、开业、在册）'
+  				     when yyzt='11' then '停业'
+    				 when yyzt='2' then '吊销'
+      				 when yyzt='3' then ''
+        			 when yyzt='4' then '注销'
+          			 when yyzt='6' then '迁出'
+            		 when yyzt='7' then '个体暂时吊销'
+              		 when yyzt='8' then '撤销登记'
+                else null end                 AS LGL_ENTSTAUS_NO 
+		       ,hzrq                           AS LGL_AUTHDATE 
+		       ,null                           AS LGL_PBUITEM 
+		       ,null                           AS ADMIN_ORG_UNIT_NO 
+		       ,null                           AS ADMIN_ORG_UNIT 
+		       ,null                           AS BUILDING_ID 
+		       ,fwbm                           AS HOUSE_ID 
+		       ,jycs                           AS ADDRESS_DETAIL 
+		       ,'std_schzljgw_sszt_jbxx110497' AS lyb 
+		       ,lyjg                           AS lyjg
+		FROM std_schzljgw_sszt_jbxx110497
+		WHERE --yyzt=1 AND 
+        dt=(SELECT  MAX(dt) FROM std_schzljgw_sszt_jbxx110497)
+	) t3
+	ON t1.b_lgl_id=t3.LGL_ID
+	LEFT JOIN 
+	(
+		SELECT  frid                    AS LGL_ID 
+		       ,qymc                    AS LGL_NAME 
+		       ,qymc                    AS LGL_SHORT_NAME 
+		       ,null                    AS LGL_ENGLISH_NAME 
+		       ,tyshxydm                AS tyshxydm 
+		       ,zch                     AS zch 
+		       ,zzjgdm                  AS zzjgdm 
+		       ,ssztlx                  AS LGL_ORGANIZATION_CODE 
+		       ,fddbr                   AS LEGAL_PERSON_NAME 
+		       ,frsfzh                  AS LEGAL_PERSON_CARD_NO 
+		       ,jyfw                    AS BUSINESS_SCOPE 
+		       ,clrq                    AS ESTABLISH_DATE 
+		       ,jyqxq                   AS OPERATE_STATE_TIME 
+		       ,jyqxz                   AS OPERATE_END_TIME 
+		       ,timeflag                AS GLDM_CREATE_TIME 
+		       ,timeflag                AS GLDM_UPDATE_TIME 
+		       ,null                    AS LEGAL_PERSON_CARD_ID 
+		       ,qyzt                    AS LGL_ENTSTAUS_NO 
+		       ,hzrq                    AS LGL_AUTHDATE 
+		       ,null                    AS LGL_PBUITEM 
+		       ,djjgdh                  AS ADMIN_ORG_UNIT_NO 
+		       ,fzjg                    AS ADMIN_ORG_UNIT 
+		       ,null                    AS BUILDING_ID 
+		       ,null                    AS HOUSE_ID 
+		       ,bzdz                    AS ADDRESS_DETAIL 
+		       ,zcdz                    AS ZCDZ 
+		       ,zcdtydzbm               AS ZCDZ_CODE 
+		       ,jydz                    AS JYDZ 
+		       ,jydtydzbm               AS JYDZ_CODE 
+		       ,bzdz                    AS BGDZ 
+		       ,null                    AS BGDZ_CODE 
+		       ,null                    AS SCDZ 
+		       ,null                    AS SCDZ_CODE 
+		       ,'std_qzfw_view_qy_jcxx' AS lyb 
+		       ,sxsj                    AS BRSJ 
+		       ,xwsj                    AS BLSJ 
+		       ,lyjg                    AS lyjg
+		FROM std_qzfw_view_qy_jcxx
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM std_qzfw_view_qy_jcxx)
+	) t4
+	ON t1.c_lgl_id=t4.LGL_ID
+	LEFT JOIN 
+	(
+		SELECT  tyshxydm,qymc,zch,jzwtydzbm 
+		FROM std_qzfw_view_ywk_sszt_hc
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM std_qzfw_view_ywk_sszt_hc )
+	) t5
+	ON t1.tyshxydm=t5.tyshxydm
+  left join 
+  (
+		SELECT  tyshxydm,qymc,zch,jzwtydzbm 
+		FROM std_qzfw_view_ywk_sszt_hc
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM std_qzfw_view_ywk_sszt_hc )
+	) t6
+	ON t1.lgl_name=t6.qymc
+  left join 
+    (
+		SELECT  tyshxydm,qymc,zch,jzwtydzbm 
+		FROM std_qzfw_view_ywk_sszt_hc
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM std_qzfw_view_ywk_sszt_hc )
+	) t7
+	ON t1.zch=t7.zch
+	LEFT JOIN 
+	(
+		SELECT  *
+		FROM std_qzfw_view_ywk_tydz
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM std_qzfw_view_ywk_tydz)
+	) t8
+	ON t5.JZWTYDZBM=t8.SSLDBM
+   LEFT JOIN
+  (
+    (select tyshxydm,zcdtydzbm,row_number()over(partition by tyshxydm order by zcdtydzbm) rn
+           from std_qzfw_view_qy_jcxx where dt=(select max(dt) from std_qzfw_view_qy_jcxx) )
+  )t9
+  ON t9.tyshxydm = t1.tyshxydm and t9.rn=1
+  left join ssss t10 
+  on t1.tyshxydm = t10.enterpriseno
+  and t10.enterpriseno_rn =1
+  left join ssss t11
+  on t1.zzjgdm = t11.organcode
+  and t11.organcode_rn =1
+)
+WHERE rn =1  and length(tyshxydm)>1
+
+
+
+
+
+ --SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-02 16:03:43
+--table_name : dwd_jbxx_frjcxx (基本信息_法人基础信息)
+--use_tables : std_qmz_qmzjmbfqydwcldjxx (民办非企业单位成立登记信息)
+--  		   std_qmz_qmzjshzzcldjxx (社会组织成立登记信息)	
+--	           std_qfg_t_busi_mzj_jjh (基金会登记信息)		
+--取数逻辑   : 三张表去重后 取出对应字段 union all 插入 法人基本信息表中 作为补充数据
+--去重/筛选逻辑: 无
+--20210524 增加zczb注册资本字段
+--_********************************************************_
+   
+insert into  dwd_jbxx_frjcxx partition (dt='${DayBeforeStartTime}')
+select 
+id  as  lgl_id  --法人唯一标识
+,mc  as  lgl_name  --机构名称
+,mc  as  lgl_short_name  --机构简称
+,null  as  lgl_english_name  --机构英文名称
+,shtyxydm  as  tyshxydm  --统一社会信用代码
+,null  as  zch  --登记或注册号
+,null  as  zzjgdm  --组织机构代码
+,'91'  as  lgl_organization_code  --机构类型
+,'民办非企业单位' as lgl_organization_name --机构类型名称
+,null as  legal_person_name  --法定代表人或负责人姓名
+,null  as  legal_person_card_no  --法定代表人或负责人证件号码
+,ywfw  as  business_scope  --经营范围
+,null  as  establish_date  --成立日期
+,null  as  operate_state_time  --经营期限自
+,null  as  operate_end_time  --经营期限至
+,null as hymldm --行业门类
+,null as hyml -- 行业门类
+,null as lsqymc -- 隶属企业名称
+,null as lsqyzch -- 隶属企业注册号
+,null as zczb   --注册资本
+,null as sbsszb -- 申报实收资本
+,null as bzdm --币种代码
+,null as bizhong -- 币种
+,null as hydm -- 行业代码
+,null as hymc --行业名称
+,null as jycs -- 经营场所
+,null as njqk -- 年检情况
+,null as ndbgxx -- 年度报告信息
+,null as ssztlx -- 商事主体类型
+,null as yyzt -- 企业状态
+,substr(u_insert_time,1,19)  as  gldm_create_time  --记录创建时间
+,substr(u_insert_time,1,19)  as  gldm_update_time  --记录更新时间
+,null  as  legal_person_card_id  --法定代表人或负责人证件类型
+,null  as  lgl_entstaus_no  --法人主体状态
+,null  as  lgl_authdate  --核准日期
+,ywfw  as  lgl_pbuitem  --许可经营项目
+,null  as  admin_org_unit_no  --登记管理部门代码
+,ywzgdw  as  admin_org_unit  --登记管理部门名称
+,null  as  building_id  --楼栋编码
+,null  as  house_id  --房屋编码
+,null  as  address_detail  --详细地址
+,null  as  zcdz  --注册地址
+,null  as  zcdz_code  --注册地统一地址编码
+,zs  as  jydz  --经营地址
+,null  as  jydz_code  --经营地统一地址编码
+,zs  as  bgdz  --办公地址
+,null  as  bgdz_code  --办公地址一地址编码
+,null  as  scdz  --生产地址
+,null  as  scdz_code  --生产地址一地址编码
+,null  as  brsj  --搬入时间
+,null  as  blsj  --搬离时间
+,null  as  zbx  --坐标X
+,null  as  zby  --坐标Y
+,'std_qmz_qmzjmbfqydwcldjxx'  as  lyb  --来源表
+,lyjg  as  lyjg  --来源机构
+,CURRENT_TIMESTAMP  as  yxsj  --运行时间
+from 
+(select id,mc,shtyxydm,u_insert_time,ywfw,ywzgdw,zs,lyjg
+,row_number() over(partition by shtyxydm order by mc,u_insert_time desc) as rn 
+from std_qmz_qmzjmbfqydwcldjxx where dt=(select max(dt) from std_qmz_qmzjmbfqydwcldjxx))
+where rn=1  and shtyxydm!='51440307349885702E'
+
+
+union all
+
+select 
+id as lgl_id --法人唯一标识
+,mc as lgl_name --机构名称
+,mc as lgl_short_name --机构简称
+,null as lgl_english_name --机构英文名称
+,shtyxydm as tyshxydm --统一社会信用代码
+,null as zch --登记或注册号
+,null as zzjgdm --组织机构代码
+,'79' as lgl_organization_code --机构类型
+,'其他社会团体' as lgl_organization_name --机构类型名称
+,fddbr as legal_person_name --法定代表人或负责人姓名
+,null as legal_person_card_no --法定代表人或负责人证件号码
+,ywfw as business_scope --经营范围
+,null as establish_date --成立日期
+,null as operate_state_time --经营期限自
+,null as operate_end_time --经营期限至
+,null as hymldm --行业门类
+,null as hyml -- 行业门类
+,null as lsqymc -- 隶属企业名称
+,null as lsqyzch -- 隶属企业注册号
+,null as zczb   --注册资本
+,null as sbsszb -- 申报实收资本
+,null as bzdm --币种代码
+,null as bizhong -- 币种
+,null as hydm -- 行业代码
+,null as hymc --行业名称
+,null as jycs -- 经营场所
+,null as njqk -- 年检情况
+,null as ndbgxx -- 年度报告信息
+,null as ssztlx -- 商事主体类型
+,null as yyzt -- 企业状态
+,substr(u_insert_time,1,19) as gldm_create_time --记录创建时间
+,substr(u_insert_time,1,19) as gldm_update_time --记录更新时间
+,null as legal_person_card_id --法定代表人或负责人证件类型
+,null as lgl_entstaus_no --法人主体状态
+,null as lgl_authdate --核准日期
+,ywfw as lgl_pbuitem --许可经营项目
+,null as admin_org_unit_no --登记管理部门代码
+,ywzgdw as admin_org_unit --登记管理部门名称
+,null as building_id --楼栋编码
+,null as house_id --房屋编码
+,null as address_detail --详细地址
+,null as zcdz --注册地址
+,null as zcdz_code --注册地统一地址编码
+,zs as jydz --经营地址
+,null as jydz_code --经营地统一地址编码
+,zs as bgdz --办公地址
+,null as bgdz_code --办公地址一地址编码
+,null as scdz --生产地址
+,null as scdz_code --生产地址一地址编码
+,null as brsj --搬入时间
+,null as blsj --搬离时间
+,null as zbx --坐标X
+,null as zby --坐标Y
+,'std_qmz_qmzjshzzcldjxx' as lyb --来源表
+,lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from (select id,mc,shtyxydm,fddbr,ywfw,u_insert_time,ywzgdw,fzjg,zs,lyjg
+,row_number() over(partition by shtyxydm order by mc,u_insert_time desc) as rn
+from std_qmz_qmzjshzzcldjxx where dt=(select max(dt) from std_qmz_qmzjshzzcldjxx))
+where rn=1
+
+union all
+
+select 
+aicentcode as lgl_id --法人唯一标识
+,dwmc as lgl_name --机构名称
+,dwmc as lgl_short_name --机构简称
+,null as lgl_english_name --机构英文名称
+,tyshxydm as tyshxydm --统一社会信用代码
+,djzh as zch --登记或注册号
+,zzjgdm as zzjgdm --组织机构代码
+,'93' as lgl_organization_code --机构类型
+,'基金会' as lgl_organization_name --机构类型
+,fddbr as legal_person_name --法定代表人或负责人姓名
+,fddbrzjhm as legal_person_card_no --法定代表人或负责人证件号码
+,ywfw as business_scope --经营范围
+,null as establish_date --成立日期
+,null as operate_state_time --经营期限自
+,null as operate_end_time --经营期限至
+,null as hymldm --行业门类代码
+,null as hyml -- 行业门类
+,null as lsqymc -- 隶属企业名称
+,null as lsqyzch -- 隶属企业注册号
+,null as zczb   --注册资本
+,null as sbsszb -- 申报实收资本
+,null as bzdm --币种代码
+,null as bizhong -- 币种
+,null as hydm -- 行业代码
+,null as hymc
+,null as jycs -- 经营场所
+,null as njqk -- 年检情况
+,null as ndbgxx -- 年度报告信息
+,null as ssztlx -- 商事主体类型
+,null as yyzt -- 企业状态
+,updatetime as gldm_create_time --记录创建时间
+,updatetime as gldm_update_time --记录更新时间
+,fddbrzjlx as legal_person_card_id --法定代表人或负责人证件类型
+,null as lgl_entstaus_no --法人主体状态
+,null as lgl_authdate --核准日期
+,ywfw as lgl_pbuitem --许可经营项目
+,null as admin_org_unit_no --登记管理部门代码
+,djgljg as admin_org_unit --登记管理部门名称
+,null as building_id --楼栋编码
+,null as house_id --房屋编码
+,null as address_detail --详细地址
+,null as zcdz --注册地址
+,null as zcdz_code --注册地统一地址编码
+,dwdz as jydz --经营地址
+,null as jydz_code --经营地统一地址编码
+,dwdz as bgdz --办公地址
+,null as bgdz_code --办公地址一地址编码
+,null as scdz --生产地址
+,null as scdz_code --生产地址一地址编码
+,null as brsj --搬入时间
+,null as blsj --搬离时间
+,null as zbx --坐标X
+,null as zby --坐标Y
+,'std_qfg_t_busi_mzj_jjh' as lyb --来源表
+,lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间 
+from 
+(select aicentcode,dwmc,tyshxydm,djzh,zzjgdm,fddbr,jjhlx,fddbrzjhm,ywfw,updatetime,fddbrzjlx,djgljg,dwdz,lyjg
+,row_number() over(partition by aicentcode,dwmc,tyshxydm order by updatetime desc) as rn 
+from std_qfg_t_busi_mzj_jjh where dt=(select max(dt) from std_qfg_t_busi_mzj_jjh))
+where rn=1
+
+
+

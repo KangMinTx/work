@@ -1,0 +1,102 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-04 15:24:27
+--_********************************************************_
+--主键	uuid	STRING		
+--统一社会信用代码	tyshxydm	STRING	根据法人基本信息补充	
+--主体身份代码	ztsfdm	STRING	根据法人基本信息补充	
+--组织机构代码	zzjgdm	STRING	根据法人基本信息补充	
+--登记/注册号	dj/zch	STRING	根据法人基本信息补充	
+--公司名称	gsmc	STRING	T_GTW_TDSYQCRHTBCXY103229证照主体名称	qcgjjsgczyzyldshhlszyldsp用地单位
+--不动产权利类型	bdcqllx	STRING	土地使用权	林地使用权
+--不动产权证号	bdcqzh	STRING	T_GTW_TDSYQCRHTBCXY103229证照编号（文号） 	qcgjjsgczyzyldshhlszyldsp项目准文
+--项目名称	xmmc	STRING		qcgjjsgczyzyldshhlszyldsp项目名称
+--合同号	hth	STRING	T_GTW_TDSYQCRHTBCXY103229合同号	
+--宗地号	zdh	STRING	T_GTW_TDSYQCRHTBCXY103229宗地号	
+--不动产权属起始日期	bdcqsqsrq	DATE	T_GTW_TDSYQCRHTBCXY103229证照生效日期	
+--不动产权属终止日期	bdcqszzrq	DATE	T_GTW_TDSYQCRHTBCXY103229证照失效日期	
+--使用期限	syqx	STRING	T_GTW_TDSYQCRHTBCXY103229土地使用年限 	qcgjjsgczyzyldshhlszyldsp占地类型
+--登记日期	djrq	DATE	T_GTW_TDSYQCRHTBCXY103229发（出）证日期	qcgjjsgczyzyldshhlszyldsp终审时间
+--用地面积	ydmj	STRING	T_GTW_TDSYQCRHTBCXY103229用地面积	qcgjjsgczyzyldshhlszyldsp占林地总面积
+--信息来源类型	xxlylx	STRING	补充	补充
+--来源表	lyb	STRING		
+--来源机构	lyjg	STRING		
+--运行时间	yxsj	DATETIME		
+--truncate table std_qcghzhzfj_qcgjjsgczyzyldshhlszyldsp
+INSERT OVERWRITE TABLE dwd_zczb_bdcxx PARTITION (dt = '${DayBeforeStartTime}')
+select
+uuid                  ,--主键
+tyshxydm                  ,--统一社会信用代码
+ztsfdm                  ,--主体身份代码
+zzjgdm                  ,--组织机构代码
+zch                  ,--登记/注册号
+gsmc                  ,--公司名称
+bdcqllx                  ,--不动产权利类型
+bdcqzh                  ,--不动产权证号
+xmmc                  ,--项目名称
+hth                  ,--合同号
+zdh                  ,--宗地号
+to_date(bdcqsqsrq) as bdcqsqsrq                ,--不动产权属起始日期
+to_date(bdcqszzrq) as  bdcqszzrq                ,--不动产权属终止日期
+syqx                  ,--使用期限
+to_date(djrq)                  ,--登记日期
+ydmj                  ,--用地面积
+xxlylx                  ,--信息来源类型
+lyb                  ,--来源表
+lyjg                  ,--来源机构
+now() yxsj                  --运行时间
+from
+(
+select
+uuid() uuid                  ,--主键
+b1.tyshxydm tyshxydm                  ,--统一社会信用代码
+b1.lgl_id ztsfdm                  ,--主体身份代码
+b1.zzjgdm zzjgdm                  ,--组织机构代码
+b1.zch as zch                  ,--登记/注册号
+b2.u_ztmc gsmc                  ,--公司名称
+"土地使用权" bdcqllx                  ,--不动产权利类型
+b2.u_zzbh bdcqzh                  ,--不动产权证号
+null xmmc                  ,--项目名称
+b2.hth hth                  ,--合同号
+b2.zdh zdh                  ,--宗地号
+b2.u_sxrq bdcqsqsrq                  ,--不动产权属起始日期
+to_date(replace(b2.u_jzrq,'/','-'),'yyyy-MM-dd') bdcqszzrq                  ,--不动产权属终止日期
+b2.tdsynx syqx                  ,--使用期限
+b2.u_fzrq djrq                  ,--登记日期
+b2.ydmj ydmj                  ,--用地面积
+"补充" xxlylx                  ,--信息来源类型
+"std_sghhgtzywyh_t_gtw_tdsyqcrhtbcxy103229  dwd_jbxx_frjcxx" lyb                  ,--来源表
+b2.lyjg lyjg                  ,--来源机构
+now() yxsj                  --运行时间
+from (select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b1
+inner join (select * from  std_sghhgtzywyh_t_gtw_tdsyqcrhtbcxy103229 where dt=(select max(dt) from std_sghhgtzywyh_t_gtw_tdsyqcrhtbcxy103229)) b2
+on trim(b2.u_ztmc)=trim(b1.lgl_name)
+
+union all
+
+select 
+uuid() uuid                  ,--主键
+null tyshxydm                  ,--统一社会信用代码
+null ztsfdm                  ,--主体身份代码
+null zzjgdm                  ,--组织机构代码
+null dj_zch                  ,--登记/注册号
+b1.yddw gsmc                  ,--公司名称
+"林地使用权" bdcqllx                  ,--不动产权利类型
+b1.xmzw bdcqzh                  ,--不动产权证号
+b1.xmmc xmmc                  ,--项目名称
+null hth                  ,--合同号
+null zdh                  ,--宗地号
+null bdcqsqsrq                  ,--不动产权属起始日期
+null bdcqszzrq                  ,--不动产权属终止日期
+b1.zdlx syqx                  ,--使用期限
+b1.zssj djrq                  ,--登记日期
+b1.zldzmj ydmj                  ,--用地面积
+"补充" xxlylx                  ,--信息来源类型
+"std_qcghzhzfj_qcgjjsgczyzyldshhlszyldsp" lyb                  ,--来源表
+b1.lyjg lyjg                  ,--来源机构
+now() yxsj                  --运行时间
+from   (select * from  std_qcghzhzfj_qcgjjsgczyzyldshhlszyldsp where dt=(select max(dt) from std_qcghzhzfj_qcgjjsgczyzyldshhlszyldsp)) b1
+)
+
+

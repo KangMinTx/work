@@ -1,0 +1,52 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-01 14:01:19.84
+--所属主题:印章备案信息
+--内容描述:印章备案信息1张表,加工至dwd_jbxx_yzbaxx(印章备案信息)
+--			std_qfzggj_t_busi_gaj_letindbak(区发展改革局_印章备案信息)1
+
+
+--加载策略:全量
+--修改    0106：修改字段顺序 将zch前置
+--_********************************************************_
+--truncate table dwd_jbxx_yzbaxx;
+insert overwrite table dwd_jbxx_yzbaxx partition (dt='${DayBeforeStartTime}')
+
+select
+	uuid() uuid		--主键
+	,tyshxydm	--统一社会信用代码
+	,ztsfdm		--主体身份代码
+	,zzjgdm		--组织机构代码
+    ,zch		--登记/注册号
+	,gsmc		--公司名称
+	,yzbm		--印章编码
+	,yzmc		--印章名称
+	,yzzt		--印章状态
+	,baqk		--备案情况
+	,basj		--备案时间
+	,spsj		--审批时间
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+select
+	distinct
+	b.tyshxydm	--统一社会信用代码
+	,nvl(b.zch,a.zch) as zch		--登记/注册号
+	,nvl(b.lgl_id,a.aicentcode) as ztsfdm		--主体身份代码
+	,nvl(b.zzjgdm,a.zzjgdm) as zzjgdm		--组织机构代码
+	,nvl(b.lgl_name,a.qymc) as gsmc		--公司名称
+	,yzbm		--印章编码
+	,yzmc		--印章名称
+	,yzzt		--印章状态
+	,baqk		--备案情况
+	,basj		--备案时间
+	,spsj		--审批时间
+ 	,'std_qfzggj_t_busi_gaj_letindbak' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,substr(current_timestamp,1,19) as yxsj      --运行时间
+ from (select * from std_qfzggj_t_busi_gaj_letindbak where dt=(select max(dt) from std_qfzggj_t_busi_gaj_letindbak)) a
+ inner join (select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+ on trim(a.zzjgdm)=trim(b.zzjgdm) )

@@ -1,0 +1,68 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-26 16:24:53
+--table_name : dwd_jbxx_lsqy(隶属企业)
+--use_tables : std_schzljgw_sszt_jbxx110497(商事主体基本信息)
+--			   dwd_jbxx_frjcxx (法人基本信息)
+-- 取数逻辑  : 与 std_schzljgw_sszt_jbxx110497 一一对应,关联 dwd_jbxx_frjcxx (法人基本信息) 补充部分法人信息
+-- 修改记录  : 1210 He 统一社会信用代码在“法人基本信息”里，且隶属企业不为空的；
+--					   统一社会信用代码不在“法人基本信息”里，但隶属企业名称在“法人基本信息”里；
+--			   1230 企业名称,注册号,组织机构代码 优先从 法人基本信息中 取值
+--			   20210106 qymc --> gsmc 
+--_********************************************************_
+INSERT OVERWRITE TABLE dwd_jbxx_lsqy PARTITION (dt = '${DayBeforeStartTime}')
+SELECT  tyshxydm --统一社会信用代码 
+       ,zzjgdm --组织机构代码 
+       ,zch --注册号 
+       ,qymc as gsmc --企业名称 
+       ,lsqyzch --隶属企业注册号 
+       ,lsqymc --隶属企业名称 
+       ,ssztlx --商事主体类型 
+       ,jyfw --经营范围 
+       ,clrq --成立日期 
+       ,lyb --来源表 
+       ,lyjg --来源机构 
+       ,yxsj --运行时间
+FROM 
+(
+select 
+*,row_number() over(partition by tyshxydm order by clrq desc) as rn
+from (
+SELECT  t1.tyshxydm                    AS tyshxydm --统一社会信用代码 
+       ,nvl(t2.zzjgdm,t1.zzjgdm)       AS zzjgdm --组织机构代码 
+       ,nvl(t2.zch,t1.zch)             AS zch --注册号 
+       ,nvl(t2.lgl_name,t1.qymc)       AS qymc --企业名称 
+       ,t1.lsqyzch                     AS lsqyzch --隶属企业注册号 
+       ,t1.lsqymc                      AS lsqymc --隶属企业名称 
+       ,t1.ssztlx                      AS ssztlx --商事主体类型 
+       ,t1.jyfw                        AS jyfw --经营范围 
+       ,t1.clrq                        AS clrq --成立日期 
+       ,'std_schzljgw_sszt_jbxx110497' AS lyb --来源表 
+       ,'市场和质量监管委'as lyjg --来源机构 
+       ,current_timestamp              AS yxsj --运行时间
+FROM 
+(select * from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497) and qymc is not null) t1
+inner join 
+(select lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.tyshxydm=t2.tyshxydm 
+union all 
+SELECT  nvl(b2.tyshxydm,b1.tyshxydm)   AS tyshxydm --统一社会信用代码 
+       ,nvl(b2.zzjgdm,b1.zzjgdm)       AS zzjgdm --组织机构代码 
+       ,nvl(b2.zch,b1.zch)             AS zch --注册号 
+       ,b1.qymc                        AS qymc --企业名称 
+       ,b1.lsqyzch                     AS lsqyzch --隶属企业注册号 
+       ,b1.lsqymc                      AS lsqymc --隶属企业名称 
+       ,b1.ssztlx                      AS ssztlx --商事主体类型 
+       ,b1.jyfw                        AS jyfw --经营范围 
+       ,b1.clrq                        AS clrq --成立日期 
+       ,'std_schzljgw_sszt_jbxx110497' AS lyb --来源表 
+       ,'市场和质量监管委'              as lyjg --来源机构 
+       ,current_timestamp              AS yxsj --运行时间
+FROM 
+(select * from std_schzljgw_sszt_jbxx110497 where dt=(select max(dt) from std_schzljgw_sszt_jbxx110497) ) b1
+inner join 
+(select lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b2
+on b1.tyshxydm!=b2.tyshxydm  and b1.qymc=b2.lgl_name
+)  
+)where rn=1

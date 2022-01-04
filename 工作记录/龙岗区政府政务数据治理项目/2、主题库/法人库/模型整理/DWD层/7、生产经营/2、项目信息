@@ -1,0 +1,172 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-01 14:10:14
+--_********************************************************_
+--主键	uuid	STRING	T_BUSI_XXB_ACHIEVE	T_BUSI_FGJ_SHTZXMHZXX	T_BUSI_FGJ_NDCDJSXMXX	T_BUSI_QHGLJ_QHXM	T_BUSI_KJCXW_QYCDKJZXXMXX
+--统一社会信用代码	tyshxydm	STRING	匹配法人基本信息	匹配法人基本信息	匹配法人基本信息	匹配法人基本信息	T_BUSI_KJCXW_QYCDKJZXXMXX统一社会信用代码
+--主体身份代码	ztsfdm	STRING	T_BUSI_XXB_ACHIEVE主体身份代码	T_BUSI_FGJ_SHTZXMHZXX主体身份代码	T_BUSI_FGJ_NDCDJSXMXX主体身份代码	T_BUSI_QHGLJ_QHXM主体身份代码	T_BUSI_KJCXW_QYCDKJZXXMXX主体身份代码
+--组织机构代码	zzjgdm	STRING	匹配法人基本信息	匹配法人基本信息	匹配法人基本信息	匹配法人基本信息	T_BUSI_KJCXW_QYCDKJZXXMXX组织机构代码
+--登记/注册号	dj/zch	STRING	匹配法人基本信息	匹配法人基本信息	匹配法人基本信息	匹配法人基本信息	T_BUSI_KJCXW_QYCDKJZXXMXX注册号
+--公司名称	gsmc	STRING	T_BUSI_XXB_ACHIEVE企业名称	T_BUSI_FGJ_SHTZXMHZXX项目申报单位	T_BUSI_FGJ_NDCDJSXMXX项目建设单位	T_BUSI_QHGLJ_QHXM单位名称	T_BUSI_KJCXW_QYCDKJZXXMXX承担单位
+--项目\成果编号	xm\cgbh	STRING	T_BUSI_XXB_ACHIEVE成果登记号		T_BUSI_FGJ_NDCDJSXMXX项目编号	T_BUSI_QHGLJ_QHXM数据唯一标识码	T_BUSI_KJCXW_QYCDKJZXXMXX项目编号
+--项目\成果名称	xm\cgmc	STRING	T_BUSI_XXB_ACHIEVE成果名称	T_BUSI_FGJ_SHTZXMHZXX项目名称	T_BUSI_FGJ_NDCDJSXMXX项目名称	T_BUSI_QHGLJ_QHXM项目名称	T_BUSI_KJCXW_QYCDKJZXXMXX项目名称
+--项目总投资	xmztz	STRING		T_BUSI_FGJ_SHTZXMHZXX项目总投资	T_BUSI_FGJ_NDCDJSXMXX项目总投资		
+--项目联系人	xmlxr	STRING	T_BUSI_XXB_ACHIEVE项目联系人				T_BUSI_KJCXW_QYCDKJZXXMXX项目负责人
+--联系方式	lxfs	STRING	T_BUSI_XXB_ACHIEVE联系电话				T_BUSI_KJCXW_QYCDKJZXXMXX联系电话
+--项目开始时间	xmkssj	datetime	T_BUSI_XXB_ACHIEVE登记日期	T_BUSI_FGJ_SHTZXMHZXX项目核准日期	T_BUSI_FGJ_NDCDJSXMXX计划年度		T_BUSI_KJCXW_QYCDKJZXXMXX项目开始时间
+--项目完成时间	xmwcsj	datetime		T_BUSI_FGJ_SHTZXMHZXX有效期限（有效期限+核准日期）			T_BUSI_KJCXW_QYCDKJZXXMXX项目截止时间
+--项目说明	xmsm	STRING	重大项目成果	社会投资项目	年度重大建设项目	前海现代服务业综合试点扶持项目	企业重大科技专项项目
+--信息来源类型	xxlylx	STRING	权威				
+--来源表	lyb	STRING					
+--来源机构	lyjg	STRING					
+--运行时间	yxsj	DATETIME					
+INSERT OVERWRITE TABLE dwd_scjy_xmxx PARTITION (dt = '${DayBeforeStartTime}')
+select
+uuid           ,--主键
+tyshxydm           ,--统一社会信用代码
+ztsfdm           ,--主体身份代码
+zzjgdm           ,--组织机构代码
+dj_zch as zch          ,--登记/注册号
+gsmc           ,--公司名称
+xm_cgbh           ,--项目\成果编号
+xm_cgmc           ,--项目\成果名称
+xmztz           ,--项目总投资
+xmlxr           ,--项目联系人
+lxfs           ,--联系方式
+xmkssj           ,--项目开始时间
+xmwcsj           ,--项目完成时间
+xmsm           ,--项目说明
+xxlylx           ,--信息来源类型
+lyb           ,--来源表
+lyjg           ,--来源机构
+yxsj           --运行时间
+from
+(
+select
+uuid() uuid           ,--主键
+b2.tyshxydm tyshxydm           ,--统一社会信用代码
+b1.aicentcode ztsfdm           ,--主体身份代码
+b2.zzjgdm zzjgdm           ,--组织机构代码
+b2.zch dj_zch           ,--登记/注册号
+b1.entname gsmc           ,--公司名称
+b1.no xm_cgbh           ,--项目\成果编号
+b1.achname xm_cgmc           ,--项目\成果名称
+null xmztz           ,--项目总投资
+b1.prolinkman xmlxr           ,--项目联系人
+b1.linkphone lxfs           ,--联系方式
+if(size(split(b1.regdate,'/'))=3,split(b1.regdate,'/')[2] || if(length(split(b1.regdate,'/')[1])=1,'-0','-') || split(b1.regdate,'/')[1] || if(length(split(b1.regdate,'/')[0])=1,'-0','-') || split(b1.regdate,'/')[0],b1.regdate) xmkssj           ,--项目开始时间 xmkssj           ,--项目开始时间
+null xmwcsj           ,--项目完成时间
+"重大项目成果" xmsm           ,--项目说明
+"权威" xxlylx           ,--信息来源类型
+"std_qfzggj_t_busi_xxb_achieve dwd_jbxx_frjcxx" lyb           ,--来源表
+b1.lyjg lyjg           ,--来源机构
+now() yxsj           --运行时间
+from std_qfzggj_t_busi_xxb_achieve b1
+left join dwd_jbxx_frjcxx b2
+on b1.aicentcode=b2.LGL_ID
+  where b1.dt=(select max(dt) from std_qfzggj_t_busi_xxb_achieve) and b2.dt=(select max(dt) from dwd_jbxx_frjcxx)
+
+union all
+
+select
+uuid() uuid           ,--主键
+b2.tyshxydm tyshxydm           ,--统一社会信用代码
+b1.aicentcode ztsfdm           ,--主体身份代码
+b2.zzjgdm zzjgdm           ,--组织机构代码
+b2.zch dj_zch           ,--登记/注册号
+b1.xmsbdwmc gsmc           ,--公司名称
+null xm_cgbh           ,--项目\成果编号
+b1.xmmc xm_cgmc           ,--项目\成果名称
+b1.xmztz xmztz           ,--项目总投资
+null xmlxr           ,--项目联系人
+null lxfs           ,--联系方式
+b1.xmhzrq xmkssj           ,--项目开始时间
+date_add(b1.xmhzrq, if(b1.yxqx="有效期三年",1095,730))  xmwcsj           ,--项目完成时间+b1.xmhzrq
+"社会投资项目" xmsm           ,--项目说明
+null xxlylx           ,--信息来源类型
+"std_qfzggj_t_busi_fgj_shtzxmhzxx dwd_jbxx_frjcxx" lyb           ,--来源表
+b1.lyjg lyjg           ,--来源机构
+now() yxsj           --运行时间
+from std_qfzggj_t_busi_fgj_shtzxmhzxx b1
+left join dwd_jbxx_frjcxx b2
+on b1.aicentcode=b2.LGL_ID
+  where b1.dt=(select max(dt) from std_qfzggj_t_busi_fgj_shtzxmhzxx) and b2.dt=(select max(dt) from dwd_jbxx_frjcxx)
+
+union all
+
+
+select
+uuid() uuid           ,--主键
+b2.tyshxydm tyshxydm           ,--统一社会信用代码
+b1.aicentcode ztsfdm           ,--主体身份代码
+b2.zzjgdm zzjgdm           ,--组织机构代码
+b2.zch dj_zch           ,--登记/注册号
+b1.xmjsdwmc gsmc           ,--公司名称
+b1.xmbh xm_cgbh           ,--项目\成果编号
+b1.xmmc xm_cgmc           ,--项目\成果名称
+b1.xmztz xmztz           ,--项目总投资
+null xmlxr           ,--项目联系人
+null lxfs           ,--联系方式
+b1.udate xmkssj           ,--项目开始时间
+null  xmwcsj           ,--项目完成时间
+"年度重大建设项目" xmsm           ,--项目说明
+null xxlylx           ,--信息来源类型
+"std_qfzggj_T_BUSI_FGJ_NDCDJSXMXX dwd_jbxx_frjcxx" lyb           ,--来源表
+b1.lyjg lyjg           ,--来源机构
+now() yxsj           --运行时间
+from std_qfzggj_T_BUSI_FGJ_NDCDJSXMXX b1
+left join dwd_jbxx_frjcxx b2
+on b1.aicentcode=b2.LGL_ID
+  where b1.dt=(select max(dt) from std_qfzggj_T_BUSI_FGJ_NDCDJSXMXX) and b2.dt=(select max(dt) from dwd_jbxx_frjcxx)
+
+union all
+
+select
+uuid() uuid           ,--主键
+b2.tyshxydm tyshxydm           ,--统一社会信用代码
+b1.aicentcode ztsfdm           ,--主体身份代码
+b2.zzjgdm zzjgdm           ,--组织机构代码
+b2.zch dj_zch           ,--登记/注册号
+b1.entname gsmc           ,--公司名称
+b1.recordid xm_cgbh           ,--项目\成果编号
+b1.proname xm_cgmc           ,--项目\成果名称
+null xmztz           ,--项目总投资
+null xmlxr           ,--项目联系人
+null lxfs           ,--联系方式
+null xmkssj           ,--项目开始时间
+null  xmwcsj           ,--项目完成时间
+"前海现代服务业综合试点扶持项目" xmsm           ,--项目说明
+null xxlylx           ,--信息来源类型
+"std_qfzggj_T_BUSI_QHGLJ_QHXM dwd_jbxx_frjcxx" lyb           ,--来源表
+b1.lyjg lyjg           ,--来源机构
+now() yxsj           --运行时间
+from std_qfzggj_T_BUSI_QHGLJ_QHXM b1
+left join dwd_jbxx_frjcxx b2
+on b1.aicentcode=b2.LGL_ID
+  where b1.dt=(select max(dt) from std_qfzggj_T_BUSI_QHGLJ_QHXM) and b2.dt=(select max(dt) from dwd_jbxx_frjcxx)
+
+union all
+
+select
+uuid() uuid           ,--主键
+tyshxydm tyshxydm           ,--统一社会信用代码
+aicentcode ztsfdm           ,--主体身份代码
+zzjgdm zzjgdm           ,--组织机构代码
+zch dj_zch           ,--登记/注册号
+cddw gsmc           ,--公司名称
+xmbh xm_cgbh           ,--项目\成果编号
+xmmc xm_cgmc           ,--项目\成果名称
+null xmztz           ,--项目总投资
+xmfzr xmlxr           ,--项目联系人
+lxdh lxfs           ,--联系方式
+if(size(split(xmkssj,'/'))=3,split(xmkssj,'/')[0] || if(length(split(xmkssj,'/')[1])=1,'-0','-') || split(xmkssj,'/')[1] || if(length(split(xmkssj,'/')[2])=1,'-0','-') || split(xmkssj,'/')[2],xmkssj) xmkssj           ,--项目开始时间
+if(size(split(xmjzsj,'/'))=3,split(xmjzsj,'/')[0] || if(length(split(xmjzsj,'/')[1])=1,'-0','-') || split(xmjzsj,'/')[1] || if(length(split(xmjzsj,'/')[2])=1,'-0','-') || split(xmjzsj,'/')[2],xmjzsj)  xmwcsj           ,--项目完成时间
+"企业重大科技专项项目" xmsm           ,--项目说明
+null xxlylx           ,--信息来源类型
+"std_qfzggj_T_BUSI_KJCXW_QYCDKJZXXMXX" lyb           ,--来源表
+lyjg lyjg           ,--来源机构
+now() yxsj           --运行时间
+from std_qfzggj_T_BUSI_KJCXW_QYCDKJZXXMXX 
+  where dt=(select max(dt) from std_qfzggj_T_BUSI_KJCXW_QYCDKJZXXMXX)
+);

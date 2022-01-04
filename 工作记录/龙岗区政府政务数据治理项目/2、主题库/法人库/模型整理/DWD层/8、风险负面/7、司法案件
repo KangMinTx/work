@@ -1,0 +1,155 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-12 09:40:19.84
+--所属主题:司法案件
+--内容描述:司法案件std层2张表,加工至dwd_sfajxx(司法案件)
+
+
+--加载策略:全量
+--_********************************************************_
+--2021-03-16
+--结案日期修改格式为源表格式
+--truncate table dwd_sfajxx;
+insert overwrite table dwd_sfajxx partition (dt='${DayBeforeStartTime}')
+
+select
+	tyshxydm   	 --统一社会信用代码
+	,frmc gsmc    --法人名称/字号
+	,frdb fddbr    --法人代表
+	,dsrdw	 --当事人地位
+	,ah		 --案号
+	,ajlx    --案件类型
+	,jaay	 --结案案由
+	,jafs    --结案方式
+	,jaxcyy  --案件形成类型
+	,substr(jarq,1,10) jarq	 --结案日期
+	,sqdm	 --社区代码
+	,jddm	 --街道代码
+	,lyb	 --来源表
+	,lyjg	 --来源机构
+	,yxsj	 --运行时间
+    ,gdsrdw  --各当事人地位
+from 
+(
+	select
+		tyshxydm   	 --统一社会信用代码
+		,frmc    --法人名称/字号
+		,frdb    --法人代表
+		,dsrdw	 --当事人地位
+		,ah		 --案号
+		,ajlx    --案件类型
+		,jaay	 --结案案由
+		,jafs    --结案方式
+		,jaxcyy  --案件形成类型
+		,jarq	 --结案日期
+		,gdsrdw  --各当事人地位
+		,sqdm	 --社区代码
+		,jddm	 --街道代码
+		,lyb	 --来源表
+		,lyjg	 --来源机构
+		,yxsj	 --运行时间
+		,row_number()over(partition by agency_key order by jarq desc) rank
+	from 
+(
+		select
+				distinct
+				c.tyshxydm	tyshxydm--统一社会信用代码
+				,concat_ws('',replace(partydeptadd,'(被告)',''),a.caseno) agency_key   	 --法人名称/字号+案号
+				,replace(partydeptadd,'(被告)','') frmc    --法人名称/字号
+				,c.fddbr frdb    --法人代表
+				,'被告' dsrdw	 --当事人地位
+				,a.caseno ah		 --案号
+				,a.casetype ajlx    --案件类型
+				,a.caseendreason jaay	 --结案案由
+				,a.caseendmanner jafs    --结案方式
+				,a.caseformtype jaxcyy  --案件形成类型
+				,a.caseenddate jarq	 --结案日期
+				,a.perpartystatus gdsrdw  --各当事人地位
+				,null sqdm	 --社区代码
+				,null jddm	 --街道代码
+				,'std_qfzggj_t_busi_fy_endcaseinfo_yt' lyb         --来源表
+				,'区发展改革局' lyjg        --来源机构
+				,current_timestamp yxsj        --运行时间
+			from 
+			(
+				select 
+					distinct
+					name,
+					legrep,
+					partydept,
+					caseno,
+					casetype,
+					caseendreason,
+					caseendmanner,
+					caseformtype,
+					caseenddate,
+					perpartystatus,
+					partydeptadd
+			from std_qfzggj_t_busi_fy_endcaseinfo_yt
+			lateral view explode(split(perpartystatus,';')) ps as partydeptadd
+			where  dt=(select max(dt) from std_qfzggj_t_busi_fy_endcaseinfo_yt) ) a 
+			left join (select * from std_qzfw_view_qy_jcxx_d  where dt=(select max(dt) from std_qzfw_view_qy_jcxx_d))c
+			on replace(a.partydeptadd,'(被告)','')=c.qymc
+			where a.partydeptadd like '%被告%' 
+	union all
+		select
+				distinct
+				c.tyshxydm	tyshxydm--统一社会信用代码
+				,concat_ws('',replace(partydeptadd,'(被告)',''),a.caseno) agency_key   	 --法人名称/字号+案号
+				,replace(partydeptadd,'(被告)','') frmc    --法人名称/字号
+				,c.fddbr frdb    --法人代表
+				,'被告' dsrdw	 --当事人地位
+				,a.caseno ah		 --案号
+				,a.casetype ajlx    --案件类型
+				,a.caseendreason jaay	 --结案案由
+				,a.caseendmanner jafs    --结案方式
+				,a.caseformtype jaxcyy  --案件形成类型
+				,a.caseenddate jarq	 --结案日期
+				,a.perpartystatus gdsrdw  --各当事人地位
+				,null sqdm	 --社区代码
+				,null jddm	 --街道代码
+				,'std_qfzggj_t_busi_fy_endcaseinfo' lyb         --来源表
+				,'区发展改革局' lyjg        --来源机构
+				,current_timestamp yxsj        --运行时间
+			from 
+			(
+				select 
+					distinct
+					name,
+					legrep,
+					partydept,
+					caseno,
+					casetype,
+					caseendreason,
+					caseendmanner,
+					caseformtype,
+					caseenddate,
+					perpartystatus,
+					partydeptadd
+			from std_qfzggj_t_busi_fy_endcaseinfo
+			lateral view explode(split(perpartystatus,';')) ps as partydeptadd
+			where  dt=(select max(dt) from std_qfzggj_t_busi_fy_endcaseinfo) ) a 
+			left join (select * from std_qzfw_view_qy_jcxx_d  where dt=(select max(dt) from std_qzfw_view_qy_jcxx_d))c
+			on replace(a.partydeptadd,'(被告)','')=c.qymc
+			where  a.partydeptadd like '%被告%' 
+
+ )
+  group by tyshxydm   	 --统一社会信用代码
+	,frmc    --法人名称/字号
+	,frdb    --法人代表
+	,dsrdw	 --当事人地位
+	,ah		 --案号
+	,ajlx    --案件类型
+	,jaay	 --结案案由
+	,jafs    --结案方式
+	,jaxcyy  --案件形成类型
+	,jarq	 --结案日期
+	,gdsrdw  --各当事人地位
+	,sqdm	 --社区代码
+	,jddm	 --街道代码
+	,lyb	 --来源表
+	,lyjg	 --来源机构
+	,yxsj	 --运行时间
+	,agency_key	 --法人名称/字号+案号
+	) where rank=1

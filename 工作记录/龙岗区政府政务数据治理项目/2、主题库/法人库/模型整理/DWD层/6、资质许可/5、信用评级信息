@@ -1,0 +1,116 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-01 10:01:19.84
+--所属主题:信用评级信息
+--内容描述:信用评级信息4张表,加工至dwd_zzxk_xypjxx(信用评级信息)
+--			std_qfzggj_t_busi_aic_cylhpj(区发展改革局_餐饮评级)1 暂时没数据
+--			std_qfzggj_t_busi_szcrj_crelevel(区发展改革局_企业资信评级信息)1
+--			std_qfzggj_t_busi_rmyh_crerating(区发展改革局_出入境检验检疫局信用评级信息)1
+--			std_qfzggj_dm_lhjc_hhmd_swzj_ajnsrmd(区发展改革局_A级纳税人名单)1
+
+--加载策略:全量
+--_********************************************************_
+--2021-03-16
+--修改取std_qfzggj_t_busi_aic_cylhpj的udate格式为年-月-日 时：分：秒
+--修改取std_qfzggj_t_busi_szcrj_crelevel的udate格式为年-月-日 时：分：秒
+
+--truncate table dwd_zzxk_xypjxx;
+insert overwrite table dwd_zzxk_xypjxx partition (dt='${DayBeforeStartTime}')
+
+select
+	uuid() uuid		--主键
+	,ztsfdm		--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,gsmc		--公司名称
+	,xydj		--信用等级
+	,pjsm		--评级说明
+	,pjsj		--评级时间
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+select
+	distinct
+	aicentcode ztsfdm		--主体身份代码
+	,b.tyshxydm	--统一社会信用代码
+	,b.zzjgdm		--组织机构代码
+	,b.zch		--登记/注册号
+	,entname gsmc		--公司名称
+	,fsupclass xydj		--信用等级
+	,'餐饮评级' pjsm		--评级说明
+	,substr(udate,1,19) pjsj		--评级时间
+	,'权威' xxlylx		--信息来源类型
+ 	,'std_qfzggj_t_busi_aic_cylhpj' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,current_timestamp yxsj      --运行时间
+ from std_qfzggj_t_busi_aic_cylhpj a
+ join dwd_jbxx_frjcxx b
+ on trim(a.aicentcode)=trim(b.lgl_id)
+ where a.dt=(select max(dt) from std_qfzggj_t_busi_aic_cylhpj) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+ union
+ select
+	distinct
+	aicentcode ztsfdm		--主体身份代码
+	,b.tyshxydm	--统一社会信用代码
+	,b.zzjgdm		--组织机构代码
+	,b.zch		--登记/注册号
+	,entname gsmc		--公司名称
+	,crelevel xydj		--信用等级
+	,'出入境检验检疫局信用评级' pjsm		--评级说明
+	,substr(udate,1,19) pjsj		--评级时间
+	,'权威' xxlylx		--信息来源类型
+ 	,'std_qfzggj_t_busi_szcrj_crelevel' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,current_timestamp yxsj      --运行时间
+ from std_qfzggj_t_busi_szcrj_crelevel a
+ join dwd_jbxx_frjcxx b
+ on trim(a.aicentcode)=trim(b.lgl_id)
+ where a.dt=(select max(dt) from std_qfzggj_t_busi_szcrj_crelevel) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+ union
+ select
+	distinct
+	aicentcode ztsfdm		--主体身份代码
+	,b.tyshxydm	--统一社会信用代码
+	,b.zzjgdm		--组织机构代码
+	,b.zch		--登记/注册号
+	,entname gsmc		--公司名称
+	,crerating xydj		--信用等级
+	,'企业资信评级' pjsm		--评级说明
+	,case when assbedate like '%年度%' then to_date(replace(assbedate,'年度',''),'yyyy') || ' ' || '00:00:00' 
+	when assbedate like '%年%'then to_date(replace(substr(assbedate,1,4),'年',''),'yyyy')  || ' ' || '00:00:00' 
+	when assbedate like '%.%' then to_date(replace(split(assbedate,'-')[0],'.','-'))  || ' ' || '00:00:00' 
+	when  length(assbedate)>19 then to_date(split(assbedate,'--')[0]) || ' ' || '00:00:00' 
+	else null  end  pjsj		--评级时间
+	,'权威' xxlylx		--信息来源类型
+ 	,'std_qfzggj_t_busi_rmyh_crerating' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,current_timestamp yxsj      --运行时间
+ from std_qfzggj_t_busi_rmyh_crerating a
+ join dwd_jbxx_frjcxx b
+ on trim(a.aicentcode)=trim(b.lgl_id)
+ where a.dt=(select max(dt) from std_qfzggj_t_busi_rmyh_crerating) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+ union
+ select
+	distinct
+	aicentcode ztsfdm		--主体身份代码
+	,b.tyshxydm	--统一社会信用代码
+	,b.zzjgdm		--组织机构代码
+	,b.zch		--登记/注册号
+	,nsrmc gsmc		--公司名称
+	,'A级' xydj		--信用等级
+	,'A级纳税人' pjsm		--评级说明
+	,to_date(pjnd,'yyyy') || ' ' || '00:00:00'  pjsj		--评级时间
+	,'权威' xxlylx		--信息来源类型
+ 	,'std_qfzggj_dm_lhjc_hhmd_swzj_ajnsrmd' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,current_timestamp yxsj      --运行时间
+ from std_qfzggj_dm_lhjc_hhmd_swzj_ajnsrmd a
+ join dwd_jbxx_frjcxx b
+ on trim(a.aicentcode)=trim(b.lgl_id)
+ where a.dt=(select max(dt) from std_qfzggj_dm_lhjc_hhmd_swzj_ajnsrmd) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+ )

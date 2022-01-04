@@ -1,0 +1,26 @@
+--SparkSQL
+--_********************************************************_
+--author: 林志洪
+--create time: 2020-11-22 18:17:33
+--table_name:dwd_cyxx_fssgfgstgggxx
+--use_tables:std_qfzggj_t_busi_ljs_ggxx(区发展改革局-非上市股份有限公司托管高管信息)
+--取数逻辑:直接从std_qfzggj_t_busi_ljs_ggxx单表获取数据
+--去重逻辑：无
+--0322 He 修改title取值
+--_********************************************************_
+insert overwrite table dwd_cyxx_fssgfgstgggxx partition (dt='${DayBeforeStartTime}')
+SELECT  
+recordid --主键
+,zqdm --深柜代码
+,name --姓名
+,title_name as title --职务
+,sfz --身份证
+,aicentcode --主体身份代码
+,'' --法人唯一标识
+,'补充' --信息来源类型
+,'std_qfzggj_t_busi_ljs_ggxx'  as lyb  --来源表
+,'区发展改革局'  as lyjg    --来源机构
+,CURRENT_TIMESTAMP  as yxrq    --运行时间
+from std_qfzggj_t_busi_ljs_ggxx
+where dt=(select max(dt) from std_qfzggj_t_busi_ljs_ggxx) 
+;

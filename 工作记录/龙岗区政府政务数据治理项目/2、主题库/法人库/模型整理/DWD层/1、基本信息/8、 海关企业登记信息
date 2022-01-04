@@ -1,0 +1,92 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-08 14:29:11
+--table_name : dwd_zjbxx_hgqydjxx (海关企业登记信息) 
+--use_tbales : std_qfzggj_t_busi_hg_entinfo (区发展改革局_海关企业基本登记信息)
+--取数逻辑   : 从 std_qfzggj_t_busi_hg_entinfo (区发展改革局_海关企业基本登记信息) 表中取所需字段
+--去重逻辑   : 根据统一社会信用代码,公司名称等关键字段 进行去重
+--_********************************************************_
+insert overwrite table dwd_zjbxx_hgqydjxx partition (dt='${DayBeforeStartTime}')
+select 
+uuid --主键 
+,ztsfdm --主体身份代码 
+,tyshxydm --统一社会信用代码 
+,hgdjh --海关登记号 
+,nsrbsh --纳税人标识号 
+,gsmc --公司名称 
+,gsywmc --公司英文名称 
+,qyjb --企业级别 
+,jydqfw --经营地区范围 
+,tsqybz --特殊企业标志 
+,hyzldm --行业种类代码
+,hyzl --行业种类 
+,tzze --投资总额 
+,nxbl --内销比率 
+,mse --免税额 
+,qysclx --企业生产类型 
+,zycp --主要产品 
+,zcrq --注册日期 
+,zczb --注册资本 
+,zczjbz --注册资金币制 
+,dwzj --到位资金 
+,lxr --联系人 
+,lxdh --联系电话 
+,jlzhm --居留证号码 
+,frdb --法人代表 
+,frdh --法人电话 
+,qyywdz --企业英文地址 
+,qyzwdz --企业中文地址 
+,pzjg --批准机关 
+,pzwh --批准文号 
+,nsrq --年审日期 
+,nsyf --年审月份 
+,lyb --来源表 
+,lyjg --来源机构 
+,yxsj --运行时间 
+from
+(
+SELECT  uuid()                         AS UUID --主键 
+       ,t1.aicentcode                  AS ztsfdm --主体身份代码 
+       ,t1.licenseid                   AS tyshxydm --统一社会信用代码 
+       ,t1.tradeno                     AS hgdjh --海关登记号 
+       ,t1.taxregno                    AS nsrbsh --纳税人标识号 
+       ,t1.cnfullname                  AS gsmc --公司名称 
+       ,t1.enfullname                  AS gsywmc --公司英文名称 
+       ,t1.entclass                    AS qyjb --企业级别 
+       ,t1.tradearea                   AS jydqfw --经营地区范围 
+       ,t1.spesign                     AS tsqybz --特殊企业标志 
+       ,t1.indtype                     AS hyzldm --行业种类 
+       ,null						   as hyzl --行业种类（缺失源表行业字典表，没法映射清洗）
+       ,t1.invamount                   AS tzze --投资总额 
+       ,t1.domsalepro                  AS nxbl --内销比率 
+       ,t1.fredutamo                   AS mse --免税额 
+       ,t1.enttype                     AS qysclx --企业生产类型 
+       ,t1.mainpro                     AS zycp --主要产品 
+       ,t1.regdate                     AS zcrq --注册日期 
+       ,t1.regcapital                  AS zczb --注册资本 
+       ,t1.curcode                     AS zczjbz --注册资金币制 
+       ,t1.actcapital                  AS dwzj --到位资金 
+       ,t1.linkman                     AS lxr --联系人 
+       ,t1.phone                       AS lxdh --联系电话 
+       ,t1.respernum                   AS jlzhm --居留证号码 
+       ,t1.legrep                      AS frdb --法人代表 
+       ,t1.legrepphone                 AS frdh --法人电话 
+       ,t1.enadd                       AS qyywdz --企业英文地址 
+       ,t1.cnadd                       AS qyzwdz --企业中文地址 
+       ,t1.appdept                     AS pzjg --批准机关 
+       ,t1.appfileno                   AS pzwh --批准文号 
+       ,t1.aidate                      AS nsrq --年审日期 
+       ,t1.aimonth                     AS nsyf --年审月份 
+       ,'std_qfzggj_t_busi_hg_entinfo' AS lyb --来源表 
+       ,lyjg                           AS lyjg --来源机构 
+       ,CURRENT_TIMESTAMP              AS yxsj --运行时间 
+       ,row_number() over(partition by t1.aicentcode ORDER BY t1.udate desc ) rn
+FROM 
+(
+	SELECT  *
+	FROM std_qfzggj_t_busi_hg_entinfo
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM std_qfzggj_t_busi_hg_entinfo ) 
+) t1 ) where rn=1

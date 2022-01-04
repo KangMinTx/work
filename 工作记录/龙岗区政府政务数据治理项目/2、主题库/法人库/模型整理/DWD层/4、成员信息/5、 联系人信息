@@ -1,0 +1,126 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-02 17:01:19.84
+--所属主题:联系人信息
+--内容描述:联系人信息5张表,加工至dwd_cyxx_lxr(联系人信息)
+--			std_qfg_t_busi_hg_entinfo(区发展改革局_海关企业基本登记信息)1
+--			std_qgyhxxhj_t_corporation(区工业和信息化局_企业基本信息)2
+--          std_skjcxwyh_gjjgxjsqyrd_10_0805170635(市科技创新委员会_国家级高新技术企业认定)3	
+--          std_qgzj_lgdlcustomerfiles(区国资局_客户档案表)4	
+--          std_qgyhxxhj_qjjcjjcyyfqyb(区工业和信息化局_产业用房企业表)5	
+--加载策略:全量
+--_********************************************************_
+--truncate table std_skjcxwyh_gjjgxjsqyrd_10_0805170635;
+insert overwrite table dwd_cyxx_lxr partition (dt='${DayBeforeStartTime}')
+select
+	uuid() uuid			--主键
+	,a.tyshxydm		--统一社会信用代码
+	,a.ztsfdm			--主体身份代码
+	,a.zzjgdm			--组织机构代码
+	,a.zch			--登记/注册号
+	,a.gsmc			--公司名称
+	,a.lxrzjlx		--联系人证件类型
+	,a.lxrzjh			--联系人证件号
+	,a.lxrlxfs		--联系人联系方式
+	,a.lxrxm			--联系人姓名
+	,a.lyb			--来源表
+	,a.lyjg			--来源机构
+	,a.yxsj			--运行时间
+ from 
+(
+	select
+		distinct
+		b.tyshxydm	tyshxydm	--统一社会信用代码
+		,a.aicentcode ztsfdm			--主体身份代码
+		,b.zzjgdm zzjgdm			--组织机构代码
+		,b.zch zch			--登记/注册号
+		,b.lgl_name gsmc			--公司名称
+		,case when length(legal_person_card_no)=18 then '中华人民共和国居民身份证' else null end lxrzjlx		--联系人证件类型
+		,legal_person_card_no lxrzjh			--联系人证件号
+		,legrepphone lxrlxfs		--联系人联系方式
+		,legal_person_name lxrxm			--联系人姓名
+		,'std_qfg_t_busi_hg_entinfo,dwd_jbxx_frjcxx' lyb       --来源表
+		,a.lyjg  lyjg    --来源机构
+		,current_timestamp yxsj      --运行时间
+	from std_qfg_t_busi_hg_entinfo a
+	join dwd_jbxx_frjcxx b
+	on trim(a.aicentcode)=trim(b.lgl_id)
+	where a.dt=(select max(dt) from std_qfg_t_busi_hg_entinfo) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+	union  
+	select
+		distinct
+		b.tyshxydm	tyshxydm	--统一社会信用代码
+		,b.lgl_id ztsfdm			--主体身份代码
+		,b.zzjgdm zzjgdm			--组织机构代码
+		,b.zch zch			--登记/注册号
+		,b.lgl_name gsmc			--公司名称
+		,case when length(b.legal_person_card_no)=18 then '中华人民共和国居民身份证' else null end lxrzjlx		--联系人证件类型
+		,b.legal_person_card_no lxrzjh			--联系人证件号
+		,a.legal_person_phone lxrlxfs		--联系人联系方式
+		,a.legal_person_name lxrxm			--联系人姓名
+		,'std_qgyhxxhj_t_corporation,dwd_jbxx_frjcxx' lyb       --来源表
+		,a.lyjg  lyjg    --来源机构
+		,current_timestamp yxsj      --运行时间
+	from std_qgyhxxhj_t_corporation a
+	join dwd_jbxx_frjcxx b
+	on trim(a.fullname)=trim(b.lgl_name)
+	where a.dt=(select max(dt) from std_qgyhxxhj_t_corporation) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+	union  
+	select
+		distinct
+		b.tyshxydm	tyshxydm	--统一社会信用代码
+		,b.lgl_id ztsfdm			--主体身份代码
+		,b.zzjgdm zzjgdm			--组织机构代码
+		,b.zch zch			--登记/注册号
+		,b.lgl_name gsmc			--公司名称
+		,case when length(b.legal_person_card_no)=18 and trim(a.lxr)=trim(b.legal_person_name) then '中华人民共和国居民身份证' else null end   lxrzjlx		--联系人证件类型
+		,case when trim(a.lxr)=trim(b.legal_person_name) then b.legal_person_card_no else null end lxrzjh			--联系人证件号
+		,a.lxdh lxrlxfs		--联系人联系方式
+		,a.lxr lxrxm			--联系人姓名
+		,'std_skjcxwyh_gjjgxjsqyrd_10_0805170635,dwd_jbxx_frjcxx' lyb       --来源表
+		,a.lyjg  lyjg    --来源机构
+		,current_timestamp yxsj      --运行时间
+	from std_skjcxwyh_gjjgxjsqyrd_10_0805170635 a
+	join dwd_jbxx_frjcxx b
+	on trim(a.sqdw)=trim(b.lgl_name)
+	where a.dt=(select max(dt) from std_skjcxwyh_gjjgxjsqyrd_10_0805170635) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+	union 
+	select
+		distinct
+		b.tyshxydm	tyshxydm	--统一社会信用代码
+		,b.lgl_id ztsfdm			--主体身份代码
+		,b.zzjgdm zzjgdm			--组织机构代码
+		,b.zch zch			--登记/注册号
+		,b.lgl_name gsmc			--公司名称
+		,case when length(b.legal_person_card_no)=18 and trim(a.lxr)=trim(b.legal_person_name) then '中华人民共和国居民身份证' else null end   lxrzjlx		--联系人证件类型
+		,case when trim(a.lxr)=trim(b.legal_person_name) then b.legal_person_card_no else null end lxrzjh			--联系人证件号
+		,a.lxdh lxrlxfs		--联系人联系方式
+		,a.lxr lxrxm			--联系人姓名
+		,'std_qgzj_lgdlcustomerfiles,dwd_jbxx_frjcxx' lyb       --来源表
+		,a.lyjg  lyjg    --来源机构
+		,current_timestamp yxsj      --运行时间
+	from std_qgzj_lgdlcustomerfiles a
+	join dwd_jbxx_frjcxx b
+	on trim(a.credit)=trim(b.tyshxydm)
+	where a.dt=(select max(dt) from std_qgzj_lgdlcustomerfiles) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+	union 
+	select
+		distinct
+		b.tyshxydm	tyshxydm	--统一社会信用代码
+		,b.lgl_id ztsfdm			--主体身份代码
+		,b.zzjgdm zzjgdm			--组织机构代码
+		,b.zch zch			--登记/注册号
+		,b.lgl_name gsmc			--公司名称
+		,case when length(b.legal_person_card_no)=18 and trim(a.ssztlxr)=trim(b.legal_person_name) then '中华人民共和国居民身份证' else null end   lxrzjlx		--联系人证件类型
+		,case when trim(a.ssztlxr)=trim(b.legal_person_name) then b.legal_person_card_no else null end lxrzjh			--联系人证件号
+		,a.ssztlxfs lxrlxfs		--联系人联系方式
+		,a.ssztlxr lxrxm			--联系人姓名
+		,'std_qgyhxxhj_qjjcjjcyyfqyb,dwd_jbxx_frjcxx' lyb       --来源表
+		,a.lyjg  lyjg    --来源机构
+		,current_timestamp yxsj      --运行时间
+	from std_qgyhxxhj_qjjcjjcyyfqyb a
+	join dwd_jbxx_frjcxx b
+	on trim(a.ssztmc)=trim(b.lgl_name)
+	where a.dt=(select max(dt) from std_qgyhxxhj_qjjcjjcyyfqyb) and b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+)a

@@ -1,0 +1,305 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-10 11:01:19.84
+--所属主题:失信企业
+--内容描述:失信企业2张表,加工至dwd_sxqyxx(失信企业信息)
+--			std_qfzggj_t_busi_aic_yzsxwf(区发展改革局_工商严重失信违法企业)1
+--			std_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb(区发展改革局_统计上严重失信企业汇总表)2
+--			std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd(区发展改革局_失信被执行人名单)3
+--			std_qfzggj_dm_lhjc_hhmd_hgzs_hgsxrzqymd(区发展改革局_海关失信认证企业名单)4
+--			std_qfzggj_dm_lhjc_fgw_dzswsxwtzxzlhmdhzb(区发展改革局_电子商务失信问题专项治理黑名单汇总表)5
+--			std_qfzggj_dm_lhjc_hhmd_zjzj_yzzlsxqymd(区发展改革局_严重质量失信企业名单)6 
+--			std_qfzggj_dm_lhjc_zjzj_crjjyjyyzsxqymd(区发展改革局_年度出入境检验检疫严重失信企业名单)7  
+--			std_qfzggj_t_busi_hg_losscredit(区发展改革局_海关失信企业)8  
+--			std_qfzggj_dm_lhjc_jtysb_yzwfyssxdsrmd(区发展改革局_第一批严重违法超限超载运输失信当事人名单)9
+--加载策略:全量
+--修改记录:1203,修改 std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd(区发展改革局_失信被执行人名单) 去重逻辑,根据文书号,主体名称,处罚日期分组去重
+--_********************************************************_
+--truncate table dwd_sxqyxx;
+insert overwrite table dwd_sxqyxx partition (dt='${DayBeforeStartTime}')
+
+select
+	distinct
+ 	ztsfdm  --主体身份代码
+	, xzcfjdwsh --行政处罚决定书文号
+	, tyshxydm  --统一社会信用代码
+	, zzjgdm    --组织机构代码
+	, gsdjm     --工商登记码
+	, swdjh     --税务登记号
+	, gsmc        --公司名称
+	, cfmc      --处罚名称
+	, cflxdm    --处罚类型代码
+	, cflx      --处罚类型
+	, cfsy      --处罚事由
+	, cfyj      --处罚依据
+	, cfjg      --处罚结果
+	, if(length(cffbsj)=10,cffbsj || ' 00:00:00',cffbsj)   --处罚发布时间
+	, cfjig     --处罚机关
+	, lyb       --来源表
+	, lyjg      --来源机构
+	, yxsj  --运行时间
+from 
+(
+select  
+	aicentcode ztsfdm  --主体身份代码
+	,xzcfjdwsh xzcfjdwsh --行政处罚决定书文号
+	,tyshxydm tyshxydm  --统一社会信用代码
+	,substr(tyshxydm,8,9) zzjgdm    --组织机构代码
+	,gsdjm gsdjm     --工商登记码
+	,tyshxydm swdjh     --税务登记号
+	,xzxdrmc gsmc        --公司名称
+	,cfmc cfmc      --处罚名称
+	,replace(replace(concat_ws(',',cflb1,cflb2),'警告','1'),'罚款','2') cflxdm    --处罚类型代码
+	,concat_ws(',',cflb1,cflb2) cflx      --处罚类型
+	,cfsy cfsy      --处罚事由
+	,cfyj cfyj      --处罚依据
+	,cfjg cfjg      --处罚结果
+,if(length(replace(cfjdrq,'/','-'))>10,substr(replace(cfjdrq,'/','-'),1,10) || ' ' ||substr(replace(cfjdrq,'/','-'),11,8),substr(to_date(replace(cfjdrq,'/','-')),1,10) || ' 00:00:00') cffbsj    --处罚发布时间
+	,cfjig cfjig     --处罚机关
+	,'std_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb' lyb       --来源表
+	,lyjg      --来源机构
+	,current_timestamp yxsj  --运行时间
+from std_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb 
+where dt=(select max(dt) from std_qfzggj_dm_lhjc_gjtjj_tjsyzsxqyhzb) 
+union all
+select 
+  	distinct
+	a.aicentcode ztsfdm  --主体身份代码
+	,null xzcfjdwsh --行政处罚决定书文号
+	,b.tyshxydm tyshxydm  --统一社会信用代码
+	,substr(tyshxydm,8,9) zzjgdm    --组织机构代码
+	,b.zch gsdjm     --工商登记码
+	,tyshxydm swdjh     --税务登记号
+	,entname gsmc        --公司名称
+	,null cfmc      --处罚名称
+	,null cflxdm    --处罚类型代码
+	,'工商严重失信' cflx      --处罚类型
+	,illrea cfsy      --处罚事由
+	,null cfyj      --处罚依据
+	,null cfjg      --处罚结果
+	,null cffbsj    --处罚发布时间
+	,supunitbysup cfjig     --处罚机关
+	,'std_qfzggj_t_busi_aic_yzsxwf' lyb       --来源表
+	,'区发展改革局' lyjg      --来源机构
+	,current_timestamp yxsj  --运行时间
+from std_qfzggj_t_busi_aic_yzsxwf a
+join std_qzfw_view_qy_jcxx_d b
+on a.entname=b.qymc
+where a.dt=(select max(dt) from std_qfzggj_t_busi_aic_yzsxwf) and  b.dt=(select max(dt) from std_qzfw_view_qy_jcxx_d)
+union all
+select 
+ztsfdm  --主体身份代码
+,xzcfjdwsh --行政处罚决定书文号
+,tyshxydm  --统一社会信用代码
+,zzjgdm    --组织机构代码
+,gsdjm     --工商登记码
+,swdjh     --税务登记号
+,gsmc        --公司名称
+,cfmc      --处罚名称
+,cflxdm    --处罚类型代码
+,cflx      --处罚类型
+,cfsy      --处罚事由
+,cfyj      --处罚依据
+,cfjg      --处罚结果
+,cffbsj    --处罚发布时间
+,cfjig     --处罚机关
+,lyb       --来源表
+,lyjg      --来源机构
+,yxsj  --运行时间
+from (
+select 
+	b.lgl_id ztsfdm  --主体身份代码
+	,gist_cid xzcfjdwsh --行政处罚决定书文号
+	,b.tyshxydm tyshxydm  --统一社会信用代码
+	,b.zzjgdm zzjgdm    --组织机构代码
+	,b.zch gsdjm     --工商登记码
+	,b.tyshxydm swdjh     --税务登记号
+	,iname gsmc        --公司名称
+	,null cfmc      --处罚名称
+	,null cflxdm    --处罚类型代码
+	,null cflx      --处罚类型
+	,disreput_type_name cfsy      --处罚事由
+	,disreput_type_name cfyj      --处罚依据
+	,performance cfjg      --处罚结果
+	,substr(publish_date,1,4) || '-' || substr(publish_date,5,2) || '-' || substr(publish_date,7,2)  cffbsj    --处罚发布时间
+	,gist_unit cfjig     --处罚机关
+	,'std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd,dwd_jbxx_frjcxx' lyb       --来源表
+	,'区发展改革局' lyjg      --来源机构
+	,current_timestamp yxsj  --运行时间
+    ,row_number() over(partition by iname,gist_cid,publish_date order by   publish_date desc) rn
+from std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd a
+join dwd_jbxx_frjcxx b
+on a.iname=b.lgl_name
+where a.dt=(select max(dt) from std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd) and  b.dt=(select max(dt) from dwd_jbxx_frjcxx) ) 
+where rn=1
+  
+  
+union all
+select 
+  	distinct
+	b.lgl_id ztsfdm  --主体身份代码
+	,null xzcfjdwsh --行政处罚决定书文号
+	,b.tyshxydm tyshxydm  --统一社会信用代码
+	,b.zzjgdm zzjgdm    --组织机构代码
+	,b.zch gsdjm     --工商登记码
+	,b.tyshxydm swdjh     --税务登记号
+	,qyzwmc gsmc        --公司名称
+	,null cfmc      --处罚名称
+	,null cflxdm    --处罚类型代码
+	,null cflx      --处罚类型
+	,'海关失信' cfsy      --处罚事由
+	,null cfyj      --处罚依据
+	,null cfjg      --处罚结果
+	,djrdsj  || ' 00:00:00' cffbsj    --处罚发布时间
+	,null cfjig     --处罚机关
+	,'std_qfzggj_dm_lhjc_hhmd_hgzs_hgsxrzqymd,dwd_jbxx_frjcxx' lyb       --来源表
+	,'区发展改革局' lyjg      --来源机构
+	,current_timestamp yxsj  --运行时间
+from std_qfzggj_dm_lhjc_hhmd_hgzs_hgsxrzqymd a
+join dwd_jbxx_frjcxx b
+on a.zzjgdm=b.zzjgdm
+where a.dt=(select max(dt) from std_qfzggj_dm_lhjc_hhmd_hgzs_hgsxrzqymd) and  b.dt=(select max(dt) from dwd_jbxx_frjcxx) and a.xydj like '%失信企业%'
+union all
+select 
+  	distinct
+	b.lgl_id ztsfdm  --主体身份代码
+	,null xzcfjdwsh --行政处罚决定书文号
+	,b.tyshxydm tyshxydm  --统一社会信用代码
+	,b.zzjgdm zzjgdm    --组织机构代码
+	,b.zch gsdjm     --工商登记码
+	,b.tyshxydm swdjh     --税务登记号
+	,qymc gsmc        --公司名称
+	,null cfmc      --处罚名称
+	,null cflxdm    --处罚类型代码
+	,null cflx      --处罚类型
+	,'电子商务失信' cfsy      --处罚事由
+	,null cfyj      --处罚依据
+	,null cfjg      --处罚结果
+	,null cffbsj    --处罚发布时间
+	,null cfjig     --处罚机关
+	,'std_qfzggj_dm_lhjc_fgw_dzswsxwtzxzlhmdhzb,dwd_jbxx_frjcxx' lyb       --来源表
+	,'区发展改革局' lyjg      --来源机构
+	,current_timestamp yxsj  --运行时间
+from std_qfzggj_dm_lhjc_fgw_dzswsxwtzxzlhmdhzb a
+join dwd_jbxx_frjcxx b
+on a.tyshxydm=b.tyshxydm
+where a.dt=(select max(dt) from std_qfzggj_dm_lhjc_fgw_dzswsxwtzxzlhmdhzb) and  b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+union all
+select 
+  	distinct
+	b.lgl_id ztsfdm  --主体身份代码
+	,null xzcfjdwsh --行政处罚决定书文号
+	,b.tyshxydm tyshxydm  --统一社会信用代码
+	,b.zzjgdm zzjgdm    --组织机构代码
+	,b.zch gsdjm     --工商登记码
+	,b.tyshxydm swdjh     --税务登记号
+	,yzzlsxqymc gsmc        --公司名称
+	,null cfmc      --处罚名称
+	,null cflxdm    --处罚类型代码
+	,null cflx      --处罚类型
+	,'严重质量失信' cfsy      --处罚事由
+	,null cfyj      --处罚依据
+	,null cfjg      --处罚结果
+	,null cffbsj    --处罚发布时间
+	,null cfjig     --处罚机关
+	,'std_qfzggj_dm_lhjc_hhmd_zjzj_yzzlsxqymd,dwd_jbxx_frjcxx' lyb       --来源表
+	,'区发展改革局' lyjg      --来源机构
+	,current_timestamp yxsj  --运行时间
+from std_qfzggj_dm_lhjc_hhmd_zjzj_yzzlsxqymd a
+join dwd_jbxx_frjcxx b
+on a.tyshxydm=b.tyshxydm
+where a.dt=(select max(dt) from std_qfzggj_dm_lhjc_hhmd_zjzj_yzzlsxqymd) and  b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+union all
+select 
+  	distinct
+	b.lgl_id ztsfdm  --主体身份代码
+	,null xzcfjdwsh --行政处罚决定书文号
+	,b.tyshxydm tyshxydm  --统一社会信用代码
+	,b.zzjgdm zzjgdm    --组织机构代码
+	,b.zch gsdjm     --工商登记码
+	,b.tyshxydm swdjh     --税务登记号
+	,jyjysysxqymd gsmc        --公司名称
+	,null cfmc      --处罚名称
+	,null cflxdm    --处罚类型代码
+	,null cflx      --处罚类型
+	,'出入境检验检疫严重失信' cfsy      --处罚事由
+	,null cfyj      --处罚依据
+	,null cfjg      --处罚结果
+	,null cffbsj    --处罚发布时间
+	,null cfjig     --处罚机关
+	,'std_qfzggj_dm_lhjc_zjzj_crjjyjyyzsxqymd,dwd_jbxx_frjcxx' lyb       --来源表
+	,'区发展改革局' lyjg      --来源机构
+	,current_timestamp yxsj  --运行时间
+from std_qfzggj_dm_lhjc_zjzj_crjjyjyyzsxqymd a
+join dwd_jbxx_frjcxx b
+on a.jyjysysxqymd=b.lgl_name
+where a.dt=(select max(dt) from std_qfzggj_dm_lhjc_zjzj_crjjyjyyzsxqymd) and  b.dt=(select max(dt) from dwd_jbxx_frjcxx)
+union all
+select 
+  	distinct
+	b.lgl_id ztsfdm  --主体身份代码
+	,null xzcfjdwsh --行政处罚决定书文号
+	,b.tyshxydm tyshxydm  --统一社会信用代码
+	,b.zzjgdm zzjgdm    --组织机构代码
+	,b.zch gsdjm     --工商登记码
+	,b.tyshxydm swdjh     --税务登记号
+	,entnamecn gsmc        --公司名称
+	,null cfmc      --处罚名称
+	,null cflxdm    --处罚类型代码
+	,null cflx      --处罚类型
+	,'海关失信' cfsy      --处罚事由
+	,null cfyj      --处罚依据
+	,null cfjg      --处罚结果
+	,to_date(creditclassdate) || ' 00:00:00' cffbsj    --处罚发布时间
+	,null cfjig     --处罚机关
+	,'std_qfzggj_t_busi_hg_losscredit,dwd_jbxx_frjcxx' lyb       --来源表
+	,'区发展改革局' lyjg      --来源机构
+	,current_timestamp yxsj  --运行时间
+from std_qfzggj_t_busi_hg_losscredit a
+join dwd_jbxx_frjcxx b
+on a.aicentcode=b.lgl_id
+where a.dt=(select max(dt) from std_qfzggj_t_busi_hg_losscredit) and  b.dt=(select max(dt) from dwd_jbxx_frjcxx) and a.sign1=0
+union all
+select 
+	b.lgl_id ztsfdm  --主体身份代码
+	,null xzcfjdwsh --行政处罚决定书文号
+	,b.tyshxydm tyshxydm  --统一社会信用代码
+	,b.zzjgdm zzjgdm    --组织机构代码
+	,b.zch gsdjm     --工商登记码
+	,b.tyshxydm swdjh     --税务登记号
+	,lgl_name gsmc        --公司名称
+	,null cfmc      --处罚名称
+	,null cflxdm    --处罚类型代码
+	,null cflx      --处罚类型
+	,'严重违法超限超载运输失信' cfsy      --处罚事由
+	,null cfyj      --处罚依据
+	,null cfjg      --处罚结果
+	,trans_dm_tong_insertdate cffbsj    --处罚发布时间
+	,null cfjig     --处罚机关
+	,'std_qfzggj_dm_lhjc_jtysb_yzwfyssxdsrmd,dwd_jbxx_frjcxx' lyb       --来源表
+	,'区发展改革局' lyjg      --来源机构
+	,current_timestamp yxsj  --运行时间
+from std_qfzggj_dm_lhjc_jtysb_yzwfyssxdsrmd a
+join dwd_jbxx_frjcxx b
+on a.xm=b.legal_person_name
+where a.dt=(select max(dt) from std_qfzggj_dm_lhjc_jtysb_yzwfyssxdsrmd) and  b.dt=(select max(dt) from dwd_jbxx_frjcxx) 
+ )
+  group by ztsfdm  --主体身份代码
+	, xzcfjdwsh --行政处罚决定书文号
+	, tyshxydm  --统一社会信用代码
+	, zzjgdm    --组织机构代码
+	, gsdjm     --工商登记码
+	, swdjh     --税务登记号
+	, gsmc        --公司名称
+	, cfmc      --处罚名称
+	, cflxdm    --处罚类型代码
+	, cflx      --处罚类型
+	, cfsy      --处罚事由
+	, cfyj      --处罚依据
+	, cfjg      --处罚结果
+	, cffbsj    --处罚发布时间
+	, cfjig     --处罚机关
+	, lyb       --来源表
+	, lyjg      --来源机构
+	, yxsj  --运行时间

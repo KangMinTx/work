@@ -1,0 +1,227 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-15 17:40:19.84
+--所属主题:事故隐患_事故信息
+--内容描述:事故隐患stdn层4张表,加工至dwd_sgxx(事故信息)
+
+
+--加载策略:全量
+--_********************************************************_
+--truncate table dwd_sgxx;
+--ALTER TABLE dwd_sgxx DROP PARTITION( dt='${DayBeforeStartTime}');
+insert overwrite table dwd_sgxx partition (dt='${DayBeforeStartTime}')
+
+
+select
+	key			--统一社会信用代码+处罚文书号+事故发生时间
+	,ztsfdm		--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zh	gsmc		--法人名称/字号
+	,xzcfjdwsh	--行政处罚决定书文号
+	,sgfsdd		--事故发生地点
+	,sgfssj		--事故发生时间
+	,sw			--死亡（含失踪或下落不明）
+	,zsrs		--重伤人数
+	,jxgyzdrs	--急性工业中毒人数
+	,qsrs		--轻伤人数
+	,swrshj		--伤亡人数合计
+	,bqddsw		--不确定的死亡（含失踪或下落不明）
+	,bqddzsrs	--不确定的重伤人数
+	,bqddjxgyzd	--不确定的急性工业中毒
+	,bqddqssrs	--不确定的轻伤伤人数
+	,bqddswrshj	--不确定的伤亡人数合计
+	,sgjjss		--事故经济损失
+	,sgdj		--事故等级
+	,sglxdm		--事故类型代码
+	,sglx		--事故类型
+	,sgyy		--事故原因
+	,qyw		--起因物
+	,zhw		--致害物
+	,baqxw		--不安全行为
+	,baqzt		--不安全状态
+	,sggk		--事故概况
+	,xgsj		--修改时间
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+
+from 
+(
+		select
+				key			--统一社会信用代码+处罚文书号+事故发生时间
+				,ztsfdm		--主体身份代码
+				,tyshxydm	--统一社会信用代码
+				,zh			--法人名称/字号
+				,xzcfjdwsh	--行政处罚决定书文号
+				,sgfsdd		--事故发生地点
+				,sgfssj		--事故发生时间
+				,sw			--死亡（含失踪或下落不明）
+				,zsrs		--重伤人数
+				,jxgyzdrs	--急性工业中毒人数
+				,qsrs		--轻伤人数
+				,swrshj		--伤亡人数合计
+				,bqddsw		--不确定的死亡（含失踪或下落不明）
+				,bqddzsrs	--不确定的重伤人数
+				,bqddjxgyzd	--不确定的急性工业中毒
+				,bqddqssrs	--不确定的轻伤伤人数
+				,bqddswrshj	--不确定的伤亡人数合计
+				,sgjjss		--事故经济损失
+				,sgdj		--事故等级
+				,sglxdm		--事故类型代码
+				,sglx		--事故类型
+				,sgyy		--事故原因
+				,qyw		--起因物
+				,zhw		--致害物
+				,baqxw		--不安全行为
+				,baqzt		--不安全状态
+				,sggk		--事故概况
+				,xgsj		--修改时间
+				,xxlylx		--信息来源类型
+				,'stdn_qyjglj_sgxx' lyb		--来源表
+				,lyjg		--来源机构
+				,current_timestamp yxsj		--运行时间
+		from  stdn_qyjglj_sgxx 
+		where dt=(select max(dt) from stdn_qyjglj_sgxx) 
+	union all
+	select
+				key			--统一社会信用代码+处罚文书号+事故发生时间
+				,ztsfdm		--主体身份代码
+				,tyshxydm	--统一社会信用代码
+				,zh			--法人名称/字号
+				,xzcfjdwsh	--行政处罚决定书文号
+				,sgfsdd		--事故发生地点
+				,sgfssj		--事故发生时间
+				,sw			--死亡（含失踪或下落不明）
+				,zsrs		--重伤人数
+				,jxgyzdrs	--急性工业中毒人数
+				,qsrs		--轻伤人数
+				,swrshj		--伤亡人数合计
+				,bqddsw		--不确定的死亡（含失踪或下落不明）
+				,bqddzsrs	--不确定的重伤人数
+				,bqddjxgyzd	--不确定的急性工业中毒
+				,bqddqssrs	--不确定的轻伤伤人数
+				,bqddswrshj	--不确定的伤亡人数合计
+				,sgjjss		--事故经济损失
+				,sgdj		--事故等级
+				,sglxdm		--事故类型代码
+				,sglx		--事故类型
+				,sgyy		--事故原因
+				,qyw		--起因物
+				,zhw		--致害物
+				,baqxw		--不安全行为
+				,baqzt		--不安全状态
+				,sggk		--事故概况
+				,xgsj		--修改时间
+				,xxlylx		--信息来源类型
+				,'stdn_qfzggj_sgxx' lyb		--来源表
+				,lyjg		--来源机构
+				,current_timestamp yxsj		--运行时间
+		from  stdn_qfzggj_sgxx 
+		where dt=(select max(dt) from stdn_qfzggj_sgxx) 
+		union all
+	select
+				key			--统一社会信用代码+处罚文书号+事故发生时间
+				,ztsfdm		--主体身份代码
+				,tyshxydm	--统一社会信用代码
+				,zh			--法人名称/字号
+				,xzcfjdwsh	--行政处罚决定书文号
+				,sgfsdd		--事故发生地点
+				,sgfssj		--事故发生时间
+				,sw			--死亡（含失踪或下落不明）
+				,zsrs		--重伤人数
+				,jxgyzdrs	--急性工业中毒人数
+				,qsrs		--轻伤人数
+				,swrshj		--伤亡人数合计
+				,bqddsw		--不确定的死亡（含失踪或下落不明）
+				,bqddzsrs	--不确定的重伤人数
+				,bqddjxgyzd	--不确定的急性工业中毒
+				,bqddqssrs	--不确定的轻伤伤人数
+				,bqddswrshj	--不确定的伤亡人数合计
+				,sgjjss		--事故经济损失
+				,sgdj		--事故等级
+				,sglxdm		--事故类型代码
+				,sglx		--事故类型
+				,sgyy		--事故原因
+				,qyw		--起因物
+				,zhw		--致害物
+				,baqxw		--不安全行为
+				,baqzt		--不安全状态
+				,sggk		--事故概况
+				,xgsj		--修改时间
+				,xxlylx		--信息来源类型
+				,'stdn_qzwfwsjglj_sgxx' lyb		--来源表
+				,lyjg		--来源机构
+				,current_timestamp yxsj		--运行时间
+		from  stdn_qzwfwsjglj_sgxx 
+		where dt=(select max(dt) from stdn_qzwfwsjglj_sgxx) 
+	union all
+	select
+				key			--统一社会信用代码+处罚文书号+事故发生时间
+				,ztsfdm		--主体身份代码
+				,tyshxydm	--统一社会信用代码
+				,zh			--法人名称/字号
+				,xzcfjdwsh	--行政处罚决定书文号
+				,sgfsdd		--事故发生地点
+				,sgfssj		--事故发生时间
+				,sw			--死亡（含失踪或下落不明）
+				,zsrs		--重伤人数
+				,jxgyzdrs	--急性工业中毒人数
+				,qsrs		--轻伤人数
+				,swrshj		--伤亡人数合计
+				,bqddsw		--不确定的死亡（含失踪或下落不明）
+				,bqddzsrs	--不确定的重伤人数
+				,bqddjxgyzd	--不确定的急性工业中毒
+				,bqddqssrs	--不确定的轻伤伤人数
+				,bqddswrshj	--不确定的伤亡人数合计
+				,sgjjss		--事故经济损失
+				,sgdj		--事故等级
+				,sglxdm		--事故类型代码
+				,sglx		--事故类型
+				,sgyy		--事故原因
+				,qyw		--起因物
+				,zhw		--致害物
+				,baqxw		--不安全行为
+				,baqzt		--不安全状态
+				,sggk		--事故概况
+				,xgsj		--修改时间
+				,xxlylx		--信息来源类型
+				,'stdn_qxawb_sgxx' lyb		--来源表
+				,lyjg		--来源机构
+				,current_timestamp yxsj		--运行时间
+		from  stdn_qxawb_sgxx 
+		where dt=(select max(dt) from stdn_qxawb_sgxx) 
+ )
+  group by key			--统一社会信用代码+处罚文书号+事故发生时间
+	,ztsfdm		--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zh			--法人名称/字号
+	,xzcfjdwsh	--行政处罚决定书文号
+	,sgfsdd		--事故发生地点
+	,sgfssj		--事故发生时间
+	,sw			--死亡（含失踪或下落不明）
+	,zsrs		--重伤人数
+	,jxgyzdrs	--急性工业中毒人数
+	,qsrs		--轻伤人数
+	,swrshj		--伤亡人数合计
+	,bqddsw		--不确定的死亡（含失踪或下落不明）
+	,bqddzsrs	--不确定的重伤人数
+	,bqddjxgyzd	--不确定的急性工业中毒
+	,bqddqssrs	--不确定的轻伤伤人数
+	,bqddswrshj	--不确定的伤亡人数合计
+	,sgjjss		--事故经济损失
+	,sgdj		--事故等级
+	,sglxdm		--事故类型代码
+	,sglx		--事故类型
+	,sgyy		--事故原因
+	,qyw		--起因物
+	,zhw		--致害物
+	,baqxw		--不安全行为
+	,baqzt		--不安全状态
+	,sggk		--事故概况
+	,xgsj		--修改时间
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间

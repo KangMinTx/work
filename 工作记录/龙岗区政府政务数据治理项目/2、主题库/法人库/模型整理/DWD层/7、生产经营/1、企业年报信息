@@ -1,0 +1,200 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-26 14:32:40
+--table_name : dwd_scjy_qynbxx(企业年报信息)
+--use_tables : std_qfzggj_nb_gt_jbxx(区发展改革局_个体工商户年报信息)
+--			   std_qfzggj_nb_qy_jbxx(区发展改革局_企业年报信息)
+--			   dwd_jbxx_frjcxx (法人基本信息)
+-- 取数逻辑  : 从 std_qfzggj_nb_gt_jbxx(区发展改革局_个体工商户年报信息) ,std_qfzggj_nb_qy_jbxx(区发展改革局_企业年报信息) 按字段取数
+--			   通过关联  dwd_jbxx_frjcxx (法人基本信息) 补充部分企业信息
+--_********************************************************_
+
+insert overwrite table dwd_scjy_qynbxx partition (dt='${DayBeforeStartTime}')
+
+select 
+id --主键 
+,ancheyear --年报年度 
+,anchetype --年报类别 
+,ztsfdm --主体身份代码 
+,tyshxydm --统一社会信用代码 
+,zch --注册号 
+,gsmc --企业名称 
+,busst --经营状态 
+,mainbusiact --经营范围 
+,relationtouniscid --隶属企业统一码 
+,relationto --隶属企业 
+,holdingsmsg_code --控股情况代码 
+,holdingsmsg --控股情况 
+,ifpubholdingsmsg --是否公示控股情况 
+,ifhasweb --是否拥有网站 
+,ifinvother --是否有对外投资 
+,ifhasgqzr --是否有股权转让 
+,ifpub --是否公示 
+,empnum --从业人数 
+,ifpubempnum --是否公示从业人数 
+,colgranum --其中高校毕业生人数（经营者） 
+,colemplnum --其中高校毕业生人数（雇工） 
+,retsolnum --其中退役士兵人数（经营者） 
+,retemplnum --其中退役士兵人数（雇工） 
+,dispernum --其中残疾人人数（经营者） 
+,disemplnum --其中残疾人人数（雇工） 
+,unenum --其中失业人员再就业人数（经营者） 
+,uneemplnum --其中失业人员再就业人数（雇工） 
+,womempnum --女性从业人数 
+,ifpubwomempnum --是否公示女性从业人数 
+,tel --电话 
+,addr --地址 
+,postalcode --邮编 
+,email --邮箱 
+,firstpubtime --首次公示时间 
+,anchedate --年报时间 
+,lyb --来源表 
+,lyjg --来源机构 
+,yxsj --运行时间
+from 
+(
+select 
+id --主键 
+,ancheyear --年报年度 
+,anchetype --年报类别 
+,ztsfdm --主体身份代码 
+,tyshxydm --统一社会信用代码 
+,zch --注册号 
+,gsmc --企业名称 
+,busst --经营状态 
+,mainbusiact --经营范围 
+,relationtouniscid --隶属企业统一码 
+,relationto --隶属企业 
+,holdingsmsg_code --控股情况代码 
+,holdingsmsg --控股情况 
+,ifpubholdingsmsg --是否公示控股情况 
+,ifhasweb --是否拥有网站 
+,ifinvother --是否有对外投资 
+,ifhasgqzr --是否有股权转让 
+,ifpub --是否公示 
+,empnum --从业人数 
+,ifpubempnum --是否公示从业人数 
+,colgranum --其中高校毕业生人数（经营者） 
+,colemplnum --其中高校毕业生人数（雇工） 
+,retsolnum --其中退役士兵人数（经营者） 
+,retemplnum --其中退役士兵人数（雇工） 
+,dispernum --其中残疾人人数（经营者） 
+,disemplnum --其中残疾人人数（雇工） 
+,unenum --其中失业人员再就业人数（经营者） 
+,uneemplnum --其中失业人员再就业人数（雇工） 
+,womempnum --女性从业人数 
+,ifpubwomempnum --是否公示女性从业人数 
+,tel --电话 
+,addr --地址 
+,postalcode --邮编 
+,email --邮箱 
+,firstpubtime --首次公示时间 
+,anchedate --年报时间 
+,lyb --来源表 
+,lyjg --来源机构 
+,yxsj --运行时间
+,row_number() over(partition by tyshxydm,ancheyear,anchetype,firstpubtime order by  anchedate desc) rn
+from 
+(
+/*区发展改革局_个体工商户年报信息*/
+SELECT  uuid()                                         AS id --主键 
+       ,ancheyear                                      AS ancheyear --年报年度 
+       ,null                                           AS anchetype --年报类别 
+       ,pripid                                         AS ztsfdm --主体身份代码 
+       ,uniscid                                        AS tyshxydm --统一社会信用代码 
+       ,regno                                          AS zch --注册号 
+       ,traname                                        AS gsmc --企业名称 
+       ,nvl(t2.lgl_entstaus_no,t3.lgl_entstaus_no)     AS busst --经营状态 
+       ,nvl(t2.business_scope,t3.business_scope)       AS mainbusiact --经营范围 
+       ,null                                           AS relationtouniscid --隶属企业统一码 
+       ,null                                           AS relationto --隶属企业 
+       ,null 										   AS holdingsmsg_code --控股情况代码
+  	   ,null                                           AS holdingsmsg --控股情况 
+       ,null                                           AS ifpubholdingsmsg --是否公示控股情况 
+       ,ifhasweb                                       AS ifhasweb --是否拥有网站 
+       ,null                                           AS ifinvother --是否有对外投资 
+       ,null                                           AS ifhasgqzr --是否有股权转让 
+       ,ifpub                                          AS ifpub --是否公示 
+       ,empnum                                         AS empnum --从业人数 
+       ,CASE WHEN empnum is not null THEN "是" ELSE "否" END AS ifpubempnum --是否公示从业人数 
+       ,colgranum                                      AS colgranum --其中高校毕业生人数（经营者） 
+       ,colemplnum                                     AS colemplnum --其中高校毕业生人数（雇工） 
+       ,retsolnum                                      AS retsolnum --其中退役士兵人数（经营者） 
+       ,retemplnum                                     AS retemplnum --其中退役士兵人数（雇工） 
+       ,dispernum                                      AS dispernum --其中残疾人人数（经营者） 
+       ,disemplnum                                     AS disemplnum --其中残疾人人数（雇工） 
+       ,unenum                                         AS unenum --其中失业人员再就业人数（经营者） 
+       ,uneemplnum                                     AS uneemplnum --其中失业人员再就业人数（雇工） 
+       ,null                                           AS womempnum --女性从业人数 
+       ,null                                           AS ifpubwomempnum --是否公示女性从业人数 
+       ,tel                                            AS tel --电话 
+       ,nvl(t2.address_detail,t3.address_detail)       AS addr --地址 
+       ,null                                           AS postalcode --邮编 
+       ,null                                           AS email --邮箱 
+       ,firstpubtime                                   AS firstpubtime --首次公示时间 
+       ,anchedate                                      AS anchedate --年报时间 
+       ,'std_qfzggj_nb_gt_jbxx'                        AS lyb --来源表 
+       ,'区发展改革局'                                  AS lyjg --来源机构 
+       ,current_timestamp                              AS yxsj --运行时间
+FROM std_qfzggj_nb_gt_jbxx t1
+left join 
+(select lgl_name,zzjgdm,tyshxydm,business_scope,lgl_entstaus_no,address_detail from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.uniscid=t2.tyshxydm
+left join 
+(select zzjgdm,tyshxydm,lgl_name,business_scope,lgl_entstaus_no,address_detail from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.traname = t3.lgl_name
+where t1.dt=(select max(dt) from std_qfzggj_nb_gt_jbxx)
+
+union all
+/*区发展改革局_企业年报信息*/
+select 
+uuid() as id  --主键
+,ancheyear as ancheyear  --年报年度
+,anchetype as anchetype  --年报类别
+,pripid as pripid  --主体身份代码
+,nvl(nvl(uniscid,t2.tyshxydm),t3.tyshxydm) as uniscid  --统一社会信用代码
+,regno as regno  --注册号
+,entname as entname  --企业名称
+,busst as busst  --经营状态
+,nvl(nvl(mainbusiact,t2.business_scope),t3.business_scope) as mainbusiact  --经营范围
+,relationtouniscid as relationtouniscid  --隶属企业统一码
+,relationto as relationto  --隶属企业
+,holdingsmsg as holdingsmsg_code --控股情况代码
+,holdingsmsg as holdingsmsg  --控股情况
+,ifpubholdingsmsg as ifpubholdingsmsg  --是否公示控股情况
+,ifhasweb as ifhasweb  --是否拥有网站
+,ifinvother as ifinvother  --是否有对外投资
+,ifhasgqzr as ifhasgqzr  --是否有股权转让
+,ifpub as ifpub  --是否公示
+,empnum as empnum  --从业人数
+,ifpubempnum as ifpubempnum  --是否公示从业人数
+,colgranum as colgranum  --其中高校毕业生人数(经营者)
+,colemplnum as colemplnum  --其中高校毕业生人数(雇工)
+,retsolnum as retsolnum  --其中退役士兵人数(经营者)
+,retemplnum as retemplnum  --其中退役士兵人数(雇工)
+,dispernum as dispernum  --其中残疾人人数(经营者)
+,disemplnum as disemplnum  --其中残疾人人数(雇工)
+,unenum as unenum  --其中失业人员再就业人数(经营者)
+,uneemplnum as uneemplnum  --其中失业人员再就业人数(雇工)
+,womempnum as womempnum  --女性从业人数
+,ifpubwomempnum as ifpubwomempnum  --是否公示女性从业人数
+,tel as tel  --电话
+,addr as addr  --地址
+,postalcode as postalcode  --邮编
+,email as email  --邮箱
+,firstpubtime as firstpubtime  --首次公示时间
+,anchedate as anchedate  --年报时间
+,'std_qfzggj_nb_qy_jbxx' as lyb  --来源表
+,'区发展改革局' as lyjg  --来源机构
+,current_timestamp as yxsj  --运行时间
+from std_qfzggj_nb_qy_jbxx t1
+left join 
+(select lgl_name,zzjgdm,tyshxydm,business_scope,lgl_entstaus_no,address_detail from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.entname=t2.lgl_name
+left join 
+(select lgl_name,zzjgdm,zch,tyshxydm,business_scope,lgl_entstaus_no,address_detail from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.regno=t3.zch
+where t1.dt=(select max(dt) from std_qfzggj_nb_qy_jbxx)
+))
+where rn=1

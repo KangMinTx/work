@@ -1,0 +1,41 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-11-30 10:21:49
+--b1.fileno bgbh           ,--报告编号
+--b1.spchdate cjrq           ,--抽检日期
+--运行结果显示std层这两个字段有为空
+--2229 表名修改为 : dwd_fxfm_cjccbhg 原表名 为 dwd_fxfm_xypjxx
+--优先取值为 法人基本信息中的 组织机构代码 注册号 公司名称
+--0317 He 修改 字段 scrq,ggrq 格式为 YYYY-MM-DD
+--_********************************************************_
+insert overwrite table dwd_fxfm_cjccbhg partition (dt = '${daybeforestarttime}')
+select
+	uuid() UUID           ,--主键
+	b1.aicentcode ztsfdm           ,--主体身份代码
+	b2.tyshxydm tyshxydm           ,--统一社会信用代码
+	b2.zzjgdm zzjgdm           ,--组织机构代码
+	b2.zch dj_zch           ,--登记/注册号
+	nvl(b2.lgl_name,b1.entname) gsmc           ,--公司名称
+	b1.fileno bgbh           ,--报告编号
+	b1.spchdate cjrq           ,--抽检日期
+	"食品安全抽检不合格" cjsm           ,--抽检说明
+	b1.proname cccpmc           ,--抽查产品名称
+	b1.logo bcsb           ,--标称商标
+	b1.model ggxh           ,--规格型号
+	case when scdate like '%.%' then to_date(replace(trim(scdate),'.','-'))
+	when scdate like '/' then null
+	when scdate like '%/%' then to_date(replace(trim(scdate),'/','-'))
+	else to_date(trim(scdate)) end scrq           ,--生产日期
+	b1.rejitem bhgx           ,--不合格项
+	case when ggdate like '%.%' then to_date(replace(trim(ggdate),'.','-'))
+	when ggdate like '/' then null
+	when ggdate like '%/%' then to_date(replace(trim(ggdate),'/','-'))
+	else to_date(trim(ggdate)) end ggrq           ,--公告日期
+	"补充" xxlylx           ,--信息来源类型
+	"std_qfzggj_t_busi_yjj_examinereject dwd_jbxx_frjcxx"lyb           ,--来源表
+	b1.lyjg lyjg           ,--来源机构
+	now() yxsj           --运行时间
+from (select distinct aicentcode,entname,fileno,spchdate,proname,logo,model,scdate,rejitem,ggdate,lyjg from std_qfzggj_t_busi_yjj_examinereject b1 where b1.dt=(select max(dt) from std_qfzggj_t_busi_yjj_examinereject) ) b1
+left join (select distinct tyshxydm,zzjgdm,zch,lgl_id,lgl_name from dwd_jbxx_frjcxx b2 where b2.dt=(select max(dt) from dwd_jbxx_frjcxx))b2
+on b1.aicentcode=b2.lgl_id

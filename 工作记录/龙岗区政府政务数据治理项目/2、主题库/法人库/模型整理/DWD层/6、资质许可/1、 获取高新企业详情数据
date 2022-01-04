@@ -1,0 +1,118 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-18 16:13:48
+--0114修改：he 增加筛选分区，并根据统一社会信用代码去重
+--1229
+--_********************************************************_
+/*insert overwrite table dwd_frzz_gxqysj partition (dt='${DayBeforeStartTime}')
+select
+lgl_id  --法人唯一标识
+,LGL_NAME --机构名称
+,QYDZ --企业地址
+,SZJD --所在街道
+,ZSBH --证书编号
+,GXJSLY --高新技术领域
+,RDND --认定年度
+,GLDM_UPADTE_TIME --更新时间
+,BUILD_CODE --楼栋编码
+,LEGAL_PERSON_CARD_ID --法定代表人或负责人证件类型
+,LEGAL_PERSON_CARD_NO --法定代表人或负责人证件号码
+,LEGAL_PERSON_NAME --法定代表人或负责人姓名
+,BUSINESS_SCOPE --经营范围
+,COMMUNITY_CODE --社区编码
+,COMMUNITY_NAME --社区名称
+,lyb --来源表
+,lyjg --来源机构
+,yxsj  --运行时间
+from 
+( 
+select 
+b1.tyshxydm as  LGL_ID                    ,--法人唯一标识
+b1.entname LGL_NAME                    ,--机构名称
+b2.ADDRESS_DETAIL QYDZ                    ,--企业地址
+b3.jdmc SZJD                    ,--所在街道
+b1.licno ZSBH                    ,--证书编号
+b4.gxjsly GXJSLY                    ,--高新技术领域
+b1.cogyear RDND                    ,--认定年度
+b1.cogyear GLDM_UPADTE_TIME                    ,--更新时间
+b3.building_code BUILD_CODE                    ,--楼栋编码
+b2.LEGAL_PERSON_CARD_ID LEGAL_PERSON_CARD_ID                    ,--法定代表人或负责人证件类型
+b2.LEGAL_PERSON_CARD_NO LEGAL_PERSON_CARD_NO                    ,--法定代表人或负责人证件号码
+b2.LEGAL_PERSON_NAME LEGAL_PERSON_NAME                    ,--法定代表人或负责人姓名
+b2.BUSINESS_SCOPE BUSINESS_SCOPE                    ,--经营范围
+b3.sqcode COMMUNITY_CODE                    ,--社区编码
+b3.sqname COMMUNITY_NAME                    ,--社区名称
+"std_qfzggj_t_busi_xxb_hightechent" lyb                    ,--来源表
+"区发展改革局" lyjg                    ,--来源机构
+now() yxsj                    --运行时间
+,row_number() over(partition by b1.tyshxydm order by b3.sqcode desc) rn 
+from 
+(select * from std_qfzggj_t_busi_xxb_hightechent where dt=(select max(dt) from std_qfzggj_t_busi_xxb_hightechent)) b1 
+left join (select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b2
+on b1.tyshxydm=b2.tyshxydm
+left join (select * from dwd_frdzxx where dt=(select max(dt) from dwd_frdzxx))b3
+on b1.tyshxydm=b3.tyshxydm
+left join (select * from std_qkjcxj_qkjcxjlgqgjgxjsqymd_v1 where dt=(select max(dt) from  std_qkjcxj_qkjcxjlgqgjgxjsqymd_v1)) b4
+on b1.tyshxydm=b4.tyshxydm ) where rn=1*/
+
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-18 16:13:48
+--0114修改：he 增加筛选分区，并根据统一社会信用代码去重
+--1229
+--_********************************************************_
+insert overwrite table dwd_frzz_gxqysj partition (dt='${DayBeforeStartTime}')
+select
+lgl_id  --法人唯一标识
+,LGL_NAME --机构名称
+,QYDZ --企业地址
+,SZJD --所在街道
+,ZSBH --证书编号
+,GXJSLY --高新技术领域
+,RDND --认定年度
+,GLDM_UPADTE_TIME --更新时间
+,BUILD_CODE --楼栋编码
+,LEGAL_PERSON_CARD_ID --法定代表人或负责人证件类型
+,LEGAL_PERSON_CARD_NO --法定代表人或负责人证件号码
+,LEGAL_PERSON_NAME --法定代表人或负责人姓名
+,BUSINESS_SCOPE --经营范围
+,COMMUNITY_CODE --社区编码
+,COMMUNITY_NAME --社区名称
+,lyb --来源表
+,lyjg --来源机构
+,yxsj  --运行时间
+from 
+( 
+select 
+b1.tyshxydm as  LGL_ID                    ,--法人唯一标识
+b1.qymc LGL_NAME                    ,--机构名称
+b1.qydz QYDZ                    ,--企业地址
+b1.szjd SZJD                    ,--所在街道
+b1.zsbh ZSBH                    ,--证书编号
+b1.gxjsly GXJSLY                    ,--高新技术领域
+b1.rdnd RDND                    ,--认定年度
+to_date(b1.sjsjcssj,'yyyymmdd') GLDM_UPADTE_TIME                    ,--更新时间
+b3.building_code BUILD_CODE                    ,--楼栋编码
+b2.LEGAL_PERSON_CARD_ID LEGAL_PERSON_CARD_ID                    ,--法定代表人或负责人证件类型
+b2.LEGAL_PERSON_CARD_NO LEGAL_PERSON_CARD_NO                    ,--法定代表人或负责人证件号码
+b2.LEGAL_PERSON_NAME LEGAL_PERSON_NAME                    ,--法定代表人或负责人姓名
+b2.BUSINESS_SCOPE BUSINESS_SCOPE                    ,--经营范围
+b3.sqcode COMMUNITY_CODE                    ,--社区编码
+b3.sqname COMMUNITY_NAME                    ,--社区名称
+"std_qkjcxj_qkjcxjlgqgjgxjsqymd_v1" lyb                    ,--来源表
+"区发展改革局" lyjg                    ,--来源机构
+now() yxsj                    --运行时间
+,row_number() over(partition by b1.tyshxydm order by b3.sqcode desc) rn 
+from 
+(select * from std_qkjcxj_qkjcxjlgqgjgxjsqymd_v1 where dt=(select max(dt) from std_qkjcxj_qkjcxjlgqgjgxjsqymd_v1 )) b1 
+left join (select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b2
+on b1.tyshxydm=b2.tyshxydm
+left join (select * from dwd_frdzxx where dt=(select max(dt) from dwd_frdzxx))b3
+on b1.tyshxydm=b3.tyshxydm
+left join (select * from std_qfzggj_t_busi_xxb_hightechent where dt=(select max(dt) from  std_qfzggj_t_busi_xxb_hightechent)) b4
+on b1.tyshxydm=b4.tyshxydm ) where rn=1
+ 
+
+ 

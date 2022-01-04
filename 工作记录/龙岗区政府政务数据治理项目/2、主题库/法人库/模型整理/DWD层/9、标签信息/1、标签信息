@@ -1,0 +1,282 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-10 19:31:44
+--table_name : dwd_bqxx_bqxxb (标签信息)
+--use_tables : dwd_zzxk_rzqyxx (资质许可_认证企业信息)
+--			   std_qfzggj_t_busi_zscqj_advent (知识产权优势企业名单)
+--			   std_qfzggj_t_busi_aic_honent (重合同守信用企业公示信息)
+--                   std_qfzggj_t_busi_zjj_nbpent (区发展改革局de获得国家省名牌产品称号企业信息)
+--                   std_qkjcxj_qkjcxjgjgxjsqyrdjl_v1 (区科技创新局de国家高新技术企业认定激励v1)
+--                   std_qwhgdlytyj_qwhcyfzbgslgqzdwhqy (区文化广电旅游体育局de龙岗区重点文化企业)
+--                   std_qzf_zfw_enterpriseinfomanage1 (龙岗区政法委法人数据) 
+--                   std_qxw_small_place_view (三小场所基本信息)
+--取数逻辑  : 根据文档所提供的相关表和相关字段信息.关联法人基本信息补充法人基本数据 后 union all
+--去重逻辑  : 根据统一社会信用代码,标签名,标签部门,业务时间,标签属性1,标签属性2 进行去重,取业务时间最新的一条记录
+--_********************************************************_
+insert overwrite table dwd_bqxx_bqxxb partition (dt = '${daybeforestarttime}')
+select 
+uuid --主键 
+,ztsfdm --主体身份代码 
+,tyshxydm --统一社会信用代码 
+,zzjgdm --组织机构代码 
+,zch --登记/注册号 
+,gsmc --公司名称 
+,bqm --标签名 
+,bqbm --标签部门 
+,ywsj --业务时间 
+,bqsx1 --标签属性1 
+,bqsx2 --标签属性2 
+,bqsx3 --标签属性3 
+,lyb --来源表 
+,lyjg --来源机构 
+,yxsj --运行时间  
+from (
+select 
+uuid --主键 
+,ztsfdm --主体身份代码 
+,tyshxydm --统一社会信用代码 
+,zzjgdm --组织机构代码 
+,zch --登记/注册号 
+,gsmc --公司名称 
+,bqm --标签名 
+,bqbm --标签部门 
+,ywsj --业务时间 
+,bqsx1 --标签属性1 
+,bqsx2 --标签属性2 
+,bqsx3 --标签属性3 
+,lyb --来源表 
+,lyjg --来源机构 
+,yxsj --运行时间  
+,row_number() over(partition by tyshxydm,bqm,bqbm,ywsj,bqsx1,bqsx2 order by ywsj desc) rn
+from 
+(
+/*dwd_zzxk_rzqyxx 资质许可_认证企业信息*/
+select 
+uuid --主键 
+,ztsfdm --主体身份代码 
+,tyshxydm --统一社会信用代码 
+,zzjgdm --组织机构代码 
+,zch --登记/注册号 
+,gsmc --公司名称 
+,bqm --标签名 
+,bqbm --标签部门 
+,ywsj --业务时间 
+,bqsx1 --标签属性1 
+,bqsx2 --标签属性2 
+,bqsx3 --标签属性3 
+,lyb --来源表 
+,lyjg --来源机构 
+,yxsj --运行时间  
+from (
+select 
+uuid() as uuid --主键
+,t2.lgl_id as ztsfdm --主体身份代码
+,t1.tyshxydm as tyshxydm --统一社会信用代码
+,nvl(t1.zzjgdm,t2.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t1.zch,t2.zch) as zch --登记/注册号
+,nvl(t1.qymc,t2.lgl_name) as gsmc --公司名称
+,t1.rznr as bqm --标签名
+,t1.lyjg as bqbm --标签部门
+,t1.zskssj as ywsj --业务时间
+,t1.rzdj as bqsx1 --标签属性1
+,t1.zsbh as bqsx2 --标签属性2
+,null as bqsx3 --标签属性3
+,'dwd_zzxk_rzqyxx' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+,row_number() over(partition by t1.tyshxydm,t1.qymc,t1.rznr,t1.zskssj,t1.rzdj,t1.zsbh order by t1.zskssj desc) rn
+from (select tyshxydm,zzjgdm,zch,qymc,rznr,lyjg,zskssj,rzdj,zsbh from dwd_zzxk_rzqyxx
+where dt=(select max(dt) from dwd_zzxk_rzqyxx) ) t1
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.tyshxydm=t2.tyshxydm ) where  rn=1
+
+ 
+union all
+
+/*std_qfzggj_t_busi_zscqj_advent 知识产权优势企业名单*/
+select 
+uuid() as uuid --主键
+,nvl(t1.aicentcode,t3.lgl_id) as ztsfdm --主体身份代码
+,nvl(t2.tyshxydm,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t1.org_code,t2.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t3.zch) as zch --登记/注册号
+,nvl(nvl(t1.ent_name,t2.lgl_name),t3.lgl_name) as gsmc --公司名称
+,'知识产权优势企业' as bqm --标签名
+,'区发展改革局' as bqbm --标签部门
+,t1.udate as ywsj --业务时间
+,null as bqsx1 --标签属性1
+,null as bqsx2 --标签属性2
+,null as bqsx3 --标签属性3
+,'std_qfzggj_t_busi_zscqj_advent' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from (select aicentcode,org_code,ent_name,udate,lyjg from std_qfzggj_t_busi_zscqj_advent
+where dt=(select max(dt) from std_qfzggj_t_busi_zscqj_advent)) t1
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.aicentcode=t2.lgl_id
+left join  
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.org_code=t3.zzjgdm
+
+union all
+
+/*std_qfzggj_t_busi_aic_honent 重合同守信用企业公示信息*/
+select
+uuid() as uuid --主键
+,t2.lgl_id as ztsfdm --主体身份代码
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,t1.name as gsmc --公司名称
+,'重合同守信用' as bqm --标签名
+,'区发展改革局' as bqbm --标签部门
+,t1.appdate as ywsj --业务时间
+,t1.iscontyears as bqsx1 --标签属性1
+,t1.isyear as bqsx2 --标签属性2
+,null as bqsx3 --标签属性3
+,'std_qfzggj_t_busi_aic_honent' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from (select name,appdate,iscontyears,isyear,lyjg from std_qfzggj_t_busi_aic_honent 
+where dt=(select max(dt) from std_qfzggj_t_busi_aic_honent)) t1
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.name=t2.lgl_name
+  
+  union all
+/*std_qfzggj_t_busi_zjj_nbpent 区发展改革局de获得国家省名牌产品称号企业信息*/
+select 
+uuid() as uuid --主键
+,nvl(t1.aicentcode,t2.lgl_id) as ztsfdm --主体身份代码
+,nvl(t2.tyshxydm,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t2.zzjgdm,t3.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t3.zch) as zch --登记/注册号
+,nvl(t1.entname,t3.lgl_name) as gsmc --公司名称
+,'名牌产品企业' as bqm --标签名
+,'区发展改革局' as bqbm --标签部门
+,t1.obtdate as ywsj --业务时间
+,t1.promodel as bqsx1 --标签属性1
+,t1.proname as bqsx2 --标签属性2
+,null as bqsx3 --标签属性3
+,'std_qfzggj_t_busi_zjj_nbpent' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from 
+(select aicentcode,entname,obtdate,promodel,proname,lyjg from  std_qfzggj_t_busi_zjj_nbpent where dt=(select max(dt) from std_qfzggj_t_busi_zjj_nbpent)) t1
+/*通过企业名称关联*/
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.entname=t2.lgl_name
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.aicentcode=t3.lgl_id
+
+union all
+/*std_qkjcxj_qkjcxjgjgxjsqyrdjl_v1 区科技创新局de国家高新技术企业认定激励v1*/
+select
+uuid() as uuid --主键
+,nvl(t2.lgl_id,t3.lgl_id) as ztsfdm --主体身份代码
+,nvl(t1.tyshxydm,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t2.zzjgdm,t3.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t3.zch) as zch --登记/注册号
+,nvl(t1.qymc,t2.lgl_name) as gsmc --公司名称
+,'国家高新技术企业' as bqm --标签名
+,'区科技创新局' as bqbm --标签部门
+,t1.sqsj as ywsj --业务时间
+,t1.zznf as bqsx1 --标签属性1
+,t1.zzje as bqsx2 --标签属性2
+,null as bqsx3 --标签属性3
+,'std_qkjcxj_qkjcxjgjgxjsqyrdjl_v1' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from (select tyshxydm,qymc,sqsj,zznf,zzje,lyjg from std_qkjcxj_qkjcxjgjgxjsqyrdjl_v1 where dt=(select max(dt) from std_qkjcxj_qkjcxjgjgxjsqyrdjl_v1)) t1
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.tyshxydm=t2.tyshxydm
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.qymc=t3.lgl_name
+
+
+union all
+/*std_qwhgdlytyj_qwhcyfzbgslgqzdwhqy 区文化广电旅游体育局de龙岗区重点文化企业*/
+select 
+uuid() as uuid --主键
+,t2.lgl_id as ztsfdm --主体身份代码
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,t1.qymc as gsmc --公司名称
+,null as bqm --标签名
+,'区文化广电旅游体育局' as bqbm --标签部门
+,t1.u_insert_time as ywsj --业务时间
+,t1.zyywhylb as bqsx1 --标签属性1
+,t1.dz as bqsx2 --标签属性2
+,null as bqsx3 --标签属性3
+,'std_qwhgdlytyj_qwhcyfzbgslgqzdwhqy' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from 
+(select * from std_qwhgdlytyj_qwhcyfzbgslgqzdwhqy where dt=(select max(dt) from std_qwhgdlytyj_qwhcyfzbgslgqzdwhqy) )  t1
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.qymc=t2.lgl_name
+
+union all
+/*std_qzf_zfw_enterpriseinfomanage1 龙岗区政法委法人数据*/
+select 
+uuid() as uuid --主键
+,nvl(t2.lgl_id,t3.lgl_id) as ztsfdm --主体身份代码
+,nvl(t1.enterpriseno,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t2.zzjgdm,t3.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t3.zch) as zch --登记/注册号
+,nvl(t1.enterprisename,t2.lgl_name) as gsmc --公司名称
+,'网格企业' as bqm --标签名
+,null as bqbm --标签部门
+,t1.addtime as ywsj --业务时间
+,t1.registrar as bqsx1 --标签属性1
+,t1.jycs as bqsx2 --标签属性2
+,null as bqsx3 --标签属性3
+,'std_qzf_zfw_enterpriseinfomanage1' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from 
+(select * from std_qzf_zfw_enterpriseinfomanage1 where dt=(select max(dt) from std_qzf_zfw_enterpriseinfomanage1) )  t1
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.enterpriseno=t2.tyshxydm
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.enterprisename=t3.lgl_name
+
+union all
+/*std_qxw_small_place_view 三小场所基本信息*/
+select
+uuid() as uuid --主键
+,nvl(t2.lgl_id,t3.lgl_id) as ztsfdm --主体身份代码
+,nvl(t1.licensecode,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t2.zzjgdm,t3.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t3.zch) as zch --登记/注册号
+,nvl(t1.officialname,t2.lgl_name) as gsmc --公司名称
+,null as bqm --标签名
+,null as bqbm --标签部门
+,t1.checktime as ywsj --业务时间
+,t1.placetypename as bqsx1 --标签属性1
+,t1.placetype as bqsx2 --标签属性2
+,null as bqsx3 --标签属性3
+,'std_qxw_small_place_view' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from (select * from std_qxw_small_place_view where dt=(select max(dt) from std_qxw_small_place_view )) t1
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.licensecode=t2.tyshxydm
+left join 
+(select lgl_id,lgl_name,zzjgdm,tyshxydm,business_scope,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.officialname=t3.lgl_name  
+)) where  rn =1 and tyshxydm is not null
+
+  

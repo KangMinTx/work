@@ -1,0 +1,37 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-30 15:01:19.84
+--所属主题:资产负债
+--内容描述:资产负债1张表,加工至dwd_fxfm_zcfz(资产负债)
+--			std_qfzggj_t_busi_czj_zw(区发展改革局_逾期未归还政府债务信息)1
+
+--加载策略:全量
+--1229 修改 法人名称,组织机构代码 优先从法人基本信息中取值
+--0316 He 修改 dqsj,jksj 格式为 YYYY-MM-DD
+--_********************************************************_
+--truncate table dwd_fxfm_zcfz;
+insert overwrite table dwd_fxfm_zcfz partition (dt='${DayBeforeStartTime}')
+
+select
+	distinct
+	b.tyshxydm	--统一社会信用代码
+	,b.zch		--登记/注册号
+	,aicentcode ztsfdm		--主体身份代码
+	,nvl(b.zzjgdm,a.orgcode) zzjgdm		--组织机构代码
+	,nvl(b.lgl_name,a.entname) gsmc		--公司名称
+	,cast(qkje as int) qkye		--欠款余额
+	,'逾期未归还政府债务信息' qksm		--欠款说明
+	,cast(yhje as int)		--已还金额
+	,dqsj		--到期时间
+	,jksj		--借款时间
+	,cast(jkje as int)	 	--借款金额	
+	,'补充' xxlylx		--信息来源类型
+ 	,'std_qfzggj_t_busi_czj_zw' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,substr(current_timestamp,1,19) yxsj      --运行时间
+ from (select * from std_qfzggj_t_busi_czj_zw where dt=(select max(dt) from std_qfzggj_t_busi_czj_zw)) a
+left join (select lgl_id,tyshxydm,lgl_name,zzjgdm,zch from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+ on trim(a.aicentcode)=trim(b.lgl_id) 
+
+ 

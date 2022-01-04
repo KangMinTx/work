@@ -1,0 +1,134 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin/TZM
+--create time: 2020-11-22 17:18:37
+--_********************************************************_
+--2021-03-04
+--增加dwd_jbxx_frjcxx的限制条件zzjgdm is not null and zch is not null
+--********************************************************_
+--SELECT * from dwd_zbzc_gdcz limit 1000;
+
+
+insert overwrite table dwd_zbzc_gdcz partition (dt='${DayBeforeStartTime}')
+
+/*	select
+		uuid() as id --主键
+		,gdsfbs  --投资人标识
+		,nbxh  --内部序号
+		,frwybs --法人唯一标识
+		,gd   --股东名称
+		,gd_lxgdlxdm  -- 股东类型代码
+		,gdlx   --股东类型
+		,zjlx_gdgdzjlx  --证件类型
+		,zjhm_gdgdzjhm  --证件号码
+		,zzlx_gdgdzzlxdm --证照类型代码
+		,gdzzlx    -- 币种代码证照类型
+		,rjcze  --认缴出资额
+		,rjczbl  -- 认缴出资比例
+		,rjczrq --认缴出资时间  -- 股东国籍
+		,rjczfsdm  -- 认缴出资方式代码
+		,rjczfs  -- 认缴出资方式
+		,sjcze  -- 实缴出资额
+		,sjczbl  -- 实缴出资比例
+		,bzdm   -- 币种代码
+		,bz  -- 币种
+		,gd_gjgdgjdm --股东国籍代码
+		,gdgj  -- 股东国籍
+		,xxlylx --信息来源类型
+		,lyb  -- 来源表
+		,lyjg --来源机构
+		,yxsj--运行时间
+	from
+	(
+		select 
+			distinct
+			invid as gdsfbs  --投资人标识
+			,null as nbxh  --内部序号
+			,null as frwybs --法人唯一标识
+			,invname as gd   --股东名称
+			,invtypecode as gd_lxgdlxdm  -- 股东类型代码
+			,invtype  as gdlx   --股东类型
+			,(case when length(invid)=18 then '身份证件号' else null end)  as zjlx_gdgdzjlx  --证件类型
+			,invid as zjhm_gdgdzjhm  --证件号码
+			,null as zzlx_gdgdzzlxdm --证照类型代码
+			,null as gdzzlx    -- 币种代码证照类型
+			,cast(capamt as int) as rjcze  --认缴出资额
+			,cast(capprop as int)  as rjczbl  -- 认缴出资比例
+			,null as rjczrq --认缴出资时间  -- 股东国籍
+			,null as rjczfsdm  -- 认缴出资方式代码
+			,null as rjczfs  -- 认缴出资方式
+			,null as sjcze  -- 实缴出资额
+			,null as sjczbl  -- 实缴出资比例
+			,null as bzdm   -- 币种代码
+			,null as bz  -- 币种
+			,null as gd_gjgdgjdm --股东国籍代码
+			,null as gdgj  -- 股东国籍
+			,'补充' as xxlylx --信息来源类型
+			,'std_qfzggj_aic_investor' lyb  -- 来源表
+			,lyjg --来源机构
+			,current_timestamp as yxsj  -- 运行时间
+		from std_qfzggj_aic_investor 
+		where dt=(select  max(dt) from std_qfzggj_aic_investor)
+	)
+union all*/
+	select
+		uuid() as id --主键
+		,gdsfbs  --投资人标识
+		,nbxh  --内部序号
+		,frwybs --法人唯一标识
+		,gd   --股东名称
+		,gd_lxgdlxdm  -- 股东类型代码
+		,gdlx   --股东类型
+		,zjlx_gdgdzjlx  --证件类型
+		,zjhm_gdgdzjhm  --证件号码
+		,zzlx_gdgdzzlxdm --证照类型代码
+		,gdzzlx    -- 币种代码证照类型
+		,rjcze  --认缴出资额
+		,rjczbl  -- 认缴出资比例
+		,rjczrq --认缴出资时间  -- 股东国籍
+		,rjczfsdm  -- 认缴出资方式代码
+		,rjczfs  -- 认缴出资方式
+		,sjcze  -- 实缴出资额(万元)
+		,sjczbl  -- 实缴出资比例
+		,bzdm   -- 币种代码
+		,bz  -- 币种
+		,gd_gjgdgjdm --股东国籍代码
+		,gdgj  -- 股东国籍
+		,xxlylx --信息来源类型
+		,lyb  -- 来源表
+		,lyjg --来源机构
+		,yxsj--运行时间
+	from
+	(
+		select
+			distinct
+			gdswzh as gdsfbs  --投资人标识
+			,null as nbxh  --内部序号
+			,t2.tyshxydm as frwybs --法人唯一标识
+			,gdmc as gd   --股东名称
+			,gdlb as gd_lxgdlxdm  -- 股东类型代码
+			,gdlb  as gdlx   --股东类型
+			,(case when length(gdswzh)=18 then '身份证件号' else null end) as zjlx_gdgdzjlx  --证件类型
+			,gdswzh as zjhm_gdgdzjhm  --证件号码
+			,null as zzlx_gdgdzzlxdm --证照类型代码
+			,null as gdzzlx    -- 币种代码证照类型
+			,null as rjcze  --认缴出资额
+			,cast(czbl as int)  as rjczbl  -- 认缴出资比例
+			,null as rjczrq --认缴出资时间  -- 股东国籍
+			,null as rjczfsdm  -- 认缴出资方式代码
+			,null as rjczfs  -- 认缴出资方式
+			,cast(wze as int) as sjcze  -- 实缴出资额 
+			,cast(czbl as int) as sjczbl  -- 实缴出资比例
+			,null as bzdm   -- 币种代码
+			,null as bz  -- 币种
+			,null as gd_gjgdgjdm --股东国籍代码
+			,null as gdgj  -- 股东国籍
+			,'权威' as xxlylx --信息来源类型
+			,'std_schzljgw_sszt_gdxx_10_1228113407' lyb -- 来源表
+			,t1.lyjg lyjg--来源机构
+			,current_timestamp as yxsj  -- 运行时间
+		from (select * from dwd_jbxx_frjcxx t2 where  t2.dt=(select  max(dt) from dwd_jbxx_frjcxx) and zzjgdm is not null and zch is not null)t2
+		left join (select * from std_schzljgw_sszt_gdxx_10_1228113407 t1 where t1.dt=(select  max(dt) from std_schzljgw_sszt_gdxx_10_1228113407) and t1.zzjgdm is not null and t1.zch is not null )t1
+		on t1.zzjgdm=t2.zzjgdm and t1.zch=t2.zch
+	
+)

@@ -1,0 +1,115 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-08 14:14:34
+--table_name : dwd_zczb_frdkqq (法人贷款情况)
+--use_tables : std_qfzggj_t_busi_rmyh_loancard (区发展改革局_办贷款卡情况信息)
+--			   dwd_jbxx_frjcxx (法人基础信息)
+--取数逻辑   : 以 std_qfzggj_t_busi_rmyh_loancard (区发展改革局_办贷款卡情况信息) 为主表,通过 主体身份代码,组织结构代码,企业名称 关联
+--			   dwd_jbxx_frjcxx (法人基础信息) 获取法人相关信息
+--去重逻辑   : 根据统一社会信用代码,银行,卡号 去重 
+--_********************************************************_
+insert overwrite table dwd_zczb_frdkqq partition (dt='${DayBeforeStartTime}')
+select 
+uuid --主键 
+,ztsfdm --主体身份代码 
+,tyshxydm --统一社会信用代码 
+,zzjgdm --组织机构代码 
+,zch --登记/注册号 
+,gsmc --公司名称 
+,bank --贷款银行 
+,dkkh --贷款卡号 
+,dkje --贷款金额 
+,dksj --贷款时间 
+,dklv --贷款利率 
+,repay_interval --贷款截至时间 
+,yhbj --已归还本金 
+,yhlx --已归还利息 
+,dbjg --担保机构 
+,dbze --担保总额 
+,dbsxf --担保手续费 
+,xxlylx --信息来源类型 
+,lyb --来源表 
+,lyjg --来源机构 
+,yxsj --运行时间 
+from 
+(
+SELECT  uuid()                                        AS UUID --主键 
+       ,nvl(nvl(t4.lgl_id,t3.lgl_id),t1.aicentcode)   AS ztsfdm --主体身份代码 
+       ,nvl(nvl(t2.tyshxydm,t3.tyshxydm),t4.tyshxydm) AS tyshxydm --统一社会信用代码 
+       ,nvl(nvl(t4.zzjgdm,t2.zzjgdm),t1.orgcode)      AS zzjgdm --组织机构代码 
+       ,nvl(nvl(t2.zch,t3.zch),t4.zch)                AS zch --登记/注册号 
+       ,nvl(nvl(t3.lgl_name,t2.lgl_name),t1.entname)  AS gsmc --公司名称 
+       ,t1.basebankname                               AS bank --贷款银行 
+       ,t1.cardnum                                    AS dkkh --贷款卡号 
+       ,null                                          AS dkje --贷款金额 
+       ,null                                          AS dksj --贷款时间 
+       ,null                                          AS dklv --贷款利率 
+       ,null                                          AS repay_interval --贷款截至时间 
+       ,null                                          AS yhbj --已归还本金 
+       ,null                                          AS yhlx --已归还利息 
+       ,null                                          AS dbjg --担保机构 
+       ,null                                          AS dbze --担保总额 
+       ,null                                          AS dbsxf --担保手续费 
+       ,'补充'                                        AS xxlylx --信息来源类型 
+       ,'std_qfzggj_t_busi_rmyh_loancard'             AS lyb --来源表 
+       ,lyjg                                          AS lyjg --来源机构 
+       ,CURRENT_TIMESTAMP                             AS yxsj --运行时间 
+       ,row_number() over(partition by nvl(nvl(t2.tyshxydm,t3.tyshxydm),t4.tyshxydm),t1.basebankname,t1.cardnum ORDER BY t1.cardnum) rn
+FROM 
+(
+	SELECT  *
+	FROM std_qfzggj_t_busi_rmyh_loancard
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM std_qfzggj_t_busi_rmyh_loancard)
+) t1
+LEFT JOIN 
+(
+	SELECT  lgl_id
+	       ,lgl_name
+	       ,tyshxydm
+	       ,zzjgdm
+	       ,zch
+	       ,LEGAL_PERSON_NAME
+	       ,LEGAL_PERSON_CARD_NO
+	       ,LEGAL_PERSON_CARD_ID
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx) 
+) t2
+ON trim(t1.aicentcode)=trim(t2.lgl_id)
+LEFT JOIN 
+(
+	SELECT  lgl_id
+	       ,lgl_name
+	       ,tyshxydm
+	       ,zzjgdm
+	       ,zch
+	       ,LEGAL_PERSON_NAME
+	       ,LEGAL_PERSON_CARD_NO
+	       ,LEGAL_PERSON_CARD_ID
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx) 
+) t3
+ON trim(t1.orgcode)=trim(t3.zzjgdm)
+LEFT JOIN 
+(
+	SELECT  lgl_id
+	       ,lgl_name
+	       ,tyshxydm
+	       ,zzjgdm
+	       ,zch
+	       ,LEGAL_PERSON_NAME
+	       ,LEGAL_PERSON_CARD_NO
+	       ,LEGAL_PERSON_CARD_ID
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx) 
+) t4
+ON trim(t1.entname)=trim(t4.lgl_name)
+) where rn=1

@@ -1,0 +1,47 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2021-01-12 15:42:44
+--table_name : dwd_jbxx_frsbjbxx (法人社保基本信息)
+--use_tables : dwd_jbxx_frsbjc (法人社保缴存)
+--			   std_qfzggj_t_busi_sbj_insurance （企业参保信息-发改）
+-- 取数逻辑  ： 以“法人社保缴存”为主表，通过组织机构代码、单位名称、统一社会信用代码关联“企业参保信息-发改”
+-- 去重逻辑  ： std_qfzggj_t_busi_sbj_insurance （企业参保信息-发改） 表中 根据 统一社会信用代码，企业名称，组织结构代码 分组 根据开始年份排序 取最新一条记录
+--_********************************************************_
+
+insert overwrite table dwd_jbxx_frsbjbxx partition (dt='${DayBeforeStartTime}')
+select 
+uuid() as uuid
+,t1.tyshxydm as tyshxydm --统一社会信用代码
+,t1.zzjgdm as zzjgdm --组织机构代码
+,t1.unit_sno as unit_sno --社保编号
+,t1.dwmc as gsmc --公司名称
+,t1.accountdate as accountdate --缴费到账日期
+,t1.ic_flag as ic_flag --养老参保情况
+,t1.lc_flag as lc_flag --工伤参保情况
+,t1.kc_flag as kc_flag --医疗参保情况
+,t1.jc_flag as jc_flag --生育参保情况
+,t1.mc_flag as mc_flag --失业参保情况
+,t1.account_flag as account_flag --到账状态
+,t2.stayear as stayear --投保起始年
+,t2.stamonth as stamonth --投保起始月
+,t2.stastatus as stastatus --当前状态
+,t2.instotnum as instotnum --参保总人数
+,t2.pensinsnum as pensinsnum --养老参保人数
+,t2.mediinsnum as mediinsnum --医疗参保人数
+,t2.wriinsnum as wriinsnum --工伤参保人数
+,t2.unempinsnum as unempinsnum --失业参保人数
+,substr(t1.accountdate,1,4) as account_year --缴费到账年
+,substr(t1.accountdate,6,2) as account_month --缴费到账月
+,'' as account_date --缴费到账日
+,'dwd_jbxx_frsbjc' as lyb --来源表
+,'区发展改革局' as lyjg --来源机构
+,current_date as yxsj --运行时间
+from 
+(select * from dwd_jbxx_frsbjc  where dt=(select max(dt) from dwd_jbxx_frsbjc)) t1
+left join 
+(select * from 
+  (select tyshxydm,orgcode,entname,stayear,stamonth,stastatus,instotnum,pensinsnum,mediinsnum,wriinsnum,unempinsnum,row_number() over(partition by tyshxydm,orgcode,entname order by stayear desc) rn 
+ from std_qfzggj_t_busi_sbj_insurance where dt=(select max(dt) from std_qfzggj_t_busi_sbj_insurance)
+) where rn=1) t2
+ on t1.tyshxydm=t2.tyshxydm and t1.zzjgdm=t2.orgcode and t1.dwmc=t2.entname

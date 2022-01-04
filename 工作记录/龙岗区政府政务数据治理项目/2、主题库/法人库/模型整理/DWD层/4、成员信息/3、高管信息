@@ -1,0 +1,114 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-12-02 10:00:17
+--table_name : dwd_cyxx_ggxx (高管信息)
+--use_tables : std_qfzggj_t_busi_ljs_ggxx (非上市股份有限公司托管高管信息)
+--			   ods_qgyhxxhj_t_corporation (企业基本信息)
+--取数逻辑   : 从 std_qgyhxxhj_t_corporation (企业基本信息) 中,只取董事长和总经理数据
+--去重/筛选逻辑: 暂无
+--_********************************************************_
+
+insert overwrite table dwd_cyxx_ggxx partition (dt='${DayBeforeStartTime}')
+select 
+uuid() as uuid --主键
+,t2.tyshxydm as tyshxydm --统一社会信用代码
+,t1.aicentcode as ztsfdm --主体身份代码
+,t2.zzjgdm as zzjgdm --组织机构代码
+,t2.zch as zch --登记/注册号
+,t2.lgl_name as gsmc --公司名称
+,'中华人民共和国居民身份证' as ggzjlx --高管证件类型
+,t1.sfz as ggzjhm --高管证件号码
+,t1.name as ggxm --高管姓名
+,t1.title as zwlx --职位类型
+,t1.title_name as zw --职务
+,'std_qfzggj_t_busi_ljs_ggxx' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from std_qfzggj_t_busi_ljs_ggxx t1
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2 
+on t1.aicentcode=t2.lgl_id
+where t1.dt=(select max(dt) from std_qfzggj_t_busi_ljs_ggxx)
+
+union all
+
+select 
+uuid() as uuid --主键
+,nvl(t2.tyshxydm,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t2.lgl_id,t3.lgl_id) as ztsfdm --主体身份代码
+,nvl(t1.org_code,t3.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t3.zch) as zch --登记/注册号
+,nvl(t1.fullname,t2.lgl_name) as gsmc --公司名称
+,'中华人民共和国居民身份证' as ggzjlx --高管证件类型
+,null as ggzjhm --高管证件号码
+,chairman as ggxm --高管姓名
+,'01' as zwlx --职务类型
+,'董事长' as zw --职务
+,'ods_qgyhxxhj_t_corporation' as lyb --来源表
+,'区工业和信息化局' as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from ods_qgyhxxhj_t_corporation t1
+left join  
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2 
+on t1.org_code=t2.zzjgdm
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t3
+on t1.fullname=t3.lgl_name
+where dt=(select max(dt) from ods_qgyhxxhj_t_corporation) and chairman is not NULL
+
+union all
+
+select 
+uuid() as uuid --主键
+,nvl(t2.tyshxydm,t3.tyshxydm) as tyshxydm --统一社会信用代码
+,nvl(t2.lgl_id,t3.lgl_id) as ztsfdm --主体身份代码
+,nvl(t1.org_code,t3.zzjgdm) as zzjgdm --组织机构代码
+,nvl(t2.zch,t3.zch) as zch --登记/注册号
+,nvl(t1.fullname,t2.lgl_name) as gsmc --公司名称
+,'中华人民共和国居民身份证' as ggzjlx --高管证件类型
+,null as ggzjhm --高管证件号码
+,general_manager as ggxm --高管姓名
+,'07' as zwlx --职务类型
+,'总经理' as zw --职务
+,'ods_qgyhxxhj_t_corporation' as lyb --来源表
+,'区工业和信息化局' as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from ods_qgyhxxhj_t_corporation t1
+left join  
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t2 
+on t1.org_code=t2.zzjgdm
+left join 
+(
+	SELECT  LGL_ID,tyshxydm,LGL_NAME,zch,zzjgdm
+	FROM dwd_jbxx_frjcxx
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+) t3
+on t1.fullname=t3.lgl_name
+where dt=(select max(dt) from ods_qgyhxxhj_t_corporation) and general_manager is not NULL

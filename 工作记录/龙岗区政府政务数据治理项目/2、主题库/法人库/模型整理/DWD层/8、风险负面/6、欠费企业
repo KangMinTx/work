@@ -1,0 +1,610 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-11 11:01:19.84
+--所属主题:欠费企业
+--内容描述:欠费信息1张表,加工至stdn_qfzggj_qfxx(欠费信息)
+--			std_qfzggj_t_busi_gdj_credit(区发展改革局_电费欠费记录)1
+
+
+--加载策略:全量
+--_********************************************************_
+--truncate table stdn_qfzggj_qfxx;
+insert overwrite table stdn_qfzggj_qfxx partition (dt='${DayBeforeStartTime}')
+
+select
+ key          --统一社会信用代码+欠费类型+欠费发生时间
+,ztsfdm      --主体身份代码
+,tyshxydm    --统一社会信用代码
+,zh          --法人名称/字号
+,qflxdm      --欠费类型代码
+,qflx        --欠费类型
+,dqqfje      --当前欠费金额
+,fssj        --发生时间
+,fddbrsfzjlx --法定代表人身份证件类型
+,fddbrxm     --法定代表人姓名
+,dmhzjhm     --代码或证件号码
+,dmhzjlx     --代码或证件类型
+,xxlylx      --信息来源类型
+,lyb         --来源表
+,lyjg        --来源机构
+,yxsj        --运行时间
+ from 
+(
+select
+	concat_ws('','','电费欠费',replace(to_date(scd_charge_date),'-','')) key          --统一社会信用代码+欠费类型+欠费发生时间
+	,null ztsfdm      --主体身份代码
+	,null tyshxydm    --统一社会信用代码
+	,scd_name zh          --法人名称/字号
+	,'2' qflxdm      --欠费类型代码
+	,'电费欠费' qflx        --欠费类型
+	,(scd_charge-scd_payment_charge) dqqfje      --当前欠费金额
+	,to_date(scd_charge_date) as fssj        --发生时间
+	,null fddbrsfzjlx --法定代表人身份证件类型
+	,null fddbrxm     --法定代表人姓名
+	,scd_id_no dmhzjhm     --代码或证件号码
+	,scd_id_type dmhzjlx     --代码或证件类型
+	,'补充' xxlylx      --信息来源类型
+	,'std_qfzggj_t_busi_gdj_credit' lyb         --来源表
+	,lyjg        --来源机构
+	,current_timestamp yxsj        --运行时间
+ from std_qfzggj_t_busi_gdj_credit
+ where  dt=(select max(dt) from std_qfzggj_t_busi_gdj_credit)
+ )
+  group by key          --统一社会信用代码+欠费类型+欠费发生时间
+			,ztsfdm      --主体身份代码
+			,tyshxydm    --统一社会信用代码
+			,zh          --法人名称/字号
+			,qflxdm      --欠费类型代码
+			,qflx        --欠费类型
+			,dqqfje      --当前欠费金额
+			,fssj        --发生时间
+			,fddbrsfzjlx --法定代表人身份证件类型
+			,fddbrxm     --法定代表人姓名
+			,dmhzjhm     --代码或证件号码
+			,dmhzjlx     --代码或证件类型
+			,xxlylx      --信息来源类型
+			,lyb         --来源表
+			,lyjg        --来源机构
+			,yxsj        --运行时间
+
+
+
+
+            --SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-11 11:01:19.84
+--所属主题:欠费企业
+--内容描述:欠税信息2张表,加工至stdn_sdzzwztzx_qsxx(欠税信息)
+--			std_sdzzwzyzx_sszt_qsxx_gs_10_1024151718(市电子政务资源中心_商事主体欠税违法违章信息国税)1	
+--			std_sdzzwzyzx_sszt_qsxx_ds_10_1024150936(市电子政务资源中心_商事主体欠税信息地税)2
+
+
+--加载策略:全量
+--_********************************************************_
+--truncate table stdn_sdzzwztzx_qsxx;
+insert overwrite table stdn_sdzzwztzx_qsxx partition (dt='${DayBeforeStartTime}')
+
+select
+ key          --统一社会信用代码+欠费类型+欠费发生时间
+,ztsfdm      --主体身份代码
+,tyshxydm    --统一社会信用代码
+,zh          --法人名称/字号
+,qflxdm      --欠费类型代码
+,qflx        --欠费类型
+,dqqfje      --当前欠费金额
+,fssj        --发生时间
+,fddbrsfzjlx --法定代表人身份证件类型
+,fddbrxm     --法定代表人姓名
+,dmhzjhm     --代码或证件号码
+,dmhzjlx     --代码或证件类型
+,xxlylx      --信息来源类型
+,lyb         --来源表
+,lyjg       --来源机构
+,yxsj        --运行时间
+ from 
+(
+select
+	concat_ws('',nsrsbh,'欠税欠费',replace(a.timeflag,'-','')) key          --统一社会信用代码+欠费类型+欠费发生时间
+	,null ztsfdm      --主体身份代码
+	,nsrsbh tyshxydm    --统一社会信用代码
+	,nsrmc zh          --法人名称/字号
+	,'2' qflxdm      --欠费类型代码
+	,'欠税欠费' qflx        --欠费类型 (缺失字典值)
+	,(qsye+dqxqkje) dqqfje      --当前欠费金额
+	,'20'||replace(substr(substr(ggrq,instr(ggrq,'月')),1,5),'月 -','')||'-'||
+ 		'0'||replace(substr(substr(GGRQ,instr(GGRQ,'-')+1),1,2),'月','')||'-'||
+		 substr(GGRQ,1,2) as fssj        --发生时间
+	,null fddbrsfzjlx --法定代表人身份证件类型
+	,null fddbrxm     --法定代表人姓名
+	,null dmhzjhm     --代码或证件号码
+	,null dmhzjlx     --代码或证件类型
+	,'补充' xxlylx      --信息来源类型
+	,'std_sdzzwzyzx_sszt_qsxx_gs_10_1024151718' lyb         --来源表
+	,a.lyjg  lyjg      --来源机构
+	,current_timestamp yxsj        --运行时间
+ from  std_sdzzwzyzx_sszt_qsxx_gs_10_1024151718 a 
+  left join (select * from std_qzfw_view_qy_jcxx b where  b.dt=(select max(dt) from std_qzfw_view_qy_jcxx))b
+ on b.tyshxydm=a.nsrsbh
+ where  a.dt=(select max(dt) from std_sdzzwzyzx_sszt_qsxx_gs_10_1024151718) 
+union all
+select
+	concat_ws('',nsrsbh,'欠税欠费',replace(a.timeflag,'-','')) key          --统一社会信用代码+欠费类型+欠费发生时间
+	,null ztsfdm      --主体身份代码
+	,nsrsbh tyshxydm    --统一社会信用代码
+	,nsrmc zh          --法人名称/字号
+	,'2' qflxdm      --欠费类型代码
+	,'欠税欠费' qflx        --欠费类型 (缺失字典值)
+	,qshj dqqfje      --当前欠费金额
+	,'20'||replace(substr(substr(ggrq,instr(ggrq,'月')),1,5),'月 -','')||'-'||
+ 	'0'||replace(substr(substr(GGRQ,instr(GGRQ,'-')+1),1,2),'月','')||'-'||
+ 	substr(GGRQ,1,2) as fssj        --发生时间
+	,null fddbrsfzjlx --法定代表人身份证件类型
+	,fzrxm fddbrxm     --法定代表人姓名
+	,sfzh dmhzjhm     --代码或证件号码
+	,null dmhzjlx     --代码或证件类型
+	,'补充' xxlylx      --信息来源类型
+	,'std_sdzzwzyzx_sszt_qsxx_ds_10_1024150936' lyb         --来源表
+	,a.lyjg  lyjg      --来源机构
+	,current_timestamp yxsj        --运行时间
+ from std_sdzzwzyzx_sszt_qsxx_ds_10_1024150936 a 
+ left join (select * from std_qzfw_view_qy_jcxx b where  b.dt=(select max(dt) from std_qzfw_view_qy_jcxx))b
+ on b.tyshxydm=a.nsrsbh
+ where  a.dt=(select max(dt) from std_sdzzwzyzx_sszt_qsxx_ds_10_1024150936) 
+ )
+  group by key          --统一社会信用代码+欠费类型+欠费发生时间
+			,ztsfdm      --主体身份代码
+			,tyshxydm    --统一社会信用代码
+			,zh          --法人名称/字号
+			,qflxdm      --欠费类型代码
+			,qflx        --欠费类型
+			,dqqfje      --当前欠费金额
+			,fssj        --发生时间
+			,fddbrsfzjlx --法定代表人身份证件类型
+			,fddbrxm     --法定代表人姓名
+			,dmhzjhm     --代码或证件号码
+			,dmhzjlx     --代码或证件类型
+			,xxlylx      --信息来源类型
+			,lyb         --来源表
+			,lyjg        --来源机构
+			,yxsj        --运行时间
+
+
+
+            --SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-11 11:01:19.84
+--所属主题:欠费企业
+--内容描述:欠税信息1张表,加工至stdn_qfzggj_qsxx(欠税信息)
+--          std_qfzggj_t_busi_ldj_entbackpayinfo(区发展改革局_欠税记录)1
+
+
+--加载策略:全量
+--_********************************************************_
+--truncate table stdn_qfzggj_qsxx;
+insert overwrite table stdn_qfzggj_qsxx partition (dt='${DayBeforeStartTime}')
+
+select
+ key          --统一社会信用代码+欠费类型+欠费发生时间
+,ztsfdm      --主体身份代码
+,tyshxydm    --统一社会信用代码
+,zh          --法人名称/字号
+,qflxdm      --欠费类型代码
+,qflx        --欠费类型
+,dqqfje      --当前欠费金额
+,fssj        --发生时间
+,fddbrsfzjlx --法定代表人身份证件类型
+,fddbrxm     --法定代表人姓名
+,dmhzjhm     --代码或证件号码
+,dmhzjlx     --代码或证件类型
+,xxlylx      --信息来源类型
+,lyb         --来源表
+,lyjg        --来源机构
+,yxsj        --运行时间
+ from 
+(
+select
+	concat_ws('',nsrsbh,'',substr(jkqx,1,10)) key          --统一社会信用代码+欠费类型+欠费发生时间
+	,aicentcode ztsfdm      --主体身份代码
+	,nsrsbh tyshxydm    --统一社会信用代码
+	,nsrmc zh          --法人名称/字号
+	,zsxm_dm qflxdm      --欠费类型代码
+	,'欠税欠费' qflx        --欠费类型 (缺失字典值)
+	,bqxq dqqfje      --当前欠费金额
+	,substr(jkqx,1,10) as fssj        --发生时间
+	,null fddbrsfzjlx --法定代表人身份证件类型
+	,fddbrmc fddbrxm     --法定代表人姓名
+	,frzjlx_dm dmhzjhm     --代码或证件号码
+	,null dmhzjlx     --代码或证件类型
+	,'补充' xxlylx      --信息来源类型
+	,'std_qfzggj_t_busi_gsj_owetaxrec' lyb         --来源表
+	,a.lyjg lyjg        --来源机构
+	,current_timestamp yxsj        --运行时间
+ from std_qfzggj_t_busi_gsj_owetaxrec a
+ left join (select * from std_qzfw_view_qy_jcxx b where  b.dt=(select max(dt) from std_qzfw_view_qy_jcxx))b
+ on b.tyshxydm=a.nsrsbh
+ where  a.dt=(select max(dt) from std_qfzggj_t_busi_gsj_owetaxrec) 
+ )
+  group by key          --统一社会信用代码+欠费类型+欠费发生时间
+			,ztsfdm      --主体身份代码
+			,tyshxydm    --统一社会信用代码
+			,zh          --法人名称/字号
+			,qflxdm      --欠费类型代码
+			,qflx        --欠费类型
+			,dqqfje      --当前欠费金额
+			,fssj        --发生时间
+			,fddbrsfzjlx --法定代表人身份证件类型
+			,fddbrxm     --法定代表人姓名
+			,dmhzjhm     --代码或证件号码
+			,dmhzjlx     --代码或证件类型
+			,xxlylx      --信息来源类型
+			,lyb         --来源表
+			,lyjg        --来源机构
+			,yxsj        --运行时间
+
+
+
+            --SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-11 11:01:19.84
+--所属主题:欠费企业
+--内容描述:欠费企业STDN5张表,加工至dwd_qfqyxx(欠费企业信息)
+
+--加载策略:全量
+--_********************************************************_
+--truncate table dwd_qfqyxx;
+insert overwrite table dwd_qfqyxx partition (dt='${DayBeforeStartTime}')
+
+select
+ key          --统一社会信用代码+欠费类型+欠费发生时间
+,ztsfdm      --主体身份代码
+,null tyshxydm    --统一社会信用代码
+,zh  gsmc        --法人名称/字号
+,qflxdm      --欠费类型代码
+,qflx        --欠费类型
+,dqqfje      --当前欠费金额
+,fssj        --发生时间
+,fddbrsfzjlx --法定代表人身份证件类型
+,fddbrxm     --法定代表人姓名
+,dmhzjhm     --代码或证件号码
+--,dmhzjlx     代码或证件类型
+,xxlylx      --信息来源类型
+,lyb         --来源表
+,lyjg        --来源机构
+,yxsj        --运行时间 
+ from
+(
+select
+	concat_ws('',b.tyshxydm,qflx,fssj) key          --统一社会信用代码+欠费类型+欠费发生时间
+    ,ztsfdm    --主体身份代码
+    ,b.tyshxydm tyshxydm    --统一社会信用代码
+    ,b.lgl_name zh          --法人名称/字号
+    ,a.qflxdm  qflxdm     --欠费类型代码
+    ,a.qflx   qflx      --欠费类型
+    ,round(a.dqqfje,2)  dqqfje     --当前欠费金额
+    ,a.fssj  fssj       --发生时间
+    ,case when  length(trim(b.legal_person_card_no))=18 then '中华人民共和国居民身份证' else null end   fddbrsfzjlx--法定代表人身份证件类型
+    ,b.legal_person_name fddbrxm     --法定代表人姓名
+    ,b.legal_person_card_no dmhzjhm     --代码或证件号码
+    ,a.dmhzjlx  dmhzjlx   --代码或证件类型
+    ,a.xxlylx  xxlylx   --信息来源类型
+    ,a.lyb     lyb    --来源表
+    ,a.lyjg    lyjg    --来源机构
+    ,current_timestamp yxsj        --运行时间
+ from stdn_qfzggj_qfxx a
+ left join (select * from dwd_jbxx_frjcxx b where  b.dt=(select max(dt) from dwd_jbxx_frjcxx))b
+ on b.lgl_name=a.zh 
+ where  a.dt=(select max(dt) from stdn_qfzggj_qfxx) 
+union  all
+select
+	concat_ws('',tyshxydm,qflx,fssj) key          --统一社会信用代码+欠费类型+欠费发生时间
+    ,ztsfdm    --主体身份代码
+    ,tyshxydm tyshxydm    --统一社会信用代码
+    ,zh        --法人名称/字号
+    ,qflxdm     --欠费类型代码
+    ,qflx      --欠费类型
+    ,round(dqqfje,2)  dqqfje   --当前欠费金额
+    ,fssj as fssj       --发生时间
+    ,case when  length(trim(dmhzjhm))=18 then '	中华人民共和国居民身份证' else null end fddbrsfzjlx--法定代表人身份证件类型
+    ,fddbrxm     --法定代表人姓名
+    ,dmhzjhm     --代码或证件号码
+    ,dmhzjlx   --代码或证件类型
+    ,xxlylx   --信息来源类型
+    ,a.lyb lyb    --来源表
+    ,lyjg    --来源机构
+    ,current_timestamp yxsj        --运行时间
+ from stdn_qfzggj_qsxx a
+ where  a.dt=(select max(dt) from stdn_qfzggj_qsxx) 
+union  all
+select
+		concat_ws('',tyshxydm,qflx,fssj) key          --统一社会信用代码+欠费类型+欠费发生时间
+    ,ztsfdm    --主体身份代码
+    ,tyshxydm tyshxydm    --统一社会信用代码
+    ,zh       --法人名称/字号
+    ,qflxdm     --欠费类型代码
+    ,qflx      --欠费类型
+    ,round(dqqfje,2) dqqfje     --当前欠费金额
+    ,fssj       --发生时间
+    ,case when  length(trim(fddbrxm))=18 then '	中华人民共和国居民身份证' else null end fddbrsfzjlx--法定代表人身份证件类型
+    ,fddbrxm     --法定代表人姓名
+    ,dmhzjhm     --代码或证件号码
+    ,dmhzjlx   --代码或证件类型
+    ,xxlylx   --信息来源类型
+    ,lyb lyb    --来源表
+    ,lyjg    --来源机构
+    ,current_timestamp yxsj        --运行时间
+ from stdn_sdzzwztzx_qsxx 
+ where  dt=(select max(dt) from stdn_sdzzwztzx_qsxx) 
+union  all
+select
+	concat_ws('',b.tyshxydm,qflx,fssj) key          --统一社会信用代码+欠费类型+欠费发生时间
+    ,ztsfdm    --主体身份代码
+    ,b.tyshxydm tyshxydm    --统一社会信用代码
+    ,b.lgl_name  zh        --法人名称/字号
+    ,a.qflxdm  qflxdm     --欠费类型代码
+    ,a.qflx   qflx      --欠费类型
+    ,round(a.dqqfje,2)  dqqfje     --当前欠费金额
+    ,a.fssj  fssj       --发生时间
+    ,case when  length(trim(b.legal_person_card_no))=18 then '中华人民共和国居民身份证' else null end   fddbrsfzjlx--法定代表人身份证件类型
+    ,b.legal_person_name fddbrxm     --法定代表人姓名
+    ,b.legal_person_card_no dmhzjhm     --代码或证件号码
+    ,a.dmhzjlx  dmhzjlx   --代码或证件类型
+    ,a.xxlylx  xxlylx   --信息来源类型
+    ,a.lyb     lyb    --来源表
+    ,a.lyjg    lyjg    --来源机构
+    ,current_timestamp yxsj        --运行时间
+ from stdn_sdfswj_qsxx a
+ left join (select * from dwd_jbxx_frjcxx b where  b.dt=(select max(dt) from dwd_jbxx_frjcxx))b
+ on b.lgl_name=a.zh 
+ where  a.dt=(select max(dt) from stdn_sdfswj_qsxx) 
+union all
+select
+	concat_ws('',b.tyshxydm,qflx,fssj) key          --统一社会信用代码+欠费类型+欠费发生时间
+    ,ztsfdm    --主体身份代码
+    ,b.tyshxydm tyshxydm    --统一社会信用代码
+    ,b.lgl_name zh       --法人名称/字号
+    ,round(a.dqqfje,2)  qflxdm     --欠费类型代码
+    ,a.qflx   qflx      --欠费类型
+    ,a.dqqfje  dqqfje     --当前欠费金额
+    ,a.fssj  fssj       --发生时间
+    ,case when  length(trim(b.legal_person_card_no))=18 then '中华人民共和国居民身份证' else null end   fddbrsfzjlx--法定代表人身份证件类型
+    ,b.legal_person_name fddbrxm     --法定代表人姓名
+    ,b.legal_person_card_no dmhzjhm     --代码或证件号码
+    ,a.dmhzjlx  dmhzjlx   --代码或证件类型
+    ,a.xxlylx  xxlylx   --信息来源类型
+    ,a.lyb    lyb    --来源表
+    ,a.lyjg    lyjg    --来源机构
+    ,current_timestamp yxsj        --运行时间
+ from stdn_qfzggj_qxxx a
+ left join (select * from dwd_jbxx_frjcxx b where  b.dt=(select max(dt) from dwd_jbxx_frjcxx))b
+ on b.lgl_name=a.zh 
+ where  a.dt=(select max(dt) from stdn_qfzggj_qxxx) 
+ )
+  group by key          --统一社会信用代码+欠费类型+欠费发生时间
+			,ztsfdm      --主体身份代码
+			,tyshxydm    --统一社会信用代码
+			,zh          --法人名称/字号
+			,qflxdm      --欠费类型代码
+			,qflx        --欠费类型
+			,dqqfje      --当前欠费金额
+			,fssj        --发生时间
+			,fddbrsfzjlx --法定代表人身份证件类型
+			,fddbrxm     --法定代表人姓名
+			,dmhzjhm     --代码或证件号码
+			,dmhzjlx     --代码或证件类型
+			,xxlylx      --信息来源类型
+			,lyb         --来源表
+			,lyjg        --来源机构
+			,yxsj        --运行时间
+
+
+
+            --SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-11 11:01:19.84
+--所属主题:欠费企业
+--内容描述:欠税信息1张表,加工至stdn_sdfswj_qsxx(欠税信息)
+--			std_sdfswj_t_qsxxqy_10_20110527160922(市地方税务局_欠税信息企业)1
+--          std_sdfswj_t_qsxxgthhgr_10_20110527160901(市地方税务局_市地税欠税信息个体户和个人公共信用)2
+
+
+--加载策略:全量
+--0316 He 修改 fssj 格式为 YYYY-MM-DD
+--_********************************************************_
+--truncate table stdn_sdfswj_qsxx;
+insert overwrite table stdn_sdfswj_qsxx partition (dt='${DayBeforeStartTime}')
+
+select
+ key          --统一社会信用代码+欠费类型+欠费发生时间
+,ztsfdm      --主体身份代码
+,tyshxydm    --统一社会信用代码
+,zh          --法人名称/字号
+,qflxdm      --欠费类型代码
+,qflx        --欠费类型
+,dqqfje      --当前欠费金额
+,fssj        --发生时间
+,fddbrsfzjlx --法定代表人身份证件类型
+,fddbrxm     --法定代表人姓名
+,dmhzjhm     --代码或证件号码
+,dmhzjlx     --代码或证件类型
+,xxlylx      --信息来源类型
+,lyb         --来源表
+,lyjg        --来源机构
+,yxsj        --运行时间
+ from 
+(
+select
+	concat_ws('','','欠税欠费',replace(ggrq,'-','')) key          --统一社会信用代码+欠费类型+欠费发生时间
+	,null ztsfdm      --主体身份代码
+	,null tyshxydm    --统一社会信用代码
+	,company_name zh          --法人名称/字号
+	,'3' qflxdm      --欠费类型代码
+	,'欠税欠费' qflx        --欠费类型 (缺失字典值)
+	,total dqqfje      --当前欠费金额
+	,ggrq as fssj        --发生时间
+	,null fddbrsfzjlx --法定代表人身份证件类型
+	,leader_name fddbrxm     --法定代表人姓名
+	,certificate_code dmhzjhm     --代码或证件号码
+	,null dmhzjlx     --代码或证件类型
+	,'权威' xxlylx      --信息来源类型
+	,'std_sdfswj_t_qsxxqy_10_20110527160922' lyb         --来源表
+	,lyjg        --来源机构
+	,current_timestamp yxsj        --运行时间
+ from std_sdfswj_t_qsxxqy_10_20110527160922
+ where  dt=(select max(dt) from std_sdfswj_t_qsxxqy_10_20110527160922)
+union  all
+select
+	concat_ws('','','欠税欠费',replace(ggrq,'-','')) key          --统一社会信用代码+欠费类型+欠费发生时间
+	,null ztsfdm      --主体身份代码
+	,null tyshxydm    --统一社会信用代码
+	,company_name zh          --法人名称/字号
+	,'3' qflxdm      --欠费类型代码
+	,'欠税欠费' qflx        --欠费类型 (缺失字典值)
+	,total dqqfje      --当前欠费金额
+	,ggrq as fssj        --发生时间
+	,null fddbrsfzjlx --法定代表人身份证件类型
+	,individual_name fddbrxm     --法定代表人姓名
+	,certificate_code dmhzjhm     --代码或证件号码
+	,null dmhzjlx     --代码或证件类型
+	,'权威' xxlylx      --信息来源类型
+	,'std_sdfswj_t_qsxxgthhgr_10_20110527160901' lyb         --来源表
+	,lyjg        --来源机构
+	,current_timestamp yxsj        --运行时间
+ from std_sdfswj_t_qsxxgthhgr_10_20110527160901
+ where  dt=(select max(dt) from std_sdfswj_t_qsxxgthhgr_10_20110527160901)
+ )
+  group by key          --统一社会信用代码+欠费类型+欠费发生时间
+			,ztsfdm      --主体身份代码
+			,tyshxydm    --统一社会信用代码
+			,zh          --法人名称/字号
+			,qflxdm      --欠费类型代码
+			,qflx        --欠费类型
+			,dqqfje      --当前欠费金额
+			,fssj        --发生时间
+			,fddbrsfzjlx --法定代表人身份证件类型
+			,fddbrxm     --法定代表人姓名
+			,dmhzjhm     --代码或证件号码
+			,dmhzjlx     --代码或证件类型
+			,xxlylx      --信息来源类型
+			,lyb         --来源表
+			,lyjg        --来源机构
+			,yxsj        --运行时间
+
+
+            --SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-11 11:01:19.84
+--所属主题:欠费企业
+--内容描述:欠薪信息3张表,加工至stdn_qfzggj_qxxx(欠薪信息)
+--          std_qfzggj_t_busi_ldj_entbackpayinfo(区发展改革局_企业欠薪信息)1
+--			std_qfzggj_xylg_rsj_entbackpayinfo(区发展改革局_企业欠薪情况)2
+--			std_qfzggj_t_busi_ldj_lgentbackpayinfo(区发展改革局_政府垫付欠薪企业信息)3
+
+--加载策略:全量
+--_********************************************************_
+--truncate table stdn_qfzggj_qxxx;
+insert overwrite table stdn_qfzggj_qxxx partition (dt='${DayBeforeStartTime}')
+
+select
+ key          --统一社会信用代码+欠费类型+欠费发生时间
+,ztsfdm      --主体身份代码
+,tyshxydm    --统一社会信用代码
+,zh          --法人名称/字号
+,qflxdm      --欠费类型代码
+,qflx        --欠费类型
+,dqqfje      --当前欠费金额
+,fssj        --发生时间
+,fddbrsfzjlx --法定代表人身份证件类型
+,fddbrxm     --法定代表人姓名
+,dmhzjhm     --代码或证件号码
+,dmhzjlx     --代码或证件类型
+,xxlylx      --信息来源类型
+,lyb         --来源表
+,lyjg        --来源机构
+,yxsj        --运行时间
+ from 
+(
+select
+	concat_ws('',tyshxydm,'欠薪欠费',dealcircs) key          --统一社会信用代码+欠费类型+欠费发生时间
+	,aicentcode ztsfdm      --主体身份代码
+	,tyshxydm tyshxydm    --统一社会信用代码
+	,name zh          --法人名称/字号
+	,'1' qflxdm      --欠费类型代码
+	,'欠薪欠费' qflx        --欠费类型 (缺失字典值)
+	,bacpaytotamo dqqfje      --当前欠费金额
+	,substr(dealcircs,1,4)||case when dealcircs like '%1季度%' then '-01-01' 
+		when dealcircs like '%2季度%' then '-04-01' 
+		when dealcircs like '%3季度%' then '-07-01'
+		when dealcircs like '%4季度%' then '-10-01' end  fssj        --发生时间
+	,null fddbrsfzjlx --法定代表人身份证件类型
+	,principal fddbrxm     --法定代表人姓名
+	,null dmhzjhm     --代码或证件号码
+	,null dmhzjlx     --代码或证件类型
+	,'补充' xxlylx      --信息来源类型
+	,'std_qfzggj_t_busi_ldj_entbackpayinfo' lyb         --来源表
+	,lyjg        --来源机构
+	,current_timestamp yxsj        --运行时间
+ from std_qfzggj_t_busi_ldj_entbackpayinfo
+ where  dt=(select max(dt) from std_qfzggj_t_busi_ldj_entbackpayinfo)
+union all
+select
+	concat_ws('','','欠薪欠费',replace(udate,'-','')) key          --统一社会信用代码+欠费类型+欠费发生时间
+	,aicentcode ztsfdm      --主体身份代码
+	,null tyshxydm    --统一社会信用代码
+	,bacname zh          --法人名称/字号
+	,'1' qflxdm      --欠费类型代码
+	,'欠薪欠费' qflx        --欠费类型 (缺失字典值)
+	,bacpaytotamo dqqfje      --当前欠费金额
+	,substr(udate,1,10) as fssj        --发生时间
+	,null fddbrsfzjlx --法定代表人身份证件类型
+	,null fddbrxm     --法定代表人姓名
+	,null dmhzjhm     --代码或证件号码
+	,null dmhzjlx     --代码或证件类型
+	,'补充' xxlylx      --信息来源类型
+	,'std_qfzggj_xylg_rsj_entbackpayinfo' lyb         --来源表
+	,lyjg        --来源机构
+	,current_timestamp yxsj        --运行时间
+ from std_qfzggj_xylg_rsj_entbackpayinfo
+ where  dt=(select max(dt) from std_qfzggj_xylg_rsj_entbackpayinfo)
+union all
+select
+	concat_ws('','','欠薪欠费',replace(dftime,'-','')) key          --统一社会信用代码+欠费类型+欠费发生时间
+	,aicentcode ztsfdm      --主体身份代码
+	,null tyshxydm    --统一社会信用代码
+	,name zh          --法人名称/字号
+	,'1' qflxdm      --欠费类型代码
+	,'欠薪欠费' qflx        --欠费类型 (缺失字典值)
+	,dfsalary dqqfje      --当前欠费金额
+	,to_date(replace(dftime,'/','-')) as fssj        --发生时间
+	,null fddbrsfzjlx --法定代表人身份证件类型
+	,principal fddbrxm     --法定代表人姓名
+	,null dmhzjhm     --代码或证件号码
+	,null dmhzjlx     --代码或证件类型
+	,'补充' xxlylx      --信息来源类型
+	,'std_qfzggj_t_busi_ldj_lgentbackpayinfo' lyb         --来源表
+	,lyjg        --来源机构
+	,current_timestamp yxsj        --运行时间
+ from std_qfzggj_t_busi_ldj_lgentbackpayinfo
+ where  dt=(select max(dt) from std_qfzggj_t_busi_ldj_lgentbackpayinfo)
+ )
+  group by key          --统一社会信用代码+欠费类型+欠费发生时间
+			,ztsfdm      --主体身份代码
+			,tyshxydm    --统一社会信用代码
+			,zh          --法人名称/字号
+			,qflxdm      --欠费类型代码
+			,qflx        --欠费类型
+			,dqqfje      --当前欠费金额
+			,fssj        --发生时间
+			,fddbrsfzjlx --法定代表人身份证件类型
+			,fddbrxm     --法定代表人姓名
+			,dmhzjhm     --代码或证件号码
+			,dmhzjlx     --代码或证件类型
+			,xxlylx      --信息来源类型
+			,lyb         --来源表
+			,lyjg        --来源机构
+			,yxsj        --运行时间

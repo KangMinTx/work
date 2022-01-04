@@ -1,0 +1,819 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-11 17:02:19
+--table_name : dwd_frdz_bz (法人社区信息表)
+--use_tables : dwd_jbxx_frjcxx (法人基本信息)
+--取数逻辑   : 通过经营地址 匹配 所属社区 jydz like '%xx社区%' 取对应的社区编码,社区名称,街道编码,街道名称 形成法人社区信息表
+--_********************************************************_
+insert overwrite table dwd_frdz_bz partition (dt='${DayBeforeStartTime}')
+select 
+uuid() as uuid
+,t1.lgl_id as ztsfdm --主体身份代码
+,t1.tyshxydm as tyshxydm--统一社会信用代码 
+,t1.zzjgdm as zzjgdm --组织机构 
+,t1.zch as zch--注册号 
+,t1.lgl_name as gsmc--公司名称
+,t1.jydz as jydz --经营地址
+,case when t1.jydz like '%白坭坑社区%' then '440307001' 
+when t1.jydz like '%鹅公岭社区%' then '440307001' 
+when t1.jydz like '%辅城坳社区%' then '440307001' 
+when t1.jydz like '%良安田社区%' then '440307001' 
+when t1.jydz like '%平湖社区%' then '440307001' 
+when t1.jydz like '%山厦社区%' then '440307001' 
+when t1.jydz like '%上木古社区%' then '440307001' 
+when t1.jydz like '%新木社区%' then '440307001' 
+when t1.jydz like '%新南社区%' then '440307001' 
+when t1.jydz like '%凤凰社区%' then '440307001' 
+when t1.jydz like '%禾花社区%' then '440307001' 
+when t1.jydz like '%力昌社区%' then '440307001' 
+--when t1.jydz like '%其他社区%' then '440307001' 
+when t1.jydz like '%布吉社区%' then '440307002' 
+when t1.jydz like '%布吉圩社区%' then '440307002' 
+when t1.jydz like '%长龙社区%' then '440307002' 
+when t1.jydz like '%德兴社区%' then '440307002' 
+when t1.jydz like '%东方半岛社区%' then '440307002' 
+when t1.jydz like '%凤凰社区%' then '440307002' 
+when t1.jydz like '%国展社区%' then '440307002' 
+when t1.jydz like '%金排社区%' then '440307002' 
+when t1.jydz like '%龙岭社区%' then '440307002' 
+when t1.jydz like '%龙珠社区%' then '440307002' 
+when t1.jydz like '%罗岗社区%' then '440307002' 
+when t1.jydz like '%茂业社区%' then '440307002' 
+when t1.jydz like '%大芬社区%' then '440307002' 
+when t1.jydz like '%木棉湾社区%' then '440307002' 
+when t1.jydz like '%南三社区%' then '440307002' 
+when t1.jydz like '%可园社区%' then '440307002' 
+when t1.jydz like '%文景社区%' then '440307002' 
+--when t1.jydz like '%其他社区%' then '440307002' 
+when t1.jydz like '%坂田社区%' then '440307003' 
+when t1.jydz like '%岗头社区%' then '440307003' 
+when t1.jydz like '%四季花城社区%' then '440307003' 
+when t1.jydz like '%象角塘社区%' then '440307003' 
+when t1.jydz like '%杨美社区%' then '440307003' 
+when t1.jydz like '%五和社区%' then '440307003' 
+when t1.jydz like '%马安堂社区%' then '440307003' 
+when t1.jydz like '%南坑社区%' then '440307003' 
+when t1.jydz like '%大发埔社区%' then '440307003' 
+when t1.jydz like '%万科城社区%' then '440307003' 
+when t1.jydz like '%第五园社区%' then '440307003' 
+when t1.jydz like '%新雪社区%' then '440307003' 
+--when t1.jydz like '%其他社区%' then '440307003' 
+when t1.jydz like '%宝岭社区%' then '440307004' 
+when t1.jydz like '%丹竹头社区%' then '440307004' 
+when t1.jydz like '%吉厦社区%' then '440307004' 
+when t1.jydz like '%康乐社区%' then '440307004' 
+when t1.jydz like '%南岭村社区%' then '440307004' 
+when t1.jydz like '%南龙社区%' then '440307004' 
+when t1.jydz like '%沙塘布社区%' then '440307004' 
+when t1.jydz like '%沙湾社区%' then '440307004' 
+when t1.jydz like '%上李朗社区%' then '440307004' 
+when t1.jydz like '%下李朗社区%' then '440307004' 
+when t1.jydz like '%厦村社区%' then '440307004' 
+when t1.jydz like '%樟树布社区%' then '440307004' 
+when t1.jydz like '%丹平社区%' then '440307004' 
+when t1.jydz like '%南新社区%' then '440307004' 
+--when t1.jydz like '%其他社区%' then '440307004' 
+when t1.jydz like '%横岗社区%' then '440307005' 
+when t1.jydz like '%华乐社区%' then '440307005' 
+when t1.jydz like '%华侨新村社区%' then '440307005' 
+when t1.jydz like '%六约社区%' then '440307005' 
+when t1.jydz like '%四联社区%' then '440307005' 
+when t1.jydz like '%松柏社区%' then '440307005' 
+when t1.jydz like '%怡锦社区%' then '440307005' 
+when t1.jydz like '%红棉社区%' then '440307005' 
+when t1.jydz like '%志盛社区%' then '440307005' 
+--when t1.jydz like '%其他社区%' then '440307005' 
+when t1.jydz like '%龙岗社区%' then '440307006' 
+when t1.jydz like '%龙岗墟社区%' then '440307006' 
+when t1.jydz like '%南联社区%' then '440307006' 
+when t1.jydz like '%平南社区%' then '440307006' 
+when t1.jydz like '%新生社区%' then '440307006' 
+when t1.jydz like '%龙西社区%' then '440307006' 
+when t1.jydz like '%五联社区%' then '440307006' 
+--when t1.jydz like '%其他社区%' then '440307006' 
+when t1.jydz like '%爱联社区%' then '440307007' 
+when t1.jydz like '%回龙埔社区%' then '440307007' 
+when t1.jydz like '%黄阁坑社区%' then '440307007' 
+when t1.jydz like '%龙红格社区%' then '440307007' 
+when t1.jydz like '%尚景社区%' then '440307007' 
+when t1.jydz like '%盛平社区%' then '440307007' 
+when t1.jydz like '%愉园社区%' then '440307007' 
+when t1.jydz like '%紫薇社区%' then '440307007' 
+when t1.jydz like '%新联社区%' then '440307007' 
+when t1.jydz like '%吉祥社区%' then '440307007' 
+when t1.jydz like '%嶂背社区%' then '440307007' 
+--when t1.jydz like '%其他社区%' then '440307007' 
+when t1.jydz like '%六联社区%' then '440307008' 
+when t1.jydz like '%年丰社区%' then '440307008' 
+when t1.jydz like '%坪地社区%' then '440307008' 
+when t1.jydz like '%坪东社区%' then '440307008' 
+when t1.jydz like '%坪西社区%' then '440307008' 
+when t1.jydz like '%四方埔社区%' then '440307008' 
+when t1.jydz like '%怡心社区%' then '440307008' 
+when t1.jydz like '%中心社区%' then '440307008' 
+when t1.jydz like '%高桥社区%' then '440307008' 
+--when t1.jydz like '%其他社区%' then '440307008' 
+when t1.jydz like '%甘坑社区%' then '440307014' 
+when t1.jydz like '%光华社区%' then '440307014' 
+when t1.jydz like '%丽湖社区%' then '440307014' 
+when t1.jydz like '%三联社区%' then '440307014' 
+when t1.jydz like '%水径社区%' then '440307014' 
+when t1.jydz like '%中海社区%' then '440307014' 
+when t1.jydz like '%翠湖社区%' then '440307014' 
+--when t1.jydz like '%其他社区%' then '440307014' 
+when t1.jydz like '%安良社区%' then '440307015' 
+when t1.jydz like '%保安社区%' then '440307015' 
+when t1.jydz like '%大康社区%' then '440307015' 
+when t1.jydz like '%荷坳社区%' then '440307015' 
+when t1.jydz like '%西坑社区%' then '440307015' 
+when t1.jydz like '%银荷社区%' then '440307015' 
+--when t1.jydz like '%其他社区%' then '440307015' 
+when t1.jydz like '%龙东社区%' then '440307016' 
+when t1.jydz like '%南约社区%' then '440307016' 
+when t1.jydz like '%同乐社区%' then '440307016' 
+when t1.jydz like '%宝龙社区%' then '440307016' 
+when t1.jydz like '%龙新社区%' then '440307016' 
+when t1.jydz like '%同德社区%' then '440307016' 
+when t1.jydz like '%同心社区%' then '440307016' 
+--when t1.jydz like '%其他社区%' then '440307016'  
+else null end as jddm --街道代码
+,case when t1.jydz like '%白坭坑社区%' then '平湖' 
+when t1.jydz like '%鹅公岭社区%' then '平湖' 
+when t1.jydz like '%辅城坳社区%' then '平湖' 
+when t1.jydz like '%良安田社区%' then '平湖' 
+when t1.jydz like '%平湖社区%' then '平湖' 
+when t1.jydz like '%山厦社区%' then '平湖' 
+when t1.jydz like '%上木古社区%' then '平湖' 
+when t1.jydz like '%新木社区%' then '平湖' 
+when t1.jydz like '%新南社区%' then '平湖' 
+when t1.jydz like '%凤凰社区%' then '平湖' 
+when t1.jydz like '%禾花社区%' then '平湖' 
+when t1.jydz like '%力昌社区%' then '平湖' 
+--when t1.jydz like '%其他社区%' then '平湖' 
+when t1.jydz like '%布吉社区%' then '布吉' 
+when t1.jydz like '%布吉圩社区%' then '布吉' 
+when t1.jydz like '%长龙社区%' then '布吉' 
+when t1.jydz like '%德兴社区%' then '布吉' 
+when t1.jydz like '%东方半岛社区%' then '布吉' 
+when t1.jydz like '%凤凰社区%' then '布吉' 
+when t1.jydz like '%国展社区%' then '布吉' 
+when t1.jydz like '%金排社区%' then '布吉' 
+when t1.jydz like '%龙岭社区%' then '布吉' 
+when t1.jydz like '%龙珠社区%' then '布吉' 
+when t1.jydz like '%罗岗社区%' then '布吉' 
+when t1.jydz like '%茂业社区%' then '布吉' 
+when t1.jydz like '%大芬社区%' then '布吉' 
+when t1.jydz like '%木棉湾社区%' then '布吉' 
+when t1.jydz like '%南三社区%' then '布吉' 
+when t1.jydz like '%可园社区%' then '布吉' 
+when t1.jydz like '%文景社区%' then '布吉' 
+--when t1.jydz like '%其他社区%' then '布吉' 
+when t1.jydz like '%坂田社区%' then '坂田' 
+when t1.jydz like '%岗头社区%' then '坂田' 
+when t1.jydz like '%四季花城社区%' then '坂田' 
+when t1.jydz like '%象角塘社区%' then '坂田' 
+when t1.jydz like '%杨美社区%' then '坂田' 
+when t1.jydz like '%五和社区%' then '坂田' 
+when t1.jydz like '%马安堂社区%' then '坂田' 
+when t1.jydz like '%南坑社区%' then '坂田' 
+when t1.jydz like '%大发埔社区%' then '坂田' 
+when t1.jydz like '%万科城社区%' then '坂田' 
+when t1.jydz like '%第五园社区%' then '坂田' 
+when t1.jydz like '%新雪社区%' then '坂田' 
+--when t1.jydz like '%其他社区%' then '坂田' 
+when t1.jydz like '%宝岭社区%' then '南湾' 
+when t1.jydz like '%丹竹头社区%' then '南湾' 
+when t1.jydz like '%吉厦社区%' then '南湾' 
+when t1.jydz like '%康乐社区%' then '南湾' 
+when t1.jydz like '%南岭村社区%' then '南湾' 
+when t1.jydz like '%南龙社区%' then '南湾' 
+when t1.jydz like '%沙塘布社区%' then '南湾' 
+when t1.jydz like '%沙湾社区%' then '南湾' 
+when t1.jydz like '%上李朗社区%' then '南湾' 
+when t1.jydz like '%下李朗社区%' then '南湾' 
+when t1.jydz like '%厦村社区%' then '南湾' 
+when t1.jydz like '%樟树布社区%' then '南湾' 
+when t1.jydz like '%丹平社区%' then '南湾' 
+when t1.jydz like '%南新社区%' then '南湾' 
+--when t1.jydz like '%其他社区%' then '南湾' 
+when t1.jydz like '%横岗社区%' then '横岗' 
+when t1.jydz like '%华乐社区%' then '横岗' 
+when t1.jydz like '%华侨新村社区%' then '横岗' 
+when t1.jydz like '%六约社区%' then '横岗' 
+when t1.jydz like '%四联社区%' then '横岗' 
+when t1.jydz like '%松柏社区%' then '横岗' 
+when t1.jydz like '%怡锦社区%' then '横岗' 
+when t1.jydz like '%红棉社区%' then '横岗' 
+when t1.jydz like '%志盛社区%' then '横岗' 
+--when t1.jydz like '%其他社区%' then '横岗' 
+when t1.jydz like '%龙岗社区%' then '龙岗' 
+when t1.jydz like '%龙岗墟社区%' then '龙岗' 
+when t1.jydz like '%南联社区%' then '龙岗' 
+when t1.jydz like '%平南社区%' then '龙岗' 
+when t1.jydz like '%新生社区%' then '龙岗' 
+when t1.jydz like '%龙西社区%' then '龙岗' 
+when t1.jydz like '%五联社区%' then '龙岗' 
+--when t1.jydz like '%其他社区%' then '龙岗' 
+when t1.jydz like '%爱联社区%' then '龙城' 
+when t1.jydz like '%回龙埔社区%' then '龙城' 
+when t1.jydz like '%黄阁坑社区%' then '龙城' 
+when t1.jydz like '%龙红格社区%' then '龙城' 
+when t1.jydz like '%尚景社区%' then '龙城' 
+when t1.jydz like '%盛平社区%' then '龙城' 
+when t1.jydz like '%愉园社区%' then '龙城' 
+when t1.jydz like '%紫薇社区%' then '龙城' 
+when t1.jydz like '%新联社区%' then '龙城' 
+when t1.jydz like '%吉祥社区%' then '龙城' 
+when t1.jydz like '%嶂背社区%' then '龙城' 
+--when t1.jydz like '%其他社区%' then '龙城' 
+when t1.jydz like '%六联社区%' then '坪地' 
+when t1.jydz like '%年丰社区%' then '坪地' 
+when t1.jydz like '%坪地社区%' then '坪地' 
+when t1.jydz like '%坪东社区%' then '坪地' 
+when t1.jydz like '%坪西社区%' then '坪地' 
+when t1.jydz like '%四方埔社区%' then '坪地' 
+when t1.jydz like '%怡心社区%' then '坪地' 
+when t1.jydz like '%中心社区%' then '坪地' 
+when t1.jydz like '%高桥社区%' then '坪地' 
+--when t1.jydz like '%其他社区%' then '坪地' 
+when t1.jydz like '%甘坑社区%' then '吉华' 
+when t1.jydz like '%光华社区%' then '吉华' 
+when t1.jydz like '%丽湖社区%' then '吉华' 
+when t1.jydz like '%三联社区%' then '吉华' 
+when t1.jydz like '%水径社区%' then '吉华' 
+when t1.jydz like '%中海社区%' then '吉华' 
+when t1.jydz like '%翠湖社区%' then '吉华' 
+--when t1.jydz like '%其他社区%' then '吉华' 
+when t1.jydz like '%安良社区%' then '园山' 
+when t1.jydz like '%保安社区%' then '园山' 
+when t1.jydz like '%大康社区%' then '园山' 
+when t1.jydz like '%荷坳社区%' then '园山' 
+when t1.jydz like '%西坑社区%' then '园山' 
+when t1.jydz like '%银荷社区%' then '园山' 
+--when t1.jydz like '%其他社区%' then '园山' 
+when t1.jydz like '%龙东社区%' then '宝龙' 
+when t1.jydz like '%南约社区%' then '宝龙' 
+when t1.jydz like '%同乐社区%' then '宝龙' 
+when t1.jydz like '%宝龙社区%' then '宝龙' 
+when t1.jydz like '%龙新社区%' then '宝龙' 
+when t1.jydz like '%同德社区%' then '宝龙' 
+when t1.jydz like '%同心社区%' then '宝龙' 
+--when t1.jydz like '%其他社区%' then '宝龙'  
+else null end as jdmc --街道名称
+,case when t1.jydz like '%白坭坑社区%' then '440307001001' 
+when t1.jydz like '%鹅公岭社区%' then '440307001002' 
+when t1.jydz like '%辅城坳社区%' then '440307001003' 
+when t1.jydz like '%良安田社区%' then '440307001004' 
+when t1.jydz like '%平湖社区%' then '440307001005' 
+when t1.jydz like '%山厦社区%' then '440307001007' 
+when t1.jydz like '%上木古社区%' then '440307001008' 
+when t1.jydz like '%新木社区%' then '440307001009' 
+when t1.jydz like '%新南社区%' then '440307001010' 
+when t1.jydz like '%凤凰社区%' then '440307001011' 
+when t1.jydz like '%禾花社区%' then '440307001012' 
+when t1.jydz like '%力昌社区%' then '440307001013' 
+--when t1.jydz like '%其他社区%' then '440307001999' 
+when t1.jydz like '%布吉社区%' then '440307002001' 
+when t1.jydz like '%布吉圩社区%' then '440307002002' 
+when t1.jydz like '%长龙社区%' then '440307002003' 
+when t1.jydz like '%德兴社区%' then '440307002004' 
+when t1.jydz like '%东方半岛社区%' then '440307002005' 
+when t1.jydz like '%凤凰社区%' then '440307002006' 
+when t1.jydz like '%国展社区%' then '440307002009' 
+when t1.jydz like '%金排社区%' then '440307002010' 
+when t1.jydz like '%龙岭社区%' then '440307002012' 
+when t1.jydz like '%龙珠社区%' then '440307002013' 
+when t1.jydz like '%罗岗社区%' then '440307002014' 
+when t1.jydz like '%茂业社区%' then '440307002015' 
+when t1.jydz like '%大芬社区%' then '440307002019' 
+when t1.jydz like '%木棉湾社区%' then '440307002020' 
+when t1.jydz like '%南三社区%' then '440307002021' 
+when t1.jydz like '%可园社区%' then '440307002023' 
+when t1.jydz like '%文景社区%' then '440307002024' 
+--when t1.jydz like '%其他社区%' then '440307002999' 
+when t1.jydz like '%坂田社区%' then '440307003001' 
+when t1.jydz like '%岗头社区%' then '440307003002' 
+when t1.jydz like '%四季花城社区%' then '440307003003' 
+when t1.jydz like '%象角塘社区%' then '440307003004' 
+when t1.jydz like '%杨美社区%' then '440307003005' 
+when t1.jydz like '%五和社区%' then '440307003006' 
+when t1.jydz like '%马安堂社区%' then '440307003007' 
+when t1.jydz like '%南坑社区%' then '440307003008' 
+when t1.jydz like '%大发埔社区%' then '440307003009' 
+when t1.jydz like '%万科城社区%' then '440307003010' 
+when t1.jydz like '%第五园社区%' then '440307003011' 
+when t1.jydz like '%新雪社区%' then '440307003012' 
+--when t1.jydz like '%其他社区%' then '440307003999' 
+when t1.jydz like '%宝岭社区%' then '440307004001' 
+when t1.jydz like '%丹竹头社区%' then '440307004002' 
+when t1.jydz like '%吉厦社区%' then '440307004003' 
+when t1.jydz like '%康乐社区%' then '440307004004' 
+when t1.jydz like '%南岭村社区%' then '440307004005' 
+when t1.jydz like '%南龙社区%' then '440307004006' 
+when t1.jydz like '%沙塘布社区%' then '440307004007' 
+when t1.jydz like '%沙湾社区%' then '440307004008' 
+when t1.jydz like '%上李朗社区%' then '440307004009' 
+when t1.jydz like '%下李朗社区%' then '440307004010' 
+when t1.jydz like '%厦村社区%' then '440307004011' 
+when t1.jydz like '%樟树布社区%' then '440307004012' 
+when t1.jydz like '%丹平社区%' then '440307004013' 
+when t1.jydz like '%南新社区%' then '440307004014' 
+--when t1.jydz like '%其他社区%' then '440307004999' 
+when t1.jydz like '%横岗社区%' then '440307005005' 
+when t1.jydz like '%华乐社区%' then '440307005006' 
+when t1.jydz like '%华侨新村社区%' then '440307005007' 
+when t1.jydz like '%六约社区%' then '440307005008' 
+when t1.jydz like '%四联社区%' then '440307005009' 
+when t1.jydz like '%松柏社区%' then '440307005010' 
+when t1.jydz like '%怡锦社区%' then '440307005013' 
+when t1.jydz like '%红棉社区%' then '440307005014' 
+when t1.jydz like '%志盛社区%' then '440307005015' 
+--when t1.jydz like '%其他社区%' then '440307005999' 
+when t1.jydz like '%龙岗社区%' then '440307006002' 
+when t1.jydz like '%龙岗墟社区%' then '440307006003' 
+when t1.jydz like '%南联社区%' then '440307006004' 
+when t1.jydz like '%平南社区%' then '440307006006' 
+when t1.jydz like '%新生社区%' then '440307006008' 
+when t1.jydz like '%龙西社区%' then '440307007004' 
+when t1.jydz like '%五联社区%' then '440307007008' 
+--when t1.jydz like '%其他社区%' then '440307006999' 
+when t1.jydz like '%爱联社区%' then '440307007001' 
+when t1.jydz like '%回龙埔社区%' then '440307007002' 
+when t1.jydz like '%黄阁坑社区%' then '440307007003' 
+when t1.jydz like '%龙红格社区%' then '440307007005' 
+when t1.jydz like '%尚景社区%' then '440307007006' 
+when t1.jydz like '%盛平社区%' then '440307007007' 
+when t1.jydz like '%愉园社区%' then '440307007009' 
+when t1.jydz like '%紫薇社区%' then '440307007010' 
+when t1.jydz like '%新联社区%' then '440307007011' 
+when t1.jydz like '%吉祥社区%' then '440307007012' 
+when t1.jydz like '%嶂背社区%' then '440307007013' 
+--when t1.jydz like '%其他社区%' then '440307007999' 
+when t1.jydz like '%六联社区%' then '440307008001' 
+when t1.jydz like '%年丰社区%' then '440307008002' 
+when t1.jydz like '%坪地社区%' then '440307008003' 
+when t1.jydz like '%坪东社区%' then '440307008004' 
+when t1.jydz like '%坪西社区%' then '440307008005' 
+when t1.jydz like '%四方埔社区%' then '440307008006' 
+when t1.jydz like '%怡心社区%' then '440307008007' 
+when t1.jydz like '%中心社区%' then '440307008008' 
+when t1.jydz like '%高桥社区%' then '440307008009' 
+--when t1.jydz like '%其他社区%' then '440307008999' 
+when t1.jydz like '%甘坑社区%' then '440307002007' 
+when t1.jydz like '%光华社区%' then '440307002008' 
+when t1.jydz like '%丽湖社区%' then '440307002011' 
+when t1.jydz like '%三联社区%' then '440307002016' 
+when t1.jydz like '%水径社区%' then '440307002017' 
+when t1.jydz like '%中海社区%' then '440307002018' 
+when t1.jydz like '%翠湖社区%' then '440307002022' 
+--when t1.jydz like '%其他社区%' then '440307014999' 
+when t1.jydz like '%安良社区%' then '440307005001' 
+when t1.jydz like '%保安社区%' then '440307005002' 
+when t1.jydz like '%大康社区%' then '440307005003' 
+when t1.jydz like '%荷坳社区%' then '440307005004' 
+when t1.jydz like '%西坑社区%' then '440307005011' 
+when t1.jydz like '%银荷社区%' then '440307005012' 
+--when t1.jydz like '%其他社区%' then '440307015999' 
+when t1.jydz like '%龙东社区%' then '440307006001' 
+when t1.jydz like '%南约社区%' then '440307006005' 
+when t1.jydz like '%同乐社区%' then '440307006007' 
+when t1.jydz like '%宝龙社区%' then '440307006009' 
+when t1.jydz like '%龙新社区%' then '440307006010' 
+when t1.jydz like '%同德社区%' then '440307006011' 
+when t1.jydz like '%同心社区%' then '440307006012' 
+--when t1.jydz like '%其他社区%' then '440307016999'  
+else null end as sqdm --社区代码
+,case when t1.jydz like '%白坭坑社区%' then '白坭坑' 
+when t1.jydz like '%鹅公岭社区%' then '鹅公岭' 
+when t1.jydz like '%辅城坳社区%' then '辅城坳' 
+when t1.jydz like '%良安田社区%' then '良安田' 
+when t1.jydz like '%平湖社区%' then '平湖' 
+when t1.jydz like '%山厦社区%' then '山厦' 
+when t1.jydz like '%上木古社区%' then '上木古' 
+when t1.jydz like '%新木社区%' then '新木' 
+when t1.jydz like '%新南社区%' then '新南' 
+when t1.jydz like '%凤凰社区%' then '凤凰' 
+when t1.jydz like '%禾花社区%' then '禾花' 
+when t1.jydz like '%力昌社区%' then '力昌' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%布吉社区%' then '布吉' 
+when t1.jydz like '%布吉圩社区%' then '布吉圩' 
+when t1.jydz like '%长龙社区%' then '长龙' 
+when t1.jydz like '%德兴社区%' then '德兴' 
+when t1.jydz like '%东方半岛社区%' then '东方半岛' 
+when t1.jydz like '%凤凰社区%' then '凤凰' 
+when t1.jydz like '%国展社区%' then '国展' 
+when t1.jydz like '%金排社区%' then '金排' 
+when t1.jydz like '%龙岭社区%' then '龙岭' 
+when t1.jydz like '%龙珠社区%' then '龙珠' 
+when t1.jydz like '%罗岗社区%' then '罗岗' 
+when t1.jydz like '%茂业社区%' then '茂业' 
+when t1.jydz like '%大芬社区%' then '大芬' 
+when t1.jydz like '%木棉湾社区%' then '木棉湾' 
+when t1.jydz like '%南三社区%' then '南三' 
+when t1.jydz like '%可园社区%' then '可园' 
+when t1.jydz like '%文景社区%' then '文景' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%坂田社区%' then '坂田' 
+when t1.jydz like '%岗头社区%' then '岗头' 
+when t1.jydz like '%四季花城社区%' then '四季花城' 
+when t1.jydz like '%象角塘社区%' then '象角塘' 
+when t1.jydz like '%杨美社区%' then '杨美' 
+when t1.jydz like '%五和社区%' then '五和' 
+when t1.jydz like '%马安堂社区%' then '马安堂' 
+when t1.jydz like '%南坑社区%' then '南坑' 
+when t1.jydz like '%大发埔社区%' then '大发埔' 
+when t1.jydz like '%万科城社区%' then '万科城' 
+when t1.jydz like '%第五园社区%' then '第五园' 
+when t1.jydz like '%新雪社区%' then '新雪' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%宝岭社区%' then '宝岭' 
+when t1.jydz like '%丹竹头社区%' then '丹竹头' 
+when t1.jydz like '%吉厦社区%' then '吉厦' 
+when t1.jydz like '%康乐社区%' then '康乐' 
+when t1.jydz like '%南岭村社区%' then '南岭村' 
+when t1.jydz like '%南龙社区%' then '南龙' 
+when t1.jydz like '%沙塘布社区%' then '沙塘布' 
+when t1.jydz like '%沙湾社区%' then '沙湾' 
+when t1.jydz like '%上李朗社区%' then '上李朗' 
+when t1.jydz like '%下李朗社区%' then '下李朗' 
+when t1.jydz like '%厦村社区%' then '厦村' 
+when t1.jydz like '%樟树布社区%' then '樟树布' 
+when t1.jydz like '%丹平社区%' then '丹平' 
+when t1.jydz like '%南新社区%' then '南新' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%横岗社区%' then '横岗' 
+when t1.jydz like '%华乐社区%' then '华乐' 
+when t1.jydz like '%华侨新村社区%' then '华侨新村' 
+when t1.jydz like '%六约社区%' then '六约' 
+when t1.jydz like '%四联社区%' then '四联' 
+when t1.jydz like '%松柏社区%' then '松柏' 
+when t1.jydz like '%怡锦社区%' then '怡锦' 
+when t1.jydz like '%红棉社区%' then '红棉' 
+when t1.jydz like '%志盛社区%' then '志盛' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%龙岗社区%' then '龙岗' 
+when t1.jydz like '%龙岗墟社区%' then '龙岗墟' 
+when t1.jydz like '%南联社区%' then '南联' 
+when t1.jydz like '%平南社区%' then '平南' 
+when t1.jydz like '%新生社区%' then '新生' 
+when t1.jydz like '%龙西社区%' then '龙西' 
+when t1.jydz like '%五联社区%' then '五联' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%爱联社区%' then '爱联' 
+when t1.jydz like '%回龙埔社区%' then '回龙埔' 
+when t1.jydz like '%黄阁坑社区%' then '黄阁坑' 
+when t1.jydz like '%龙红格社区%' then '龙红格' 
+when t1.jydz like '%尚景社区%' then '尚景' 
+when t1.jydz like '%盛平社区%' then '盛平' 
+when t1.jydz like '%愉园社区%' then '愉园' 
+when t1.jydz like '%紫薇社区%' then '紫薇' 
+when t1.jydz like '%新联社区%' then '新联' 
+when t1.jydz like '%吉祥社区%' then '吉祥' 
+when t1.jydz like '%嶂背社区%' then '嶂背' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%六联社区%' then '六联' 
+when t1.jydz like '%年丰社区%' then '年丰' 
+when t1.jydz like '%坪地社区%' then '坪地' 
+when t1.jydz like '%坪东社区%' then '坪东' 
+when t1.jydz like '%坪西社区%' then '坪西' 
+when t1.jydz like '%四方埔社区%' then '四方埔' 
+when t1.jydz like '%怡心社区%' then '怡心' 
+when t1.jydz like '%中心社区%' then '中心' 
+when t1.jydz like '%高桥社区%' then '高桥' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%甘坑社区%' then '甘坑' 
+when t1.jydz like '%光华社区%' then '光华' 
+when t1.jydz like '%丽湖社区%' then '丽湖' 
+when t1.jydz like '%三联社区%' then '三联' 
+when t1.jydz like '%水径社区%' then '水径' 
+when t1.jydz like '%中海社区%' then '中海' 
+when t1.jydz like '%翠湖社区%' then '翠湖' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%安良社区%' then '安良' 
+when t1.jydz like '%保安社区%' then '保安' 
+when t1.jydz like '%大康社区%' then '大康' 
+when t1.jydz like '%荷坳社区%' then '荷坳' 
+when t1.jydz like '%西坑社区%' then '西坑' 
+when t1.jydz like '%银荷社区%' then '银荷' 
+--when t1.jydz like '%其他社区%' then '其他' 
+when t1.jydz like '%龙东社区%' then '龙东' 
+when t1.jydz like '%南约社区%' then '南约' 
+when t1.jydz like '%同乐社区%' then '同乐' 
+when t1.jydz like '%宝龙社区%' then '宝龙' 
+when t1.jydz like '%龙新社区%' then '龙新' 
+when t1.jydz like '%同德社区%' then '同德' 
+when t1.jydz like '%同心社区%' then '同心' 
+--when t1.jydz like '%其他社区%' then '其他' 
+else null end as sqmc --社区名称
+,'dwd_jbxx_frjcxx' as lyb --来源表
+,t1.lyjg as lyjg --来源机构
+,CURRENT_TIMESTAMP as yxsj --运行时间
+from (select lgl_id,tyshxydm,zzjgdm,zch,lgl_name,nvl(jydz,address_detail) as jydz,lyjg from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t1
+
+
+
+
+
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-13 16:23:07
+--修改人: TZM
+--修改逻辑:把a1表和a11表的匹配逻辑修改了
+--table_name:dwd_frdzxx(法人地址信息)
+--修改人:HHY
+--修改日期:20201127
+--修改内容:逻辑变更
+--取数逻辑:以法人基本信息(dwd_jbxx_frjcxx) 为主表,通过楼栋编码(building_id) 关联 fwzt.dwd_houseaddress_info(房屋地址信息表) 获取部分社区代码
+--		   通过 企业名称,组织机构代码 关联 龙岗区政法委法人数据 (std_qzf_zfw_enterpriseinfomanage1) 获取社区代码
+--		   通过 社区代码 关联 街道社区码表 (jczl.zd_jdsqdm) 获取街道名称,街道代码,社区名称
+--1209修改:He 发现同一企业对应多条社区记录情况 
+--			  龙岗区政法委法人数据 (std_qzf_zfw_enterpriseinfomanage1) 多套一层,
+--1210修改:He 补充 社区代码 坂田街道-企业基础 (std_btjd_ud_dm_org_arrears_dtl_main) 通过企业名称,统一社会信用代码关联
+--1211修改:He 新增jycs字段,数据来源 法人基本信息(dwd_jbxx_frjcxx)中经营地址字段 
+--1211修改:He 新增数据源 dwd_frdz_bz (法人社区信息表) 取社区时.先去该表社区 再用其他做补充
+--1212修改:He  房屋地址信息表,先通过社区名称获取认可的社区代码 再参与整体计算
+--1215修改:He 楼栋编码 Building_code 字段取值,1.法人基本信息 BUILDING_ID 2.楼栋信息表 code 3.ZFW_ENTERPRISEINFOMANAGE1 BUILDINGHOUSECODE
+/*1216修改:He 逻辑修改:以法人基本信息作为法人对象来源
+					 来源01:关联市监局“商事主体表”（SSZT_JBXX110497）中经营场所提取社区信息为主来源；
+							截取经营场所（注册地址）中的社区名称，并转换为旧的社区编码；
+					 来源02:
+							通过政法委“龙岗区政法委法人数据”（ZFW_ENTERPRISEINFOMANAGE1）中楼栋编码buildinghousecode，关联zfw_building1的code，取zfw_building1的teamid；
+							再teamid匹配ZFW_WG_MISGIS的misid，获取sqcode，匹配字典表补全信息；
+							补全后的数据通过“深圳市龙岗区”+街道名+社区名+ZFW_ENTERPRISEINFOMANAGE1（enterpriseaddress字段）加工成政法委地址
+					 来源03:
+							通过块数据“lgqzfw.view_ywk_sszt_hc”企业楼栋编码，关联zfw_building1的code，取zfw_building1的teamid；
+							再teamid匹配ZFW_WG_MISGIS的misid，获取sqcode，匹配字典表补全信息；
+							lgqzfw.view_ywk_sszt_hc中dz作为块数据地址
+					 来源04:
+							通过坂田街道“企业基础”（UD_DM_ORG_ARREARS_DTL_MAIN）匹配社区信息；---社区名称转换为旧社区编码
+							获取“企业基础”的法人数据中的社区名称，再转换为旧的社区编码
+							新增表为b_temp 原先 房屋地址信息表保留 作为 b 表 补充其他字段信息
+							*/
+--1217修改:He lgqzfw.zfw_enterpriseinfomanage1 处理楼栋编码 字段 :  Substr(replace(replace(a1.buildinghousecode,'楼栋编码:'),'房屋编码:'),1,19)
+--0528修改:tzm 发现社区和对应网格信息不一致,限制当社区名称相同时补网格名称
+--_********************************************************_
+
+INSERT OVERWRITE TABLE dwd_frdzxx PARTITION (dt = '${DayBeforeStartTime}')
+--创建临时表
+
+SELECT  t1.tyshxydm--统一社会信用代码 
+       ,t1.zzjgdm--组织机构 
+       ,t1.zch--注册号 
+       ,t1.swdjh--税务登记号 
+       ,t1.zh--企业名称 
+       ,t1.house_code--房屋编码 
+       ,t1.house_name--房屋名称 
+       ,t1.building_code--楼栋编码 
+       ,t1.building_name--楼栋名称 
+       ,t1.district_bm--区域编码 
+       ,t1.district--区域名称 
+       ,nvl(t1.jdbm,e.jddm) AS jdbm--街道编码 
+       ,nvl(t1.jdmc,e.jdmc) AS jdmc--街道名称 
+       ,t1.wgbm gridcode--网格编码 
+       ,t1.grname--网格名称 
+       ,t1.sqcode--社区编码 
+       ,nvl(t1.sqname,e.sqmc) AS sqname--社区名称 
+       ,t1.jycs as jycs --经营场所
+       ,t1.zbx--坐标X经度 
+       ,t1.zby--坐标Y纬度 
+       ,t1.lyb --来源表 
+       ,t1.lyjg --来源机构 
+       ,t1.yxsj --运行时间
+FROM (
+SELECT  a.tyshxydm--统一社会信用代码 
+       ,a.zzjgdm--组织机构 
+       ,a.zch--注册号 
+       ,null swdjh--税务登记号 
+       ,a.lgl_name zh--企业名称 
+       ,b.housecode house_code--房屋编码 
+       ,b.housename house_name--房屋名称 
+       ,nvl(nvl(nvl(a.BUILDING_ID,b.code),c.BUILDINGHOUSECODE),d.BUILDINGHOUSECODE) building_code --楼栋编码 
+       ,b.name building_name--楼栋名称 
+       ,b.district_bm--区域编码 
+       ,b.district--区域名称 
+       ,a.jddm as jdbm--街道编码 
+       ,a.jdmc as jdmc--街道名称 
+       ,b.GRIDCODE wgbm--网格编码 
+       ,b.grname--网格名称 
+       ,nvl(nvl(nvl(nvl(nvl(a.sqdm,d.sqbm),c.sqbm),b_temp.sqcode),f.community_code),g.community_code) as sqcode--社区编码 
+       ,a.sqmc as sqname--社区名称 
+  	   ,nvl(nvl(a.jydz,c.zfw_address),d.zfw_address) as jycs--经营场所
+       ,b.zbx--坐标X经度 
+       ,b.zby--坐标Y纬度 
+       ,case when a.sqdm is not null then 'dwd_frdz_bz'
+	    when d.sqbm is not null then 'zfw_enterpriseinfomanage1'
+		when c.sqbm is not null then 'zfw_enterpriseinfomanage1'
+		when b_temp.sqcode is not null then 'view_ywk_sszt_hc'
+		when f.community_code is not null then 'ud_dm_org_arrears_dtl_main'
+		when g.community_code is not null then 'ud_dm_org_arrears_dtl_main' 
+		else 'dwd_jbxx_frjcxx' end as  lyb --来源表 
+       ,a.lyjg --来源机构 
+       ,now() yxsj --运行时间
+       ,row_number() over(partition by a.tyshxydm order by nvl(nvl(nvl(nvl(a.sqdm,d.sqbm),c.sqbm),b_temp.sqcode),g.community_code) asc nulls last) as rn
+FROM (select 
+		a.tyshxydm--统一社会信用代码 
+		,zzjgdm--组织机构 
+		,zch--注册号 
+		,lgl_name
+		,building_id
+		,jydz
+		,lyjg
+		,jddm
+		,jdmc
+		,sqdm
+		,sqmc
+		from 
+		(select 
+			tyshxydm--统一社会信用代码 
+			,zzjgdm--组织机构 
+			,zch--注册号 
+			,lgl_name
+			,building_id
+			,jydz
+			,lyjg
+		from dwd_jbxx_frjcxx WHERE  dt=(SELECT  MAX(dt) FROM dwd_jbxx_frjcxx)
+		) a
+		/*通过市监局的经营地址,先加工的表,获取了社区信息*/
+		left join 
+		(select 
+			tyshxydm
+			,jddm
+			,jdmc
+			,sqdm
+			,sqmc
+			from dwd_frdz_bz where dt=(select max(dt) from dwd_frdz_bz)
+			) a_temp
+		on a.tyshxydm=a_temp.tyshxydm
+)a
+
+left JOIN 
+(
+/*房屋地址信息表,先通过社区名称获取认可的社区代码*/
+select 
+     housecode 
+	       ,b_temp.housename 
+	       ,b_temp.code 
+	       ,b_temp.name 
+	       ,b_temp.district_bm 
+	       ,b_temp.district 
+	       ,e_temp.jddm jdbm 
+	       ,e_temp.jdmc jdmc 
+	       ,b_temp.GRIDCODE 
+	       ,b_temp.grname 
+	       ,e_temp.sqdm sqcode 
+	       ,regexp_replace(replace(b_temp.sqname,'社区'),'[0-9]','')  sqname 
+	       ,b_temp.zbx 
+	       ,b_temp.zby 
+      from 
+     (SELECT  housecode 
+	       ,housename 
+	       ,code 
+	       ,name 
+	       ,district_bm 
+	       ,district 
+	       ,jdbm 
+	       ,jdmc 
+	       ,GRIDCODE 
+	       ,grname 
+	       ,sqcode 
+	       ,sqname 
+	       ,zbx 
+	       ,zby
+	FROM fwzt.dwd_houseaddress_info  
+	WHERE dt=(SELECT  MAX(dt) FROM fwzt.dwd_houseaddress_info) )  b_temp
+    left join jczl.zd_jdsqdm  e_temp
+on  regexp_replace(replace(b_temp.sqname,'社区'),'[0-9]','') =e_temp.sqmc
+) b --房屋表
+ON trim(a.building_id)=trim(b.code) and a.sqmc=b.sqname  --楼栋编码相等
+
+
+/*通过块数据“lgqzfw.view_ywk_sszt_hc”企业楼栋编码，匹配社区信息*/
+left join 
+(
+  select * from (
+  select 
+  t1.qymc
+  ,t1.tyshxydm
+  ,t1.gxsj
+  ,t1.dz
+  ,t1.JZWTYDZBM
+  ,t3.sqcode
+  ,row_number() over(partition by tyshxydm order by gxsj desc ) rn
+  from (select * from ods_qzfw_view_ywk_sszt_hc where dt=(select max(dt) from ods_qzfw_view_ywk_sszt_hc)) t1
+  left join (select * from fwzt.ods_qwzfw_zfw_building1 where dt=(select max(dt) from fwzt.ods_qwzfw_zfw_building1)) t2
+  on t1.JZWTYDZBM = t2.code
+  left join (select * from ods_qzfw_zfw_wg_misgis where dt=(select max(dt) from ods_qzfw_zfw_wg_misgis)) t3
+  on t2.teamid = t3.misid) where rn=1
+) b_temp
+on trim(a.tyshxydm)=trim(b_temp.tyshxydm)
+
+/*通过企业名称(lgl_name) 关联龙岗区政法委法人数据 (std_qzf_zfw_enterpriseinfomanage1) 获取社区代码 */
+LEFT JOIN 
+(
+	SELECT  enterprisename,BUILDINGHOUSECODE,sqcode AS sqbm,substr(qhareaid,1,9) jdbm,organcode,zfw_address
+	FROM 
+	(
+		/*根据企业名称,取最新记录时间的一条记录*/
+		/*通过政法委“龙岗区政法委法人数据”（ZFW_ENTERPRISEINFOMANAGE1）中楼栋编码buildinghousecode，关联zfw_building1的code，取zfw_building1的teamid；
+			再teamid匹配ZFW_WG_MISGIS的misid，获取sqcode，匹配字典表补全信息；
+			补全后的数据通过“深圳市龙岗区”+街道名+社区名+ZFW_ENTERPRISEINFOMANAGE1（enterpriseaddress字段）加工成政法委地址*/
+		select b1.enterprisename,b1.BUILDINGHOUSECODE,b1.qhareaid,b1.organcode,b1.sqcode,b2.sqmc,'深圳市龙岗区'||b2.jdmc||'街道'||b2.sqmc||'社区'||trim(enterpriseaddress) as zfw_address from (
+		SELECT  a1.enterprisename,Substr(replace(replace(replace(a1.buildinghousecode,';',''),'楼栋编码:'),'房屋编码:'),1,19) as BUILDINGHOUSECODE,a1.qhareaid,a1.organcode,a3.sqcode,a1.enterpriseaddress,row_number() over(partition by a1.enterprisename ORDER BY addtime desc) rn
+		FROM (select * from ods_qzf_zfw_enterpriseinfomanage1  WHERE dt=(SELECT  MAX(dt) FROM ods_qzf_zfw_enterpriseinfomanage1) ) a1
+		left join (select * from fwzt.ods_qwzfw_zfw_building1 where dt=(select max(dt) from fwzt.ods_qwzfw_zfw_building1)) a2
+    	on Substr(replace(replace(replace(trim(a1.buildinghousecode),';',''),'楼栋编码:'),'房屋编码:'),1,19) = a2.code
+  		left join (select * from ods_qzfw_zfw_wg_misgis where dt=(select max(dt) from ods_qzfw_zfw_wg_misgis)) a3
+    	on a2.teamid = a3.misid ) b1
+		left join jczl.zd_jdsqdm b2 
+    	on b1.sqcode=b2.sqdm
+		where b1.rn=1
+)
+) c
+ON trim(a.lgl_name)=trim(c.enterprisename)
+/*通过组织机构代码(zzjgdm) 关联龙岗区政法委法人数据 (std_qzf_zfw_enterpriseinfomanage1) 获取社区代码 */
+LEFT JOIN 
+(
+	SELECT  enterprisename,BUILDINGHOUSECODE,sqcode AS sqbm,substr(qhareaid,1,9) jdbm,organcode,zfw_address
+	FROM 
+	(
+		/*根据企业名称,取最新记录时间的一条记录*/
+		/*通过政法委“龙岗区政法委法人数据”（ZFW_ENTERPRISEINFOMANAGE1）中楼栋编码buildinghousecode，关联zfw_building1的code，取zfw_building1的teamid；
+			再teamid匹配ZFW_WG_MISGIS的misid，获取sqcode，匹配字典表补全信息；
+			补全后的数据通过“深圳市龙岗区”+街道名+社区名+ZFW_ENTERPRISEINFOMANAGE1（enterpriseaddress字段）加工成政法委地址*/
+		select b1.enterprisename,b1.BUILDINGHOUSECODE,b1.qhareaid,b1.organcode,b1.sqcode,b2.sqmc,'深圳市龙岗区'||b2.jdmc||'街道'||b2.sqmc||'社区'||trim(enterpriseaddress) as zfw_address from (
+		SELECT  a1.enterprisename,Substr(replace(replace(replace(a1.buildinghousecode,';',''),'楼栋编码:'),'房屋编码:'),1,19) as BUILDINGHOUSECODE,a1.qhareaid,a1.organcode,a3.sqcode,a1.enterpriseaddress,row_number() over(partition by a1.enterprisename ORDER BY addtime desc) rn
+		FROM (select * from ods_qzf_zfw_enterpriseinfomanage1 WHERE dt=(SELECT  MAX(dt) FROM ods_qzf_zfw_enterpriseinfomanage1) ) a1
+		left join (select * from fwzt.ods_qwzfw_zfw_building1 where dt=(select max(dt) from fwzt.ods_qwzfw_zfw_building1)) a2
+    	on Substr(replace(replace(replace(trim(a1.buildinghousecode),';',''),'楼栋编码:'),'房屋编码:'),1,19) = a2.code
+  		left join (select * from ods_qzfw_zfw_wg_misgis where dt=(select max(dt) from ods_qzfw_zfw_wg_misgis)) a3
+    	on a2.teamid = a3.misid ) b1
+		left join jczl.zd_jdsqdm b2 
+    	on b1.sqcode=b2.sqdm
+		where b1.rn=1
+) ) d
+ON trim(a.zzjgdm)=trim(d.organcode)   
+
+left join (
+/*通过统一社会信用代码 关联 企业基础  UD_DM_ORG_ARREARS_DTL_MAIN 获取社区代码*/
+select * from (
+select community_code,community_name,org_name,org_usc_code,street_code,street_name,row_number() over(partition by org_usc_code order by create_time desc) rn
+from std_btjd_ud_dm_org_arrears_dtl_main where dt=(select max(dt) from std_btjd_ud_dm_org_arrears_dtl_main  ) and org_usc_code is not null
+) where rn=1
+) f on a.tyshxydm=f.org_usc_code
+
+left join (
+/*通过企业名称 关联 企业基础  UD_DM_ORG_ARREARS_DTL_MAIN 获取社区代码*/ 
+select * from (
+select community_code,community_name,org_name,org_usc_code,street_code,street_name,row_number() over(partition by org_name order by create_time desc) rn
+from std_btjd_ud_dm_org_arrears_dtl_main where dt=(select max(dt) from std_btjd_ud_dm_org_arrears_dtl_main  ) and org_name is not null
+)  where rn=1
+) g on a.lgl_name=g.org_name
+  
+ ) t1
+
+left join  jczl.zd_jdsqdm  e
+on t1.sqcode=e.sqdm 
+where rn=1
+
+
+
+
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-05-28 00:54:26
+--补充网格信息
+--2021-08-31
+--修改人:tzm 修改内容:发现表里有重复数据,后发现,一.dwd_frdzxx_temp01没有限制分区,二.该表本身就有重复数据,后修改关联条件确保唯一性,保证数据不重复
+--_********************************************************_
+INSERT OVERWRITE TABLE dwd_frdzxx PARTITION (dt = '${DayBeforeStartTime}')
+select 
+	t1.tyshxydm--统一社会信用代码 
+       ,t1.zzjgdm--组织机构 
+       ,t1.zch--注册号 
+       ,t1.swdjh--税务登记号 
+       ,t1.zh--企业名称 
+       ,t1.house_code--房屋编码 
+       ,t1.house_name--房屋名称 
+       ,t1.building_code--楼栋编码 
+       ,t1.building_name--楼栋名称 
+       ,t1.district_bm--区域编码 
+       ,t1.district--区域名称 
+       ,t1.jdbm AS jdbm--街道编码 
+       ,t1.jdmc AS jdmc--街道名称 
+       ,nvl(t1.gridcode,t2.gridcode) gridcode--网格编码 
+       ,nvl(t1.grname,t2.grname) grname--网格名称 
+       ,t1.sqcode--社区编码 
+       ,t1.sqname AS sqname--社区名称 
+       ,t1.jycs as jycs --经营场所
+       ,t1.zbx--坐标X经度 
+       ,t1.zby--坐标Y纬度 
+       ,t1.lyb --来源表 
+       ,t1.lyjg --来源机构 
+       ,t1.yxsj --运行时间
+from(select * from dwd_frdzxx  where dt=(select max(dt) from dwd_frdzxx))t1
+left join (select * from dwd_frdzxx_temp01 where  dt=(select max(dt) from dwd_frdzxx_temp01) ) t2
+on t1.tyshxydm=t2.tyshxydm and t1.sqname=t2.sqname and t1.building_code=t2.building_code

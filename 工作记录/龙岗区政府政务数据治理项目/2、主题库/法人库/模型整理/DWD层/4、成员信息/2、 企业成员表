@@ -1,0 +1,122 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-25 10:41:43
+--table_name : dwd_cyxx_qycyxx (企业成员表)
+--use_tables : std_srlzyhshbzj_grmycbjfqknzn109788(个人每月参保缴费情况20年至21)
+--			   std_srlzyhshbzj_sbgrxx110041(个人基本信息)
+--			   dwd_glgx_qysbhglxx (企业社保关联信息)
+--取数逻辑   : 以 std_srlzyhshbzj_grmycbjfqknzn109788(个人每月参保缴费情况20年至21)表作为主表
+--			   关联 std_srlzyhshbzj_sbgrxx110041(个人基本信息) 补充个人信息
+--			   关联 dwd_glgx_qysbhglxx (企业社保关联信息) 补充企业信息
+--			   t4 社保单位编码+社会保险号+到账日期（最后一次）作为离职时间
+--			   t5 社保单位编码+社会保险号+到账日期（首次）作为入职时间	去重时使用nulls last 
+--去重逻辑   :根据统一社会信用代码,个人社保号 进行去重
+--修改人：TZM
+--修改时间：2021-02-07
+--修改逻辑 只取缴费状态为1的企业成员
+--0317 He 修改字段 tzrq 格式为 YYYY-MM
+--_********************************************************_
+
+insert overwrite table dwd_cyxx_qycyxx partition (dt='${DayBeforeStartTime}')
+SELECT  tyshxydm --统一社会信用代码 
+       ,sbdwbh --社保单位编号 
+       ,gsmc --公司名称 
+       ,emp_card_no--身份证件号码 
+       ,emp_card_id--身份证件类型 
+       ,person_si_id--个人社保唯一标识 
+       ,xm --姓名 
+       ,xb_dm --性别代码 
+       ,xb --性别 
+       ,emp_resignation_time --离职时间 
+       ,emp_entry_time --入职时间 
+       ,job_title --职位 
+       ,xxlylx --信息来源类型 
+       ,lyb -- 来源表 
+       ,lyjg --来源机构 
+       ,yxsj --运行时间
+FROM 
+(
+	SELECT  t2.tyshxydm                                           AS tyshxydm --统一社会信用代码 
+	       ,t1.SBDWBH                                             AS sbdwbh --社保单位编号 
+	       ,t2.dwmc                                               AS GSMC --公司名称 
+	       ,t3.id_no                                              AS EMP_CARD_NO --身份证件号码 
+	       ,t3.id_code_name                                        AS EMP_CARD_ID --身份证件类型 
+	       ,t1.shbxh                                              AS PERSON_SI_ID --个人社保唯一标识 
+	       ,t3.name                                               AS xm --姓名 
+	       ,t3.sex_code                                           AS xb_dm --性别代码 
+	       ,t3.sex_code_name                                      AS xb --性别 
+	       ,substr(t4.tzrq ,1,4)||'-'||substr(t4.tzrq ,5,2)      AS EMP_RESIGNATION_TIME --离职时间 
+	       ,substr(t5.tzrq ,1,4)||'-'||substr(t5.tzrq ,5,2)      AS EMP_ENTRY_TIME --入职时间 
+	       ,null                                                  AS JOB_TITLE --职位 
+	       ,'权威'                                                  AS xxlylx --信息来源类型 
+	       ,'std_srlzyhshbzj_grmycbjfqknzn109788'                 AS lyb -- 来源表 
+	       ,'市人力资源和社会保障局'                                         AS lyjg --来源机构 
+	       ,current_timestamp                                     AS yxsj --运行时间 
+	       ,row_number() over(partition by t2.tyshxydm,t1.shbxh order by t4.tzrq desc ) AS rn
+	FROM (select * from std_srlzyhshbzj_grmycbjfqknzn109788 where trim(jfzt)=1) t1
+	LEFT JOIN 
+	(
+		SELECT  sbdwbh 
+		       ,tyshxydm 
+		       ,dwmc
+		FROM dwd_glgx_qysbhglxx
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM dwd_glgx_qysbhglxx) 
+	) t2
+	ON t1.sbdwbh=t2.SBDWBH
+	LEFT JOIN 
+	(
+		SELECT  si_no 
+		       ,id_code_name 
+      		   ,id_no
+		       ,name 
+		       ,sex_code 
+		       ,sex_code_name
+		FROM std_srlzyhshbzj_sbgrxx110041
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM std_srlzyhshbzj_sbgrxx110041) 
+	) t3
+	ON t1.shbxh=t3.si_no
+	LEFT JOIN 
+	(
+		SELECT  shbxh 
+		       ,sbdwbh 
+		       ,tzrq
+		FROM 
+		(
+			SELECT  shbxh 
+			       ,sbdwbh 
+			       ,tzrq 
+			       ,row_number() over(partition by shbxh,sbdwbh ORDER BY tzrq desc) rn
+			FROM std_srlzyhshbzj_grmycbjfqknzn109788 where dt=(select max(dt) from std_srlzyhshbzj_grmycbjfqknzn109788)
+		)
+		WHERE rn=1  
+	) t4
+	ON t1.shbxh=t4.shbxh AND t1.sbdwbh=t4.sbdwbh
+	LEFT JOIN 
+	(
+		SELECT  shbxh 
+		       ,sbdwbh 
+		       ,tzrq
+		FROM 
+		(
+			SELECT  shbxh 
+			       ,sbdwbh 
+			       ,tzrq 
+			       ,row_number() over(partition by shbxh,sbdwbh ORDER BY tzrq asc  nulls last) rn
+			FROM std_srlzyhshbzj_grmycbjfqknzn109788  where dt=(select max(dt) from std_srlzyhshbzj_grmycbjfqknzn109788)
+ 		)
+		WHERE rn=1  
+	) t5
+	ON t1.shbxh=t5.shbxh AND t1.sbdwbh=t5.sbdwbh
+	WHERE dt=( 
+	SELECT  MAX(dt)
+	FROM std_srlzyhshbzj_grmycbjfqknzn109788) AND t2.tyshxydm is not null
+)
+WHERE rn=1  
+ 
+
+ 

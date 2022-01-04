@@ -1,0 +1,33 @@
+--SparkSQL
+--_********************************************************_
+--author: lizheng
+--create time: 2021-12-21 14:22:12
+--_********************************************************_
+WITH table_1 as(
+select 
+  *,
+  row_number() over(partition by zzjgdm order by gldm_update_time desc nulls last) rn_zzjgdm,
+  row_number() over(partition by lgl_name order by gldm_update_time desc nulls last) rn_lgl_name
+  from  dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)
+)
+insert overwrite table dwd_zzxk_hmdxx partition (dt='${DayBeforeStartTime}') 
+select 
+nvl(b.lgl_id,c.lgl_id)  ztsfdm
+,nvl(b.tyshxydm,c.tyshxydm)   tyshxydm
+,a.zzjgdm   zzjgdm
+,a.qyzwmc   gsmc
+,'海关' rzmc
+,a.hgzcbm  rzbm
+,a.xydj    xydj
+,from_unixtime(unix_timestamp(a.djrdsj, 'MM dd yyyy hh:mma'),'yyyy-MM-dd HH:mm:ss')   djrdsj
+,a.hyzl_name  hyzl
+,a.zxbz   zxbz
+,'std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd' lyb
+,a.lyjg lyjg
+,now() yxsj
+from (select * from std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd where dt=(select max(dt) from std_qfzggj_dm_lhjc_hhmd_hgzs_hggjrzqymd))a
+left join table_1  b 
+on a.zzjgdm=b.zzjgdm and b.r    n_zzjgdm=1
+left join table_1 c
+on a.qyzwmc=c.lgl_name and c.rn_lgl_name=1;
+

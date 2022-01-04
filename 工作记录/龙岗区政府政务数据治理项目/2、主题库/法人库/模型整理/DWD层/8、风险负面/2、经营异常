@@ -1,0 +1,143 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-12 09:40:19.84
+--所属主题:经营异常
+--内容描述:经营异常std层4张表,加工至dwd_jyycxx(经营异常)
+
+
+--加载策略:全量
+--0317 He 修改 lrrq 字段格式为 YYYY-MM-DD hh24:mi:ss
+--_********************************************************_
+--truncate table std_schzljgw_jyycml2016105928;
+insert overwrite table dwd_jyycxx partition (dt='${DayBeforeStartTime}')
+
+select
+	concat_ws('',tyshxydm,'',lrrq) key      	--统一社会信用代码+主键+列入时间
+	,ztsfdm  	--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,swdjh		--税务登记号
+	,gsmc			--法人名称/字号
+	,gsxz		--公司性质
+	,jdwsh		--决定文书号
+	,ycbh		--异常编号
+	,ycbt		--异常标题
+	,ycnr		--异常内容
+	,lrrq		--列入日期
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+
+from 
+(		
+		select
+				lgl_id ztsfdm  	--主体身份代码
+				,b.tyshxydm tyshxydm	--统一社会信用代码
+				,b.zzjgdm zzjgdm		--组织机构代码
+				,b.zch zch		--登记/注册号
+				,null swdjh		--税务登记号
+				,b.lgl_name gsmc			--法人名称/字号
+				,b.lgl_organization_code gsxz		--公司性质
+				,a.jdwsh jdwsh		--决定文书号
+				,null ycbh		--异常编号
+				,null ycbt		--异常标题
+				,zrjyycmlsy ycnr		--异常内容
+				,zrjyycml as lrrq		--列入日期
+				,'权威' xxlylx		--信息来源类型
+				,'std_schzljgw_jyycml2016105928' lyb		--来源表
+				,a.lyjg	lyjg	--来源机构
+			from (select * from std_schzljgw_jyycml2016105928 a where a.dt=(select max(dt) from std_schzljgw_jyycml2016105928) and a.ycjyycmlrq is not null) a
+			left join (select 
+						distinct
+						tyshxydm 
+                   		,lgl_id
+						,zzjgdm 
+						,zch  
+						,lgl_name
+						,lgl_organization_code
+                        ,legal_person_card_no
+					from  dwd_jbxx_frjcxx b where  b.dt=(select  max(dt) from dwd_jbxx_frjcxx)) b
+			 on a.tyshxydm=b.tyshxydm
+	union 
+		select
+				lgl_id ztsfdm  	--主体身份代码
+				,b.tyshxydm tyshxydm	--统一社会信用代码
+				,b.zzjgdm zzjgdm		--组织机构代码
+				,b.zch zch		--登记/注册号
+				,null swdjh		--税务登记号
+				,b.lgl_name gsmc			--法人名称/字号
+				,b.lgl_organization_code gsxz		--公司性质
+				,null jdwsh		--决定文书号
+				,a.dispenseid ycbh		--异常编号
+				,a.desisiontitle ycbt		--异常标题
+				,a.decisioncontent ycnr		--异常内容
+				,substr(a.endtime,1,19) lrrq		--列入日期
+				,'补充' xxlylx		--信息来源类型
+				,'std_qfzggj_t_busi_aic_ycml' lyb		--来源表
+				,a.lyjg	lyjg	--来源机构
+			from std_qfzggj_t_busi_aic_ycml a 
+			left join (select 
+						distinct
+						tyshxydm 
+                   		,lgl_id
+						,zzjgdm 
+						,zch  
+						,lgl_name
+						,lgl_organization_code
+                        ,legal_person_card_no
+					from  dwd_jbxx_frjcxx b where  b.dt=(select  max(dt) from dwd_jbxx_frjcxx)) b
+			 on trim(a.entid)=trim(b.lgl_id)
+	where a.dt=(select max(dt) from std_qfzggj_t_busi_aic_ycml) 
+	union 
+		select
+				lgl_id ztsfdm  	--主体身份代码
+				,b.tyshxydm tyshxydm	--统一社会信用代码
+				,b.zzjgdm zzjgdm		--组织机构代码
+				,b.zch zch		--登记/注册号
+				,null swdjh		--税务登记号
+				,b.lgl_name gsmc			--法人名称/字号
+				,b.lgl_organization_code gsxz		--公司性质
+				,a.jdwsh jdwsh		--决定文书号
+				,null ycbh		--异常编号
+				,null ycbt		--异常标题
+				,ycsy ycnr		--异常内容
+				,case when a.djsj is not null then
+				to_date('20'||substr(substr(a.djsj,instr(a.djsj,'-')+1),instr(substr(a.djsj,instr(a.djsj,'-')+1),'-')+1,2)||'-'||
+				replace(substr(a.djsj,instr(a.djsj,'-')+1,2),'月','')||'-'||
+				substr(a.djsj,1,2))||' 00:00:00' else null end as lrrq		--列入日期
+				,'补充' xxlylx		--信息来源类型
+				,'std_sdzzwzyzx_sszt_jyycml_10_1024151814' lyb		--来源表
+				,a.lyjg	lyjg	--来源机构
+			from std_sdzzwzyzx_sszt_jyycml_10_1024151814 a
+			left join  (select 
+						distinct
+						tyshxydm 
+                   		,lgl_id
+						,zzjgdm 
+						,zch  
+						,lgl_name
+						,lgl_organization_code
+					from  dwd_jbxx_frjcxx b where  b.dt=(select  max(dt) from dwd_jbxx_frjcxx
+                                                        )) b
+			 on trim(a.zch)=trim(b.zch) and trim(a.zzjgdm)=trim(b.zzjgdm)
+		where a.dt=(select max(dt) from std_sdzzwzyzx_sszt_jyycml_10_1024151814)  
+ )
+  group by concat_ws('',tyshxydm,'',lrrq)      	--统一社会信用代码+主键+列入时间
+	,ztsfdm  	--主体身份代码
+	,tyshxydm	--统一社会信用代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,swdjh		--税务登记号
+	,gsmc			--法人名称/字号
+	,gsxz		--公司性质
+	,jdwsh		--决定文书号
+	,ycbh		--异常编号
+	,ycbt		--异常标题
+	,ycnr		--异常内容
+	,lrrq		--列入日期
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构

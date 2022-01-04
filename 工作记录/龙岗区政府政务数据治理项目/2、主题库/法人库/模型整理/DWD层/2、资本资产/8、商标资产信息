@@ -1,0 +1,57 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-04 15:01:19.84
+--所属主题:商标资产信息
+--内容描述:商标资产信息1张表,加工至dwd_zczb_sbzcxx(商标资产信息)
+--			std_qfzggj_t_busi_aic_braregister(区发展改革局_专利资助信息)1
+
+--加载策略:全量
+--_********************************************************_
+--truncate table dwd_zczb_sbzcxx;
+insert overwrite table dwd_zczb_sbzcxx partition (dt='${DayBeforeStartTime}')
+
+select
+	uuid() uuid		--主键
+	,tyshxydm	--统一社会信用代码
+	,ztsfdm		--主体身份代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,gsmc		--公司名称
+	,sq			--申请/注册号
+	,sbmc		--商标名称
+	,sblx		--商标类型
+	,zt			--状态
+	,zyqqx		--专用权期限
+	,qfrq		--签发日期
+	,msbzl		--名商标种类
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,yxsj		--运行时间
+ from 
+(
+select
+	distinct
+	b.tyshxydm	--统一社会信用代码
+	,a.aicentcode ztsfdm		--主体身份代码
+	,b.zzjgdm zzjgdm		--组织机构代码
+	,b.zch zch		--登记/注册号
+	,b.lgl_name gsmc		--公司名称
+	,barperid sq			--申请/注册号
+	,barname sbmc		--商标名称
+	,bartype sblx		--商标类型
+	,null zt			--状态
+	,barlimdate zyqqx		--专用权期限
+	,barsnddate qfrq		--签发日期
+	,barkind msbzl		--名商标种类
+	,'补充' xxlylx		--信息来源类型
+ 	,'std_qfzggj_t_busi_aic_braregister' lyb       --来源表
+ 	,a.lyjg  lyjg    --来源机构
+ 	,current_timestamp yxsj      --运行时间
+ from std_qfzggj_t_busi_aic_braregister a
+left join (select distinct lgl_id,tyshxydm,zzjgdm,zch,lgl_name from dwd_jbxx_frjcxx b where b.dt=(select max(dt) from dwd_jbxx_frjcxx)) b
+ on trim(a.aicentcode)=trim(b.lgl_id)
+ where a.dt=(select max(dt) from std_qfzggj_t_busi_aic_braregister) 
+ )
+ 

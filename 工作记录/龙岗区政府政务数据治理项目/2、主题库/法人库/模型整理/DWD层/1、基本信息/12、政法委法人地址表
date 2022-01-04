@@ -1,0 +1,77 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-05-28 00:41:52
+--table_name:dwd_frdzxx_temp01(法人地址信息)
+
+--2021-08-31
+--修改人:tzm 修改内容:发现表有重复数据,后对统一社会信用代码,楼栋编码分组,去重,且限制公司名称不为空,经营场所不为空
+--_********************************************************_
+
+INSERT OVERWRITE TABLE dwd_frdzxx_temp01 PARTITION (dt = '${DayBeforeStartTime}')
+--创建临时表
+
+SELECT  
+		distinct
+        t1.tyshxydm--统一社会信用代码 
+       ,t1.zzjgdm--组织机构 
+       ,t1.zch--注册号 
+       ,t1.swdjh--税务登记号 
+       ,t1.zh--企业名称 
+       ,t1.house_code--房屋编码 
+       ,t1.house_name--房屋名称 
+       ,t1.building_code--楼栋编码 
+       ,t1.building_name--楼栋名称 
+       ,t1.district_bm--区域编码 
+       ,t1.district--区域名称 
+       ,t1.jdbm  jdbm--街道编码 
+       ,t1.jdmc  jdmc--街道名称 
+       ,t1.wgbm gridcode--网格编码 
+       ,t1.grname--网格名称 
+       ,t1.sqcode--社区编码 
+       ,t1.sqname--社区名称 
+       ,t1.jycs  jycs --经营场所
+       ,t1.zbx--坐标X经度 
+       ,t1.zby--坐标Y纬度 
+       ,t1.lyb --来源表 
+       ,t1.lyjg --来源机构 
+       ,t1.yxsj --运行时间
+FROM (
+	select 
+		t1.enterpriseno tyshxydm
+		,t1.organcode  zzjgdm
+		,null zch--注册号 
+        ,null  swdjh--税务登记号 
+		,t1.enterprisename zh
+		,null house_code
+		,null house_name
+		,trim(replace(t1.buildinghousecode,';','')) building_code
+		,null building_name
+		,t7.qydm  district_bm --区域编码
+		,t7.qymc  district --区域名称
+		,t7.jddm  jdbm	--街道编码
+		,t7.jdmc  jdmc	--街道名称
+		,t5.sqcode||t5.code  wgbm  --网格编码
+		,t5.wgname  grname  --网格名称
+		,t7.sqdm  sqcode  --社区编码
+		,t7.sqmc  sqname  --社区名称
+		,t1.jycs jycs
+		,t1.pdagpsx zbx
+		,t1.pdagpsy zby
+		,'ods_qzf_zfw_enterpriseinfomanage1' lyb
+		,t1.lyjg lyjg
+		,now() yxsj
+        ,row_number() over(partition by t1.enterpriseno,trim(replace(t1.buildinghousecode,';','')) order by t1.inserttime,t5.wgname,t7.jddm asc nulls last) rn 
+	from 
+	(select * from ods_qzf_zfw_enterpriseinfomanage1  a  where dt=(select max(dt) from ods_qzf_zfw_enterpriseinfomanage1)) t1
+	left join
+	(select * from fwzt.ods_qwzfw_zfw_building1 where  DELMARK ='0' and dt=(select max(dt) from fwzt.ods_qwzfw_zfw_building1)) t4
+	on trim(replace(t1.buildinghousecode,';',''))=t4.code
+	left join (select * from ods_qzfw_zfw_wg_misgis where dt=(select max(dt) from ods_qzfw_zfw_wg_misgis)) t5
+	on trim(t4.teamid)=trim(t5.misid)
+	left join 
+	jczl.zd_jdsqdm t7
+	on t5.sqcode=t7.sqdm 
+)t1 where t1.zh is not null and t1.jycs is not null and rn=1
+
+ 

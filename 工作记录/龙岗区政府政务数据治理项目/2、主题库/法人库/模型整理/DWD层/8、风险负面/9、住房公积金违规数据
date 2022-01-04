@@ -1,0 +1,28 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-22 18:37:22
+--0317 He 修改字段 lasj 格式为 YYYY-MM-dd hh24:mi:ss
+--_********************************************************_
+
+
+insert overwrite table dwd_frfm_gjjwgsj partition (dt='${DayBeforeStartTime}')
+select tyshxydm  --统一社会信用代码
+,zch  --注册号
+,orgcode AS zzjgdm  --组织机构代码
+,dwgjjh AS gjjh  --公积金号
+,entname AS gsmc  --企业名称
+,gszcdz  --工商注册地址
+,wgajhm  --违规案件号码
+,case when length(ladate)=10 then ladate||' 00:00:00'
+when length(ladate)=19 then ladate end AS lasj  --立案时间
+,dwwglx  --单位违规类型
+,dwwgnr  --单位违规内容
+,dwwgcljg  -- 单位违规处理结果
+,'补充' AS xxlylx  --信息来源类型
+,'std_qfzggj_t_busi_zfgjj_wgsj' AS lyb  --来源表
+,lyjg  --来源机构
+,substr(CURRENT_TIMESTAMP,1,19) AS yxsj  -- 运行时间
+FROM std_qfzggj_t_busi_zfgjj_wgsj t1
+WHERE t1.dt=( 
+SELECT  MAX(dt) from std_qfzggj_t_busi_zfgjj_wgsj)

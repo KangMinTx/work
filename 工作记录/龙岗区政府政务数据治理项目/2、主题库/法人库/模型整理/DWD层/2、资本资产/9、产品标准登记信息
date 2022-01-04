@@ -1,0 +1,121 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-04 16:50:40
+--table_name : dwd_zczb_cpbzdjxx (产品标准登记信息)
+--use_table  : std_qfzggj_t_busi_aic_cpzxbzdj (区发展改革局_产品执行标准登记)
+--			   std_qfzggj_t_busi_zjj_prosta (区发展改革局_企业产品执行标准登记信息19)
+--取数逻辑   : std_qfzggj_t_busi_aic_cpzxbzdj (区发展改革局_产品执行标准登记) 通过 主体身份代码,单位名称 关联 法人基本信息 补充法人信息
+--			   std_qfzggj_t_busi_zjj_prosta (区发展改革局_企业产品执行标准登记信息19)  通过 主体身份代码,组织机构代码,单位名称 关联 法人基本信息 补充法人信息
+--去重逻辑   : 根据各自公司和产品号进行去重
+--_********************************************************_
+--2021-03-16
+--由于原表字段时间格式为两种（YYYY-MM-DD hh24:mi:ss和YYYY-MM-DD），修改时间字段为YYYY-MM-DD hh24:mi:ss
+
+INSERT OVERWRITE TABLE dwd_zczb_cpbzdjxx PARTITION (dt = '${DayBeforeStartTime}')
+select 
+uuid --主键 
+,tyshxydm --统一社会信用代码 
+,ztsfdm --主体身份代码 
+,zzjgdm --组织机构代码 
+,zch --登记/注册号 
+,gsmc --公司名称 
+,cpmc --产品名称 
+,zxbzmc --执行标准名称 
+,djrq --登记日期 
+,xxlylx --信息来源类型 
+,lyb --来源表 
+,lyjg --来源机构 
+,yxsj --运行时间 
+from (
+SELECT  uuid()                           AS uuid --主键 
+       ,t2.tyshxydm         AS tyshxydm --统一社会信用代码 
+       ,nvl(t3.lgl_id,t1.aicentcode)     AS ztsfdm --主体身份代码 
+       ,nvl(t2.zzjgdm,t3.zzjgdm)         AS zzjgdm --组织机构代码 
+       ,nvl(t2.zch,t3.zch)               AS zch --登记/注册号 
+       ,nvl(t2.lgl_name,t3.lgl_name)     AS gsmc --公司名称 
+       ,t1.productname                   AS cpmc --产品名称 
+       ,t1.a298                          AS zxbzmc --执行标准名称 
+       ,t1.djrq                          AS djrq --登记日期 
+       ,'权威'                             AS xxlylx --信息来源类型 
+       ,'std_qfzggj_t_busi_aic_cpzxbzdj' AS lyb --来源表 
+       ,t1.lyjg                          AS lyjg --来源机构 
+       ,CURRENT_TIMESTAMP                AS yxsj --运行时间 
+       ,row_number() over(partition by nvl(t1.dwdm,t2.tyshxydm),nvl(t1.aicentcode,t3.lgl_id),nvl(t2.lgl_name,t3.lgl_name),t1.productname,t1.a298,t1.djrq order by t1.djrq desc ) as rn
+from (select dwdm ,aicentcode ,productname ,a298 ,djrq ,lyjg 
+from std_qfzggj_t_busi_aic_cpzxbzdj
+where dt=(select max(dt) from std_qfzggj_t_busi_aic_cpzxbzdj )
+) t1
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( select  max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.aicentcode = t2.lgl_id
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( select  max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.dwdm = t3.lgl_id
+) where rn=1
+
+union all
+
+SELECT  uuid --主键 
+       ,tyshxydm --统一社会信用代码 
+       ,ztsfdm --主体身份代码 
+       ,zzjgdm --组织机构代码 
+       ,zch --登记/注册号 
+       ,gsmc --公司名称 
+       ,cpmc --产品名称 
+       ,zxbzmc --执行标准名称 
+       ,djrq --登记日期 
+       ,xxlylx --信息来源类型 
+       ,lyb --来源表 
+       ,lyjg --来源机构 
+       ,yxsj --运行时间
+FROM 
+(
+SELECT  uuid()                                        AS uuid --主键 
+       ,nvl(nvl(t2.tyshxydm,t3.tyshxydm),t4.tyshxydm) AS tyshxydm --统一社会信用代码 
+       ,nvl(nvl(t1.aicentcode,t3.lgl_id),t4.lgl_id)   AS ztsfdm --主体身份代码 
+       ,nvl(nvl(t4.zzjgdm,t2.zzjgdm),t1.orgcode)      AS zzjgdm --组织机构代码 
+       ,nvl(nvl(t2.zch,t3.zch),t4.zch)                AS zch --登记/注册号 
+       ,nvl(nvl(t3.lgl_name,t2.lgl_name),t1.entname)  AS gsmc --公司名称 
+       ,t1.proname                                    AS cpmc --产品名称 
+       ,t1.staname                                    AS zxbzmc --执行标准名称 
+       ,t1.REGDATE                            AS djrq --登记日期 
+       ,'权威'                                          AS xxlylx --信息来源类型 
+       ,'std_qfzggj_t_busi_zjj_prosta'                AS lyb --来源表 
+       ,t1.lyjg                                       AS lyjg --来源机构 
+       ,CURRENT_TIMESTAMP                             AS yxsj --运行时间 
+       ,row_number() over(partition by nvl(nvl(t2.tyshxydm,t3.tyshxydm),t4.tyshxydm),nvl(nvl(t1.aicentcode,t3.lgl_id),t4.lgl_id),nvl(nvl(t1.entname,t2.lgl_name),t3.lgl_name),t1.proname,t1.staname ORDER BY t1.staname desc ) rn
+FROM (select aicentcode ,orgcode ,entname ,proname ,staname ,lyjg ,REGDATE
+			from std_qfzggj_t_busi_zjj_prosta
+			where dt=(select max(dt) from std_qfzggj_t_busi_zjj_prosta)) t1
+left join 
+( 	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( select  max(dt) from dwd_jbxx_frjcxx)) t2
+on t1.aicentcode = t2.lgl_id
+
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( select  max(dt) from dwd_jbxx_frjcxx)) t3
+on t1.orgcode = t3.zzjgdm
+left join 
+(
+	select  lgl_id,lgl_name,tyshxydm,zzjgdm,zch,legal_person_name,legal_person_card_no,legal_person_card_id
+	from dwd_jbxx_frjcxx
+	where dt=( select  max(dt) from dwd_jbxx_frjcxx)) t4
+on t1.entname = t4.lgl_name
+) where rn=1
+
+
+
+
+
+
