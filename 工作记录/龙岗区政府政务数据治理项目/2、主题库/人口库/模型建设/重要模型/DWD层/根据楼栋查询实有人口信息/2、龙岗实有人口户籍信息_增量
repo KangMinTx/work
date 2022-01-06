@@ -1,0 +1,65 @@
+--SparkSQL
+--_********************************************************_
+--author: lizheng
+--create time: 2021-10-20 15:47:12
+--_********************************************************_
+insert overwrite table dwd_fw_gjldcxsyrkxx_zl partition (dt='${DayBeforeStartTime}')
+select 
+a.id  T_ID --表主键 
+,xm   NAME --姓名 
+,zjlx  CARD_TYPE --证件类型
+,zjhm  CARD_NO --证件号码 
+,xb  GENDER --性别 
+,csny  BIRTHDAY --出生日期 
+,if(b.person_type='1','1','0')  IS_LOCAL --是否龙岗户口（1龙岗户口；0非龙岗户口）
+,house_code  HOUSE_CODE --房间编码
+,building_code  BUILD_CODE --楼栋编码 
+,e.xqmc  ESTATE_CODE --小区编码 
+,e.estatecode   ESTATE_NAME --小区名称 
+,sqbm  COMMUNITY_CODE --社区编码
+,sqmc  COMMUNITY_NAME --社区名称 
+,c.checkindate   LIVE_TIME --入住时间
+,case when to_date(leavedate) is not null or length(leavedate)>0 then datediff(to_date(checkindate),to_date(leavedate))  else '居住至今' end LIVE_LENGTH --居住时长_单位天）
+,crsj  INSERT_TIME --数据插入时间
+,if(yxx='有效','非暂离','暂离') zt
+,a.byzd2 phone  --手机
+,a.jdbm jdcode  --街道编码
+,a.jdmc jdname  --街道名称
+,'440307' areacode  --区code
+,'龙岗区' areaname  --区名称
+,a.byzd4 gxzt
+,now() yxsj
+from dm_rkk_rkb_zl a
+	--补充户籍信息
+	left join (
+	select 
+	  card_no
+	,name
+	,person_type
+	,person_type_name
+	  from(
+	select 
+	card_no
+	,name
+	,person_type
+	,person_type_name
+	,row_number() over(partition by card_no,name order by timeflag desc, addtime desc) rn
+	 from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)
+	  )  where rn=1 
+
+	)b
+	on a.zjhm=b.card_no and a.xm=b.name
+	
+	--补充入住时间、居住时长
+    left join (select * from std_qzfw_zfw_resident1 where dt=(select max(dt) from std_qzfw_zfw_resident1)) c
+    on a.id=c.id
+	
+	--补充小区名称、小区编码
+    left join (
+      select distinct ssldbm,xqmc,estatecode  
+      from (select * from fwzt.std_qzfw_view_ywk_tydz where dt=(select max(dt) from fwzt.std_qzfw_view_ywk_tydz)) a
+		inner join (select * from fwzt.std_lgqgafj_spmj_estateinfo where dt=(select max(dt) from fwzt.std_lgqgafj_spmj_estateinfo)) b
+		on a.xqmc=b.estatename 
+    )e
+    on a.building_code=e.ssldbm
+    

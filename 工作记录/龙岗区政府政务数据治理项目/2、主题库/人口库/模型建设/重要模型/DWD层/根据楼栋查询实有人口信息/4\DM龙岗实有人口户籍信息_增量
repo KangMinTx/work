@@ -1,0 +1,33 @@
+--SparkSQL
+--_********************************************************_
+--author: lizheng
+--create time: 2021-10-20 16:03:01
+--_********************************************************_
+insert overwrite table dm_fw_gjldcxsyrkxx_zl
+select 
+t_id                    
+,name                    
+,card_type               
+,card_no                 
+,gender                  
+,birthday                
+,is_local                
+,house_code              
+,build_code              
+,estate_code             
+,estate_name             
+,community_code          
+,community_name          
+,live_time               
+,live_length             
+,insert_time             
+,zt
+,phone  --手机
+,jdcode  --街道编码
+,jdname  --街道名称
+,areacode  --区code
+,areaname  --区名称
+,gxzt
+,now() yxsj  
+from dwd_fw_gjldcxsyrkxx_zl where dt=(select max(dt) from dwd_fw_gjldcxsyrkxx_zl)
+
