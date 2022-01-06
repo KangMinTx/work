@@ -1,0 +1,251 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-11-10 09:38:14
+--_********************************************************_
+
+insert overwrite table dm_jbxx_frdz_jt 
+select 
+tyshxydm
+,zzjgdm
+,zch
+,swdjh
+,zh
+,house_code
+,house_name
+,building_code
+,building_name
+,district_bm
+,district
+,jdbm
+,jdmc
+,gridcode
+,grname
+,sqcode
+,sqname
+,zbx
+,zby
+,jycs
+,lyb
+,lyjg
+,yxsj
+,md5(concat_ws(
+''
+,tyshxydm
+,zzjgdm
+,zch
+,swdjh
+,zh
+,house_code
+,house_name
+,building_code
+,building_name
+,district_bm
+,district
+,jdbm
+,jdmc
+,gridcode
+,grname
+,sqcode
+,sqname
+,zbx
+,zby
+,jycs
+)) id_temp
+,'' gxbz  --更新标志
+ from dm_jbxx_frdz;
+
+
+--筛选出删除得数据
+insert overwrite table dm_jbxx_frdz_zl
+select 
+tyshxydm
+,zzjgdm
+,zch
+,swdjh
+,zh
+,house_code
+,house_name
+,building_code
+,building_name
+,district_bm
+,district
+,jdbm
+,jdmc
+,gridcode
+,grname
+,sqcode
+,sqname
+,zbx
+,zby
+,jycs
+,lyb
+,lyjg
+,now() yxsj
+,id_temp
+,'delete' gxbz
+ from dm_jbxx_frdz_zt a where a.tyshxydm is not null and a.tyshxydm<>'' and not exists (select 1 from dm_jbxx_frdz_jt b where  a.tyshxydm=b.tyshxydm );
+
+
+--删除出数据太多报错
+ select test_print(deletedata,sumdata,0.05)
+from(
+select 
+a.ts  sumdata
+,b.ts  deletedata
+,now() yxsj
+from (select count(*) ts from dm_jbxx_frdz_zt) a
+join 
+(select count(*) ts from dm_jbxx_frdz_zl where gxbz='delete') b);
+
+--筛选出增加、新增的数据
+insert overwrite table dm_jbxx_frdz_zl_temp
+select 
+tyshxydm
+,zzjgdm
+,zch
+,swdjh
+,zh
+,house_code
+,house_name
+,building_code
+,building_name
+,district_bm
+,district
+,jdbm
+,jdmc
+,gridcode
+,grname
+,sqcode
+,sqname
+,zbx
+,zby
+,jycs
+,lyb
+,lyjg
+,yxsj
+,id_temp
+,'add_modif' gxbz
+ from dm_jbxx_frdz_jt a where a.tyshxydm is not null and a.tyshxydm<>''   and not exists (select 1 from dm_jbxx_frdz_zt b where  a.id_temp=b.id_temp);
+ 
+
+
+
+
+
+
+
+--筛选出增量的数据 
+insert into table dm_jbxx_frdz_zl
+select 
+tyshxydm
+,zzjgdm
+,zch
+,swdjh
+,zh
+,house_code
+,house_name
+,building_code
+,building_name
+,district_bm
+,district
+,jdbm
+,jdmc
+,gridcode
+,grname
+,sqcode
+,sqname
+,zbx
+,zby
+,jycs
+,lyb
+,lyjg
+,yxsj
+,id_temp
+,'add' gxbz
+ from dm_jbxx_frdz_jt a where a.tyshxydm is not null and a.tyshxydm<>''  and not exists (select 1 from dm_jbxx_frdz_zt b where  a.tyshxydm=b.tyshxydm );
+
+
+
+--找到修改的数据
+insert into table dm_jbxx_frdz_zl
+select 
+tyshxydm
+,zzjgdm
+,zch
+,swdjh
+,zh
+,house_code
+,house_name
+,building_code
+,building_name
+,district_bm
+,district
+,jdbm
+,jdmc
+,gridcode
+,grname
+,sqcode
+,sqname
+,zbx
+,zby
+,jycs
+,lyb
+,lyjg
+,yxsj
+,id_temp
+,'modiff' gxbz
+from dm_jbxx_frdz_zl_temp a where a.tyshxydm is not null and a.tyshxydm<>''  and not exists (select 1 from dm_jbxx_frdz_zl b where b.gxbz='add' and  a.tyshxydm=b.tyshxydm );
+
+
+
+--将今天数据给昨天的表中
+insert overwrite table dm_jbxx_frdz_zt
+select 
+tyshxydm
+,zzjgdm
+,zch
+,swdjh
+,zh
+,house_code
+,house_name
+,building_code
+,building_name
+,district_bm
+,district
+,jdbm
+,jdmc
+,gridcode
+,grname
+,sqcode
+,sqname
+,zbx
+,zby
+,jycs
+,lyb
+,lyjg
+,yxsj
+,id_temp
+,gxbz
+from dm_jbxx_frdz_jt;
+
+
+
+
+--插入表的数据量、以及删除的数据量
+/*
+insert overwrite table dm_jbxx_frdz_log  
+select 
+a.ts  sumdata
+,b.ts  deletedata
+,now() yxsj
+from (select count(*) ts from dm_jbxx_frdz_zt) a
+join 
+(select count(*) ts from dm_jbxx_frdz_zl where gxbz='delete') b;
+
+
+
+create table dm_jbxx_frdz_zl_DM as  
+select * from dm_jbxx_frdz_zl 
+where exists  (select 1 from dm_jbxx_frdz_log where deletedata/sumdata>0.05);
+*/

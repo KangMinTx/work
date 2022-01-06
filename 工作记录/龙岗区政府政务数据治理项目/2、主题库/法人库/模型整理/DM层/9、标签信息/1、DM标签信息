@@ -1,0 +1,54 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-11 16:31:44
+--table_name : dm_bqxx_bqxxb (标签信息)
+--0317 He 修改 ywsj 格式为 YYYY-MM-DD hh24:mi:ss
+--_********************************************************_
+truncate table dm_bqxx_bqxxb;
+insert into table dm_bqxx_bqxxb 
+select 
+	uuid() UUID --主键 
+	,b.ztsfdm --主体身份代码 
+	,b.tyshxydm --统一社会信用代码 
+	,b.zzjgdm --组织机构代码 
+	,b.zch --登记/注册号 
+	,a.gsmc --公司名称 
+	,a.bqm --标签名 
+	,a.bqbm --标签部门 
+	,a.ywsj --业务时间 
+	,a.bqsx1 --标签属性1 
+	,a.bqsx2 --标签属性2 
+	,a.bqsx3 --标签属性3 
+	,a.lyb --来源表 
+	,a.lyjg --来源机构 
+	,current_timestamp yxsj --运行时间  
+from 
+(
+	select 
+		distinct 
+		tyshxydm
+		,gsmc
+		,bqm --标签名 
+		,bqbm --标签部门 
+		,substr(ywsj,1,19) as ywsj --业务时间 
+		,bqsx1 --标签属性1 
+		,bqsx2 --标签属性2 
+		,bqsx3 --标签属性3 
+		,lyb --来源表 
+		,lyjg --来源机构  
+	from dwd_bqxx_bqxxb 
+  where dt=(select max(dt) from dwd_bqxx_bqxxb)
+	) a
+left join
+(
+	select 
+		distinct 
+		tyshxydm, 
+		lgl_id ztsfdm,
+  		zzjgdm,
+		zch
+		from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)
+)b 
+on a.tyshxydm=b.tyshxydm
+where b.tyshxydm is not null

@@ -1,0 +1,83 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-07 18:04:27
+--内容描述:政府资助信息1张表,加工至dm_zczb_bdcxx(政府资助信息信息)
+--_********************************************************_
+		
+truncate table dm_zczb_bdcxx;
+insert into table  dm_zczb_bdcxx 
+SELECT
+	uuid                  ,--主键
+	tyshxydm                  ,--统一社会信用代码
+	 ztsfdm                  ,--主体身份代码
+	zzjgdm                  ,--组织机构代码
+	zch                  ,--登记/注册号
+	 gsmc                  ,--公司名称
+	bdcqllx                  ,--不动产权利类型
+	bdcqzh                  ,--不动产权证号
+	xmmc                  ,--项目名称
+	hth                  ,--合同号
+	zdh                  ,--宗地号
+	bdcqsqsrq                  ,--不动产权属起始日期
+	bdcqszzrq                  ,--不动产权属终止日期
+	syqx                  ,--使用期限
+	djrq                  ,--登记日期
+	ydmj                  ,--用地面积
+	xxlylx                  ,--信息来源类型
+	lyb                  ,--来源表
+	lyjg                  ,--来源机构
+	current_timestamp yxsj                  --运行时间
+  from(
+SELECT
+	uuid                  ,--主键
+	tyshxydm                  ,--统一社会信用代码
+	 ztsfdm                  ,--主体身份代码
+	zzjgdm                  ,--组织机构代码
+	zch                  ,--登记/注册号
+	 gsmc                  ,--公司名称
+	bdcqllx                  ,--不动产权利类型
+	bdcqzh                  ,--不动产权证号
+	xmmc                  ,--项目名称
+	hth                  ,--合同号
+	zdh                  ,--宗地号
+	bdcqsqsrq                  ,--不动产权属起始日期
+	bdcqszzrq                  ,--不动产权属终止日期
+	syqx                  ,--使用期限
+	djrq                  ,--登记日期
+	ydmj                  ,--用地面积
+	xxlylx                  ,--信息来源类型
+	lyb                  ,--来源表
+	lyjg                  ,--来源机构
+	current_timestamp yxsj                  ,--运行时间
+    row_number() over(partition by concat_ws('',gsmc,bdcqzh,bdcqsqsrq,zdh,xmmc) order by concat_ws('',gsmc,bdcqzh,bdcqsqsrq,zdh,xmmc)) rn
+from(
+select
+	uuid                  ,--主键
+	b1.tyshxydm                  ,--统一社会信用代码
+	b1.lgl_id ztsfdm                  ,--主体身份代码
+	b1.zzjgdm                  ,--组织机构代码
+	b1.zch                  ,--登记/注册号
+	b1.lgl_name gsmc                  ,--公司名称
+	b2.bdcqllx                  ,--不动产权利类型
+	b2.bdcqzh                  ,--不动产权证号
+	b2.xmmc                  ,--项目名称
+	b2.hth                  ,--合同号
+	b2.zdh                  ,--宗地号
+	b2.bdcqsqsrq                  ,--不动产权属起始日期
+	b2.bdcqszzrq                  ,--不动产权属终止日期
+	b2.syqx                  ,--使用期限
+	b2.djrq                  ,--登记日期
+	b2.ydmj                  ,--用地面积
+	b2.xxlylx                  ,--信息来源类型
+	b2.lyb                  ,--来源表
+	b2.lyjg                  ,--来源机构
+	current_timestamp yxsj                  --运行时间
+    
+from (select * from   dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b1
+inner join (select * from dwd_zczb_bdcxx b2 where b2.dt=(select max(dt) from dwd_zczb_bdcxx))b2
+on trim(b1.lgl_name)=trim(b2.gsmc)
+)  
+)where rn=1;
+
+

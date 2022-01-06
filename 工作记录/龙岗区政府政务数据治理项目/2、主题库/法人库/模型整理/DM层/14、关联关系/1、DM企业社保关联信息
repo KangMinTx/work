@@ -1,0 +1,16 @@
+--SparkSQL
+--_********************************************************_
+--author: luoyun
+--create time: 2021-08-13 14:11:02
+--_********************************************************_
+insert OVERWRITE table dm_glgx_qysbhglxx
+SELECT
+	tyshxydm	--	统一社会信用代码
+	,sbdwbh	--	社保单位编号
+	,zzjgdm	--	组织机构代码
+	,dwmc	--	单位名称
+	,lyb	--	来源表
+	,lyjg	--	来源机构
+	,now() yxsj	--	运行时间
+from dwd_glgx_qysbhglxx
+	where dt=(select max(dt) from dwd_glgx_qysbhglxx)

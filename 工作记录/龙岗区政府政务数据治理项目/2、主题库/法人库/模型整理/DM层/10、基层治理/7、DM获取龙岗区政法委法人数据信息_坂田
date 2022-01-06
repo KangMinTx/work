@@ -1,0 +1,82 @@
+--SparkSQL
+--_********************************************************_
+--author: luoyun
+--create time: 2021-08-17 16:45:28
+--_********************************************************_
+insert OVERWRITE table dm_frk_hqlgqzfwfrsj
+SELECT
+	id	--	主键ID
+	,buildinghousecode	--	注册所在房屋编码
+	,enterpriseaddress	--	注册地址
+	,registrar	--	信息采集员
+	,addtime	--	采集时间
+	,updater	--	修改人
+	,creator	--	创建人
+	,enterprisetype	--	有无证照(1有 2 无)
+	,enterprisename	--	企业名称
+	,enterpriseno	--	企业证照编码
+	,legalname	--	法人姓名
+	,legaladdress	--	法人地址
+	,cardtypeid	--	法人证件类型
+	,cardno	--	法人证件号码
+	,legaltelphone	--	法人联系电话
+	,enterprisetelphone	--	企业联系电话
+	,operatorname	--	经营者姓名
+	,operatorcardnotype	--	经营者证件类型
+	,operatorcardno	--	经营者证件号码
+	,operatoraddress	--	经营者地址
+	,operatortelphone	--	经营者联系电话
+	,operatortype	--	经营类型
+	,operatorplacearea	--	经营场所面积
+	,remarks	--	备注
+	,areaid	--	行政区划
+	,photo1	--	相片1
+	,photo2	--	相片2
+	,photo3	--	相片3
+	,isstate	--	状态(0 正常,1注销)
+	,logoutreason	--	注销说明
+	,logoutor	--	注销人
+	,logouttime	--	注销时间
+	,updatetime	--	修改时间
+	,cbuitem	--	经营范围
+	,bizmethod	--	经营方式
+	,estdate	--	成立日期
+	,authdate	--	核准日期
+	,createtime	--	新增时间
+	,photopath	--	空值为company路径，非空为原默认路径
+	,organcode	--	组织机构代码
+	,isnspection	--	是否年检(0否，1是)
+	,enterprisearea	--	单位营业面积
+	,businessname	--	项目名称
+	,businessfile	--	项目文件
+	,businessfiledefine	--	自定义项目文件
+	,pdagpsx	--	位置坐标X
+	,pdagpsy	--	位置坐标Y
+	,pdabusnissallotedtime	--	营业期限
+	,pdatradetype	--	行业分类
+	,pdatradenature	--	行业性质
+	,pdaeconomictype	--	经济类型
+	,pdaenterprisetype	--	企业类型
+	,pdaregistrationplace	--	注册地
+	,pdaregistrationstreets	--	注册街道
+	,pdaregisteredcapital	--	注册资金(万元)
+	,registerunit	--	填表单位
+	,update_key	--	更新标示
+	,interview	--	是否走访1是0否
+	,interviewtime	--	走访时间
+	,interviewer	--	走访人
+	,interviewremark	--	走访说明
+	,cloudappid	--	系统字段
+	,licensetype	--	企业证照类型(1.组织机构代码证。2.工商营业执照。3.其他。4.无。5.统一社会信用代码)
+	,residenttype	--	数据来源标记
+	,jycs	--	经营场所
+	,sszt_jbxx_recordid	--	暂无使用
+	,qhareaid	--	行政区划areaid
+	,areaidbak	--	管理机构ID备用
+	,inserttime	--	插入时间
+	,timeflag	--	
+	,lyjg	--	来源机构
+	,load_time	--	加载时间
+	,now() yxsj	--	运行时间
+from std_qzf_zfw_enterpriseinfomanage1
+	where dt=(select max(dt) from std_qzf_zfw_enterpriseinfomanage1)

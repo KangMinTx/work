@@ -1,0 +1,27 @@
+--SparkSQL
+--_********************************************************_
+--author: luoyun
+--create time: 2021-08-17 15:54:37
+--_********************************************************_
+insert OVERWRITE table dm_fwk_hqfwmpdz
+SELECT
+	id	--	主键BGUID
+	,code	--	房屋编码
+	,address_district	--	房屋地址-区
+	,address_street	--	房屋地址-街道
+	,address_community	--	房屋地址-社区
+	,address_grid	--	房屋地址-网格
+	,address_normal	--	规范地址
+	,norm_address_source	--	规范地址来源
+	,addrss_1	--	公安门牌地址
+	,addrss_2	--	市租赁办地址
+	,addrss_3	--	网格办摸底数据
+	,address_normal_all	--	规范地址整合
+	,gisx	--	中心点坐标X
+	,gisy	--	中心点坐标Y
+	,timeflag	--	
+	,lyjg	--	来源机构
+	,load_time	--	加载时间
+	,now() yxsj	--	运行时间
+from std_qzfw_building_address1
+	where dt=(select max(dt) from std_qzfw_building_address1)

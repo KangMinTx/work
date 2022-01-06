@@ -1,0 +1,26 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-22 11:37:12
+--_********************************************************_
+truncate table dm_fr_hqgxqyxqsj;
+insert overwrite table dm_fr_hqgxqyxqsj partition (dt='${DayBeforeStartTime}')
+select
+LGL_ID             ,--法人唯一标识
+LGL_NAME             ,--机构名称
+QYDZ             ,--企业地址
+SZJD             ,--所在街道
+ZSBH             ,--证书编号
+GXJSLY             ,--高新技术领域
+RDND             ,--认定年度
+GLDM_UPADTE_TIME             ,--更新时间
+BUILD_CODE             ,--楼栋编码
+LEGAL_PERSON_NAME             ,--法定代表人/负责人
+BUSINESS_SCOPE             ,--经营范围
+COMMUNITY_CODE             ,--社区编码
+COMMUNITY_NAME             ,--社区名称
+now() yxsj             --运行时间
+from dwd_frzz_gxqysj
+where dt=(select max(dt) from dwd_frzz_gxqysj) and LGL_ID is NOT NULL and RDND>'2017';
+--select dt from dm_fr_hqgxqyxqsj  group by dt
+--select dt,count(*) from dm_fr_hqgxqyxqsj  group by dt

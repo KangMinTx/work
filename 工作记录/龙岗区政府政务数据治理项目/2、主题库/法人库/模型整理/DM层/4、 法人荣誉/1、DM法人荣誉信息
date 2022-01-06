@@ -1,0 +1,36 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-11-26 17:23:25
+--0317 He 修改 RDRQ，GSJSRQ 格式为 YYYY-MM-DD hh24:mi:ss
+--_********************************************************_
+with frjbxx as(
+  select TYSHXYDM,ZZJGDM,LGL_NAME,zch,LEGAL_PERSON_NAME,
+  row_number()over(partition by ZZJGDM order by TYSHXYDM) ZZJGDM_rn,
+  row_number()over(partition by LGL_NAME order by TYSHXYDM) LGL_NAME_rn
+  from dwd_jbxx_frjcxx where dt = (select max(dt) from dwd_jbxx_frjcxx)
+  )
+insert overwrite table dm_frry_frryxx 
+select
+UUID             ,--主键
+COALESCE(a.TYSHXYDM,b.TYSHXYDM,c.TYSHXYDM) ,--统一社会信用代码
+COALESCE(a.ZCH,b.ZCH,c.ZCH)             ,--注册号
+COALESCE(a.ZZJGDM,b.ZZJGDM,c.ZZJGDM)             ,--组织机构代码
+GSMC             ,--公司名称
+COALESCE(a.QYMC,b.LGL_NAME,c.LGL_NAME) ,--企业名称
+COALESCE(a.FDDBRxm,b.LEGAL_PERSON_NAME,c.LEGAL_PERSON_NAME),--法定代表人
+RYWH             ,--荣誉文号
+RYCH             ,--荣誉称号
+RYJB             ,--荣誉级别
+RYNR             ,--荣誉内容
+DW             ,--颁发单位组织机构代码
+XZQHDM             ,--颁发单位所在行政区划
+substr(RDRQ,1,19)  as RDRQ           ,--认定日期
+substr(GSJSRQ,1,19) as GSJSRQ             ,--公示结束日期
+lyb             ,--来源表
+lyjg             ,--来源机构
+now() yxsj             --运行时间
+from dwd_frry_frryxx a
+left join frjbxx b on a.ZZJGDM = b.ZZJGDM and b.ZZJGDM_rn =1
+left join frjbxx c on a.qymc = c.LGL_NAME and c.LGL_NAME_rn =1
+where a.dt=(select max(dt) from dwd_frry_frryxx);

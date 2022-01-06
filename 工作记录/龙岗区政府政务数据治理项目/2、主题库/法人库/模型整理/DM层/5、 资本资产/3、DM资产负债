@@ -1,0 +1,30 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-07 15:01:19.84
+--所属主题:资产负债
+--内容描述:资产负债1张表,加工至dm_fxfm_zcfz(资产负债)
+
+--加载策略:全量
+--0316 He 修改 dqsj,jksj 格式为 YYYY-MM-DD
+--_********************************************************_
+truncate table  dm_fxfm_zcfz;
+insert into table dm_fxfm_zcfz 
+select
+	if(tyshxydm is null,'',tyshxydm)	--统一社会信用代码
+	,zch		--登记/注册号
+	,ztsfdm		--主体身份代码
+	,zzjgdm		--组织机构代码
+	,gsmc		--公司名称
+	,qkye		--欠款余额
+	,qksm		--欠款说明
+	,yhje	--已还金额
+	,dqsj as dqsj--到期时间
+	,jksj as jksj	--借款时间
+	,jkje 	--借款金额	
+	,xxlylx		--信息来源类型
+ 	,lyb       --来源表
+ 	,lyjg    --来源机构
+ 	,substr(current_timestamp,1,19) yxsj      --运行时间
+ from dwd_fxfm_zcfz a
+ where a.dt=(select max(dt) from dwd_fxfm_zcfz) ;

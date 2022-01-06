@@ -1,0 +1,62 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2021-05-31 01:27:14
+-- 企业人口信息 dm_rkk_qyrkxx
+--法人库筛选企业人口：法人地址表中有网格的企业成员，且带身份证号（统一社会信用代码、企业名称、证件号码、姓名、企业街道、企业社区、企业网格）；
+--_********************************************************_
+drop table if exists dm_jbxx_frjcdzxx_01;
+ create table dm_jbxx_frjcdzxx_01 as 
+ select 
+ 	t1.tyshxydm
+    , case when t4.wgname like '中海怡翠%' then '440307002' else t5.jddm end	jdbm		--街道编码
+	,case when t4.wgname like '中海怡翠%' then '布吉' else t5.jdmc end	jdmc		--街道名称
+	,t5.sqdm||t4.code	wgbm	--网格编码
+	,t4.wgname	wgmc		--网格名称
+	,case when t4.wgname like '中海怡翠%' then '中海怡翠'  else t5.sqdm end	sqbm		--社区编码
+	,case when t4.wgname like '中海怡翠%' then '440307002018' else t5.sqmc end  sqmc			--社区名称
+from 
+ (select  tyshxydm,zzjgdm from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t1
+ inner join 
+ (select buildinghousecode,organcode from  std_qzf_zfw_enterpriseinfomanage1 
+ where dt=(select max(dt) from std_qzf_zfw_enterpriseinfomanage1)) t2
+ on t1.zzjgdm=t2.organcode
+  left join 
+ (select * from fwzt.std_qwzfw_zfw_building1 where dt=(select max(dt) from fwzt.std_qwzfw_zfw_building1)) t3
+  on t2.buildinghousecode=t3.code
+ left join (select * from fwzt.std_qzfw_zfw_wg_misgis where dt=(select max(dt) from fwzt.std_qzfw_zfw_wg_misgis)) t4
+ on t3.teamid=t4.misid
+   left join jczl.zd_jdsqdm t5
+ on t4.sqcode=t5.sqdm;
+ 
+
+
+drop table if exists dm_rkk_qyrkxx;
+create table dm_rkk_qyrkxx as 
+select 
+gsmc
+,tyshxydm
+,zjhm
+,xm
+,jydz
+,jdmc
+,jdbm
+,sqmc
+,sqbm
+,wgmc
+,wgbm
+from
+(select cast (null as String) as jydz,gsmc,t1.tyshxydm,zjhm,xm,emp_resignation_time jnrq,
+jdmc,jdbm,sqmc,sqbm,wgmc,wgbm  
+,row_number() over(partition by zjhm order by emp_resignation_time desc,gsmc,t1.tyshxydm ) as rn 
+from 
+(select tyshxydm,gsmc,emp_card_no as zjhm,xm,emp_resignation_time
+from dm_cyxx_qycyxx where length(emp_card_no)<>6 and emp_resignation_time>='2020-12') t1
+inner join 
+(select tyshxydm,jdmc,jdbm,sqmc,sqbm,wgmc,wgbm  
+from dm_jbxx_frjcdzxx_01 where wgbm is not null and jdbm like '440307%') t2 on t1.tyshxydm=t2.tyshxydm
+where not exists (select 1 from lgrkk.dm_rkk_syrkkb t3 where byzd1='实有人口' and t1.zjhm=t3.zjhm)) where rn=1;
+
+
+ 
+  

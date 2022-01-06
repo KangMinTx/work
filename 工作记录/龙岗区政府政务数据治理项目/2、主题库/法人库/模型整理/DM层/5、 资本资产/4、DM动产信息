@@ -1,0 +1,63 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-07 16:51:27
+--table_name : dm_zbzc_dcxx (动产信息)
+--_********************************************************_
+truncate table 	dm_zbzc_dcxx;
+insert into table  dm_zbzc_dcxx 
+SELECT
+	uuid           ,--主键
+	ztsfdm    ,--主体身份代码
+	tyshxydm      ,--统一社会信用代码
+	zzjgdm      ,--组织机构代码
+	zch   ,--登记/注册号
+	gsmc           ,--公司名称
+	dclx           ,--动产类型
+	dcsl           ,--动产数量
+	djsj           ,--登记时间
+	xxlylx           ,--信息来源类型
+	lyb           ,--来源表
+	lyjg           ,--来源机构
+	current_timestamp yxsj          --运行时间
+	
+ from(
+SELECT
+	uuid           ,--主键
+	ztsfdm    ,--主体身份代码
+	tyshxydm      ,--统一社会信用代码
+	zzjgdm      ,--组织机构代码
+	zch   ,--登记/注册号
+	gsmc           ,--公司名称
+	dclx           ,--动产类型
+	dcsl           ,--动产数量
+	djsj           ,--登记时间
+	xxlylx           ,--信息来源类型
+	lyb           ,--来源表
+	lyjg           ,--来源机构
+	current_timestamp yxsj          ,--运行时间
+row_number() over(partition by concat_ws('',tyshxydm,dclx,dcsl,djsj) order by djsj ) rn
+from(
+select
+	uuid           ,--主键
+	nvl(b1.lgl_id,b2.ztsfdm) ztsfdm    ,--主体身份代码
+	b2.tyshxydm      ,--统一社会信用代码
+	nvl(b1.zzjgdm,b2.zzjgdm) as zzjgdm      ,--组织机构代码
+	nvl(b1.zch,b2.zch) as zch   ,--登记/注册号
+	b1.lgl_name gsmc           ,--公司名称
+	b2.dclx           ,--动产类型
+	b2.dcsl           ,--动产数量
+	b2.djsj           ,--登记时间
+	b2.xxlylx           ,--信息来源类型
+	b2.lyb           ,--来源表
+	b2.lyjg           ,--来源机构
+	current_timestamp yxsj          --运行时
+from  (select * from   dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b1
+inner join dwd_zbzc_dcxx b2
+on trim(b1.tyshxydm)=trim(b2.tyshxydm)
+where b2.dt=(select max(dt) from dwd_zbzc_dcxx) 
+  ))where rn=1;
+
+
+--select count(*) from dm_zbzc_dcxx 
+

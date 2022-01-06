@@ -1,0 +1,214 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-05-28 01:11:19
+--修改人:tzm 增加检测机构字段
+--_********************************************************_
+insert overwrite table dm_frk_frgyfyqk 
+select 
+	distinct
+ a.lgl_no 
+ ,a.lgl_name
+,a.building_id
+,a.lgl_id
+,a.person_si_id
+,a.emp_card_no
+,a.emp_card_name
+,a.emp_entry_time
+,a.emp_phone
+,a.jdbm 
+,a.jdmc
+,a.sqbm
+,a.sqmc
+,a.wgbm
+,a.wgmc
+,b.COLLECTION_TIME hsjcsj
+,'' ymjzsj 
+,COOPERATIVE_INSTITUTION jcjg
+,a.lyb 
+,a.lyjg
+,now() yxsj
+from (
+SELECT  lgl_id 
+       ,lgl_name 
+       ,building_id 
+       ,lgl_no 
+       ,person_si_id 
+       ,emp_card_no 
+       ,emp_card_name 
+       ,emp_entry_time 
+       ,emp_phone 
+	   ,jdbm
+	   ,jdmc
+	   ,sqbm
+	   ,sqmc
+	   ,wgbm
+	   ,wgmc
+       ,lyb 
+       ,lyjg 
+       ,yxsj
+FROM 
+(
+	SELECT  t4.lgl_id                                                AS lgl_id 
+	       ,t1.gsmc                                                  AS lgl_name 
+	       ,t5.building_code                                         AS building_id 
+	       ,t1.tyshxydm                                              AS lgl_no 
+	       ,t1.person_si_id                                                AS person_si_id 
+	       ,t1.emp_card_no                                                  AS emp_card_no 
+	       ,t1.xm                                                    AS emp_card_name 
+	       ,t1.emp_entry_time                                        AS emp_entry_time 
+	       ,t3.lxdh                                                  AS emp_phone 
+		   ,t5.jdbm 
+		   ,t5.jdmc
+		   ,t5.sqcode as sqbm
+		   ,t5.sqname as sqmc
+		   ,t5.gridcode as wgbm
+		   ,t5.grname as wgmc
+	       ,"dm_cyxx_qycyxx"                                          AS lyb 
+	       ,"人口库"                                                    AS lyjg 
+	       ,CURRENT_TIMESTAMP                                        AS yxsj 		   
+	FROM 
+	(
+		SELECT  *
+		FROM dm_jk_cyxx_qycyxx
+	) t1 -- 企业成员信息
+	LEFT JOIN 
+	(
+	 select zjhm,lxdh from (
+      SELECT  zjhm,lxdh 
+		       ,row_number() over(partition by zjhm ORDER BY kxpx ASC) AS rk
+		FROM lgrkk.dwd_jbxx_lxdhxx
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM lgrkk.dwd_jbxx_lxdhxx) 
+	)where rk=1) t3
+	ON t1.emp_card_no = t3.zjhm -- 联系电话信息
+	LEFT JOIN 
+	(
+		SELECT  *
+		FROM lgfrk.dwd_jbxx_frjcxx
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM dwd_jbxx_frjcxx) 
+	) t4
+	ON t1.tyshxydm = t4.tyshxydm -- 法人基础信息
+	LEFT JOIN 
+	(
+		SELECT  *
+		FROM dwd_frdzxx
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM dwd_frdzxx) 
+	) t5
+	ON t1.tyshxydm = t5.tyshxydm -- 法人地址信息
+)  
+
+) a
+left join (select * from lgrkk.dm_yq_hsjcjg)  b on a.emp_card_no=b.id_card_no
+union all
+select 
+	distinct
+ a.lgl_no
+ ,a.lgl_name
+,a.building_id
+,a.lgl_id
+,a.person_si_id
+,a.emp_card_no
+,a.emp_card_name
+,a.emp_entry_time
+,a.emp_phone
+,a.jdbm 
+,a.jdmc
+,a.sqbm
+,a.sqmc
+,a.wgbm
+,a.wgmc
+,'' hsjcsj
+,ymjzsj
+,null jcjg
+,a.lyb 
+,a.lyjg
+,now() yxsj
+from (
+SELECT  lgl_id 
+       ,lgl_name 
+       ,building_id 
+       ,lgl_no 
+       ,person_si_id 
+       ,emp_card_no 
+       ,emp_card_name 
+       ,emp_entry_time 
+       ,emp_phone 
+	   ,jdbm
+	   ,jdmc
+	   ,sqbm
+	   ,sqmc
+	   ,wgbm
+	   ,wgmc
+       ,lyb 
+       ,lyjg 
+       ,yxsj
+FROM 
+(
+	SELECT  t4.lgl_id                                                AS lgl_id 
+	       ,t1.gsmc                                                  AS lgl_name 
+	       ,t5.building_code                                         AS building_id 
+	       ,t1.tyshxydm                                              AS lgl_no 
+	       ,t1.person_si_id                                                AS person_si_id 
+	       ,t1.emp_card_no                                                  AS emp_card_no 
+	       ,t1.xm                                                    AS emp_card_name 
+	       ,t1.emp_entry_time                                        AS emp_entry_time 
+	       ,t3.lxdh                                                  AS emp_phone 
+		   ,t5.jdbm 
+		   ,t5.jdmc
+		   ,t5.sqcode as sqbm
+		   ,t5.sqname as sqmc
+		   ,t5.gridcode as wgbm
+		   ,t5.grname as wgmc
+	       ,"dm_cyxx_qycyxx"                                          AS lyb 
+	       ,"人口库"                                                    AS lyjg 
+	       ,CURRENT_TIMESTAMP                                        AS yxsj 		   
+	FROM 
+	(
+		SELECT  *
+		FROM dm_jk_cyxx_qycyxx
+	) t1 -- 企业成员信息
+	LEFT JOIN 
+	(
+	 select zjhm,lxdh from (
+      SELECT  zjhm,lxdh 
+		       ,row_number() over(partition by zjhm ORDER BY kxpx ASC) AS rk
+		FROM lgrkk.dwd_jbxx_lxdhxx
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM lgrkk.dwd_jbxx_lxdhxx) 
+	)where rk=1) t3
+	ON t1.emp_card_no = t3.zjhm -- 联系电话信息
+	LEFT JOIN 
+	(
+		SELECT  *
+		FROM lgfrk.dwd_jbxx_frjcxx
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM dwd_jbxx_frjcxx) 
+	) t4
+	ON t1.tyshxydm = t4.tyshxydm -- 法人基础信息
+	LEFT JOIN 
+	(
+		SELECT  *
+		FROM dwd_frdzxx
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM dwd_frdzxx) 
+	) t5
+	ON t1.tyshxydm = t5.tyshxydm -- 法人地址信息
+)  
+
+) a
+left join  (select * from (
+(select 
+ b1.idcard_num as zjhm  --身份证 
+,b2.inoculation_date as ymjzsj --接种时间
+,row_number() over(partition by b1.idcard_num,b2.inoculation_date order by b2.inoculation_date desc) rn
+from lgrkk.ods_sjhpt_t_vac_basic_children b1
+inner join (select * from lgrkk.ods_sjhpt_t_vac_cdc_inoculation where trim(VACCINE_CODE) like '56%') b2 on b1.child_id=b2.child_id) ) where rn=1)   b on a.emp_card_no=b.zjhm

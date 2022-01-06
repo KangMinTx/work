@@ -1,0 +1,100 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-22 10:51:58
+--table_name : dm_fr_frjcxxjk (法人基础信息接口)
+--use_tables : dwd_jbxx_frjcxx (法人基本信息)
+--	         : fwzt.DWD_HOUSEADDRESS_INFO (房屋地址信息表)
+--取数逻辑   : dwd_jbxx_frjcxx为主表，通过“楼栋编码”字段关联DWD_HOUSEADDRESS_INFO的社区编码
+--去重逻辑   : 根据 tyshxydm ( 统一社会信用代码 ) 去重
+--_********************************************************_
+ 
+ truncate table dm_fr_frjcxxjk;
+ insert into table dm_fr_frjcxxjk
+ SELECT  LGL_ID --法人唯一标识 
+       ,LGL_NAME --机构名称 
+       ,LGL_SHORT_NAME --机构简称 
+       ,LGL_ENGLISH_NAME --机构英文名称 
+       ,LGL_NO --统一社会信用代码 
+       ,LGL_REG_NO --登记或注册号 
+       ,LGL_ORG_NO --组织机构代码 
+       ,LGL_ORGANIZATION_CODE --机构类型 
+       ,LEGAL_PERSON_NAME --法定代表人或负责人姓名 
+       ,LEGAL_PERSON_CARD_NO --法定代表人或负责人证件号码 
+       ,LEGAL_PERSON_CARD_ID --法定代表人或负责人证件类型 
+       ,BUSINESS_SCOPE --经营范围 
+       ,ESTABLISH_DATE --成立日期 
+       ,OPERATE_STATE_TIME --经营期限自 
+       ,OPERATE_END_TIME --经营期限至 
+       ,GLDM_CREATE_TIME --记录创建时间 
+       ,GLDM_UPDATE_TIME --记录更新时间 
+       ,LGL_ENTSTAUS_NO --法人主体状态 
+       ,LGL_AUTHDATE --核准日期 
+       ,LGL_PBUITEM --许可经营项目 
+       ,ADMIN_ORG_UNIT_NO --登记管理部门代码 
+       ,ADMIN_ORG_UNIT --登记管理部门名称 
+       ,BUILDING_ID --楼栋编码 
+       ,BOUSE_ID --房屋编码 
+       ,ADDRESS_DETAIL --详细地址 
+       ,REG_ADDR_FLAG --是否注册地址
+       ,OFFICE_ADDR_FLAG --是否办公地址
+       ,PRD_ADDR_FLAG --是否生产地址
+       ,BUSS_ADDR_FLAG --是否经营地址
+       ,COMMUNITY_ID --社区编码 
+       ,MOVE_IN_TIME --搬入时间 
+       ,MOVE_OUT_TIME --搬离时间 
+       ,GPSX --x坐标 
+       ,GPSY --y坐标 
+       ,YXSJ --运行时间
+FROM 
+(
+	SELECT  t1.LGL_ID                AS LGL_ID --法人唯一标识 
+	       ,t1.LGL_NAME              AS LGL_NAME --机构名称 
+	       ,t1.LGL_SHORT_NAME        AS LGL_SHORT_NAME --机构简称 
+	       ,t1.LGL_ENGLISH_NAME      AS LGL_ENGLISH_NAME --机构英文名称 
+	       ,t1.tyshxydm              AS LGL_NO --统一社会信用代码 
+	       ,t1.zch                   AS LGL_REG_NO --登记或注册号 
+	       ,t1.zzjgdm                AS LGL_ORG_NO --组织机构代码 
+	       ,t1.LGL_ORGANIZATION_CODE AS LGL_ORGANIZATION_CODE --机构类型 
+	       ,t1.LEGAL_PERSON_NAME     AS LEGAL_PERSON_NAME --法定代表人或负责人姓名 
+	       ,t1.LEGAL_PERSON_CARD_NO  AS LEGAL_PERSON_CARD_NO --法定代表人或负责人证件号码 
+	       ,t1.LEGAL_PERSON_CARD_ID  AS LEGAL_PERSON_CARD_ID --法定代表人或负责人证件类型 
+	       ,t1.BUSINESS_SCOPE        AS BUSINESS_SCOPE --经营范围 
+	       ,t1.ESTABLISH_DATE        AS ESTABLISH_DATE --成立日期 
+	       ,t1.OPERATE_STATE_TIME    AS OPERATE_STATE_TIME --经营期限自 
+	       ,t1.OPERATE_END_TIME      AS OPERATE_END_TIME --经营期限至 
+	       ,t1.GLDM_CREATE_TIME      AS GLDM_CREATE_TIME --记录创建时间 
+	       ,t1.GLDM_UPDATE_TIME      AS GLDM_UPDATE_TIME --记录更新时间 
+	       ,t1.LGL_ENTSTAUS_NO       AS LGL_ENTSTAUS_NO --法人主体状态 
+	       ,t1.LGL_AUTHDATE          AS LGL_AUTHDATE --核准日期 
+	       ,t1.LGL_PBUITEM           AS LGL_PBUITEM --许可经营项目 
+	       ,t1.ADMIN_ORG_UNIT_NO     AS ADMIN_ORG_UNIT_NO --登记管理部门代码 
+	       ,t1.ADMIN_ORG_UNIT        AS ADMIN_ORG_UNIT --登记管理部门名称 
+	       ,t1.BUILDING_ID           AS BUILDING_ID --楼栋编码 
+	       ,t1.HOUSE_ID              AS BOUSE_ID --房屋编码 
+	       ,t1.ADDRESS_DETAIL        AS ADDRESS_DETAIL --详细地址 
+	       ,null                     AS REG_ADDR_FLAG  --是否注册地址
+	       ,null                     AS OFFICE_ADDR_FLAG  --是否办公地址
+	       ,null                     AS PRD_ADDR_FLAG  --是否生产地址
+	       ,null                     AS BUSS_ADDR_FLAG  --是否经营地址
+	       ,t2.sqcode                AS COMMUNITY_ID --社区编码 
+	       ,T1.BRSJ                  AS MOVE_IN_TIME --搬入时间 
+	       ,T1.BLSJ                  AS MOVE_OUT_TIME --搬离时间 
+	       ,T1.ZBX                   AS GPSX --x坐标 
+	       ,T1.ZBY                   AS GPSY --y坐标 
+	       ,CURRENT_TIMESTAMP        AS YXSJ --运行时间 
+	       ,row_number() over(partition by t1.tyshxydm ORDER BY t1.yxsj) rn
+	FROM dwd_jbxx_frjcxx t1
+	LEFT JOIN 
+	(
+		SELECT  *
+		FROM dm_jbxx_frdz
+	) t2
+	ON t1.tyshxydm=t2.tyshxydm
+	WHERE t1.dt=( 
+	SELECT  MAX(dt)
+	FROM dwd_jbxx_frjcxx)
+)
+WHERE rn=1 
+
+ 

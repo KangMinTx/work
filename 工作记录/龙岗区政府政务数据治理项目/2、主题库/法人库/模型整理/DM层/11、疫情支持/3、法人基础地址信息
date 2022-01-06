@@ -1,0 +1,77 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-05-30 16:42:44
+--_********************************************************_
+insert overwrite table dm_jbxx_frjcdzxx
+select
+	distinct
+	 a.LGL_ID --法人唯一标识 
+       ,a.LGL_NAME --机构名称 
+       ,a.LGL_SHORT_NAME --机构简称 
+       ,a.LGL_ENGLISH_NAME --机构英文名称 
+       ,a.tyshxydm --统一社会信用代码 
+       ,a.zch --登记或注册号 
+       ,a.zzjgdm --组织机构代码 
+       ,a.LGL_ORGANIZATION_CODE --机构类型代码 
+       ,a.LGL_ORGANIZATION_NAME --机构类型
+       ,a.LEGAL_PERSON_NAME --法定代表人或负责人姓名 
+       ,a.LEGAL_PERSON_CARD_NO --法定代表人或负责人证件号码 
+       ,a.BUSINESS_SCOPE --经营范围 
+       ,a.ESTABLISH_DATE --成立日期 
+       ,a.OPERATE_STATE_TIME --经营期限自 
+       ,a.OPERATE_END_TIME --经营期限至
+	   /*========1223新增字段====================*/
+       ,a.hymldm  --行业门类代码 （0118新增）
+       ,a.hyml -- 行业门类
+       ,a.lsqymc -- 隶属企业名称
+       ,a.zczb   --注册资本
+	   ,a.lsqyzch -- 隶属企业注册号
+	   ,a.sbsszb -- 申报实收资本
+       ,a.bzdm    --币种代码
+	   ,a.bizhong -- 币种
+	   ,a.hydm -- 行业代码
+       ,a.hymc -- 行业名称（暂时空）
+	   ,a.jycs -- 经营场所
+	   ,a.njqk -- 年检情况
+	   ,a.ndbgxx -- 年度报告信息
+	   ,a.ssztlx -- 商事主体类型
+	   ,a.yyzt -- 企业状态
+	   /*===================*/
+       ,a.GLDM_CREATE_TIME --记录创建时间 
+       ,a.GLDM_UPDATE_TIME --记录更新时间 
+       ,a.LEGAL_PERSON_CARD_ID --法定代表人或负责人证件类型 
+       ,a.LGL_ENTSTAUS_NO --法人主体状态 
+       ,a.LGL_AUTHDATE --核准日期 
+       ,a.LGL_PBUITEM --许可经营项目 
+       ,a.ADMIN_ORG_UNIT_NO --登记管理部门代码 
+       ,a.ADMIN_ORG_UNIT --登记管理部门名称 
+       ,a.BUILDING_ID --楼栋编码 
+       ,a.HOUSE_ID --房屋编码 
+       ,a.ADDRESS_DETAIL --详细地址 
+       ,a.ZCDZ --注册地址 
+       ,a.ZCDZ_CODE --注册地统一地址编码 
+       ,a.JYDZ --经营地址 
+       ,a.JYDZ_CODE --经营地统一地址编码 
+       ,a.BGDZ --办公地址 
+       ,a.BGDZ_CODE --办公地址一地址编码 
+       ,a.SCDZ --生产地址 
+       ,a.SCDZ_CODE --生产地址一地址编码 
+       ,a.BRSJ --搬入时间 
+       ,a.BLSJ --搬离时间 
+       ,a.ZBX --坐标X 
+       ,a.ZBY --坐标Y 
+       ,a.lyb --来源表 
+       ,a.lyjg --来源机构 
+       ,a.yxsj --运行时间
+       ,b.jdbm
+	   ,b.jdmc
+	   ,b.sqcode
+	   ,b.sqname
+       ,b.grname wgmc
+       ,b.gridcode wgbm 
+ from  (select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx))a
+ left join (select * from dwd_frdzxx_temp01 where dt=(select max(dt) from dwd_frdzxx_temp01))b
+ on trim(a.tyshxydm)=trim(b.tyshxydm)
+ 
+

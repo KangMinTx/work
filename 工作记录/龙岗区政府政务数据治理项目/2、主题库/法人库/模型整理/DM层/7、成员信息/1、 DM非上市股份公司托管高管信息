@@ -1,0 +1,26 @@
+--sparksql
+--_********************************************************_
+--author: he
+--create time: 2020-11-27 11:56:15
+--table_name : dm_cyxx_fssgfgstgggxx (非上市股份公司托管高管信息)
+--use_tables : dwd_cyxx_fssgfgstgggxx (非上市股份公司托管高管信息)
+--取数逻辑   : 从dwd_cyxx_fssgfgstgggxx (非上市股份公司托管高管信息) 取出对应字典
+--去重/筛选逻辑: 取主体身份代码 (aicentcode) 不为空的记录
+--_********************************************************_
+truncate table dm_cyxx_fssgfgstgggxx;
+insert into table dm_cyxx_fssgfgstgggxx
+select 
+uuid  as uuid --主键
+,zqdm  as zqdm --深柜代码
+,name  as name --姓名
+,title  as title --职务
+,sfz  as sfz --身份证
+,aicentcode  as aicentcode --主体身份代码
+,frwybs  as frwybs --法人唯一标识
+,xxlylx  as xxlylx --信息来源类型
+,lyb  as lyb --来源表
+,lyjg  as lyjg --来源机构
+,current_timestamp  as yxsj --运行时间
+from dwd_cyxx_fssgfgstgggxx 
+where dt=(select max(dt) from dwd_cyxx_fssgfgstgggxx)
+and aicentcode is not null ;

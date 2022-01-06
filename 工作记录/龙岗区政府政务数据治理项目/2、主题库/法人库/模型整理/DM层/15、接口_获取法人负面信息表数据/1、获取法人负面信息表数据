@@ -1,0 +1,963 @@
+--SparkSQL
+--_********************************************************_
+--author: chenbaokang
+--create time: 2021-09-16 14:33:14
+--_********************************************************_
+drop table if exists dm_frfmxxb_jk_temp01;
+create table dm_frfmxxb_jk_temp01
+select * from (
+select *,row_number() over(partition by LGL_NO,aicentcode
+					   order by LGL_ORG_NO desc nulls last ) as rn
+from (
+select 
+t1.LGL_NO --统一社会信用代码 
+,t4.aicentcode --主体身份代码
+,substr(t1.LGL_NO,8,9) as LGL_ORG_NO --组织机构代码
+,t1.GLDM_CREATE_TIME --记录更新时间
+,cast(null as string) as STREET_ID   --街道代码
+,T1.COMMUNITY_ID --社区编码
+,T1.ADDRESS_DETAIL --详细地址
+,T1.LGL_ID --法人唯一标识
+,T1.LGL_NAME --机构名称
+,t2.fmxxlb --负面信息类别
+,cast(null as string) as SHJG  --审核结果（消防局消防安全检查）
+,cast(null as string) as ARRDATE   --欠费日期（电费欠费记录、逾期欠费用户清单）
+,cast(null as string) as USERID   --用户编号（逾期欠费用户清单）
+,cast(null as string) as ARREAR_TYPE  --欠费类型（逾期欠费用户清单）
+,cast(null as string) as ENTNAME  --建设单位（消防局消防安全检查）
+,t3.wsbh as FILE_NO--文书编号（企业黑名单）
+,cast(null as string) as PUNISH_TIME  --处罚时间（企业黑名单）
+,cast(null as string) as BANK        --支票签发银行（企业黑名单）
+,cast(null as string) as PENPAY    --罚款缴纳情况（企业黑名单）
+,cast(null as string) as DATE1 --支票签发日期（企业黑名单）
+,t3.ztzjlx as KINDOFDOC  --证件类型（企业黑名单）
+,t3.ztzjhm as DOCNUM   --证件号码（企业黑名单）
+,cast(null as string) as EPNUM   --空头支票张数（企业黑名单）
+,cast(null as string) as FOOD_ADMIN   --食品管理者（企业黑名单）
+,cast(null as string) as FZR_OR_JYZNAME  --经营者（企业黑名单）
+,cast(null as string) as LRBM  --列入部门（不公开）（企业黑名单）
+,t3.sjje as SAJE   --涉案金额（不公开）（企业黑名单）
+,cast(null as string) as HMDTYPE --涉金融黑名单类型（企业黑名单）
+,cast(null as string) as ZCPJJG     --作出判决机关（企业黑名单）       
+,cast(null as string) as XXBSJG    --信息报送机关（企业黑名单）         
+,cast(null as string) as SXXWJK     --失信行为简况（企业黑名单)        
+,t3.hmdlx as BLACK_LIST_TYPE    --黑名单类型（企业黑名单）
+,cast(null as string) as PUNISH_DETAIL      --处罚情况（企业黑名单、行政处罚）
+,cast(null as string) as INVALID_TIME       --失效时间（企业黑名单）
+,cast(null as string) as REMOVE_REASON      --解除黑名单原因（企业黑名单）
+,cast(null as string) as REMOVE_DT          --解除黑名单日期（企业黑名单）
+,cast(null as string) as PUBLISH_TIME       --公布时间（企业黑名单）
+,cast(null as string) as DOCTYPE            --文书类型（建筑企业不良行为记录）
+,cast(null as string) as RESTYPE            --责任类别（建筑企业不良行为记录）
+,t4.RECDATE as RECDEPT   --记录单位（建筑企业不良行为记录）
+,t4.BADSCORE  as BADSCORE   --不良行为记分（建筑企业不良行为记录）
+,cast(null as string) as BADFORM  --不良行为描述（建筑企业不良行为记录）
+,t4.PRONAME as PRONAME --违法工程（建筑企业不良行为记录、食品安全抽检不合格信息、行政处罚）
+,t4.PRONO as PRONO    --工程编号（建筑企业不良行为记录、行政处罚）
+,t4.BADNO as BADNO --不良行为编号（建筑企业不良行为记录）
+,t4.TYPENAME as TYPENAME --不良行为类别（建筑企业不良行为记录）
+,t4.PUNDOCNO as PUNDOCNO  --处罚文书号（建筑企业不良行为记录、行政处罚）
+,cast(null as string) as APPFORM       --状态（建筑企业不良行为记录）
+,cast(null as string) as EMPNAME       --人员名称（建筑企业不良行为记录）
+,cast(null as string) as EMPID         --人员编号（建筑企业不良行为记录）
+,cast(null as string) as EMPSIGN       --人员标示（建筑企业不良行为记录）
+,cast(null as string) as EMPTYPE       --人员类型（建筑企业不良行为记录）
+,cast(null as string) as RECDATE       --记录时间（建筑企业不良行为记录）
+,t5.ah as CASE_NO  --案号（案件信息、劳动仲裁信息、失信企业、行政处罚）
+,cast(null as string) as CASEID            --案件序号（案件信息）
+,cast(null as string) as REMARK            --备注（案件信息、电费欠费记录、食品安全抽检不合格信息、锁定限制信息、行政处罚）
+,cast(null as string) as SIGN              --被执行人案件有效标记（案件信息）
+,cast(null as string) as CONTENT1          --执行标的（案件信息）
+,cast(null as string) as PREJUDGE          --承办法官（案件信息）
+,cast(null as string) as EXECASENO         --执行案号（案件信息）
+,cast(null as string) as EXEACCORDING      --执行依据案号（案件信息）
+,cast(null as string) as CASE_NAME         --案件名称（案件信息）
+,cast(null as string) as PARTY_IDENTITY    --当事人身份（案件信息）
+,t5.ajxclx as CASEFORMTYPE    --案件形成方式（案件信息）
+,cast(null as string) as CASEREASON     --立案案由（案件信息）
+,t5.jaay as CASE_REASON  --结案案由（案件信息）
+,cast(null as string)  as SUITCLAIM       --诉讼请求（案件信息）
+,cast(null as string) as SUITSTATUS       --诉讼地位（案件信息）
+,t5.gdsrdw as PERPARTYSTATUS    --各当事人诉讼地位（案件信息）
+,cast(null as string) as AICENTCODE01         	--主体身份代码（案件信息、企业社保欠缴信息）
+,cast(null as string) as DECISION           	--判决情况（案件信息）
+from dm_fr_frjcxxjk T1 --法人基本信息
+left join dm_jk_frfm_frlb t2 --法人负面列表
+on t1.LGL_NO=t2.tyshxydm
+left join (select * from dwd_hmdxx where dt=(select max(dt) from dwd_hmdxx)) t3 --黑名单信息
+on t1.LGL_NO=t3.tyshxydm 
+left join (select * from ods_qfzggj_T_BUSI_JSJ_ENTBADRECORD where dt=(select max(dt) from ods_qfzggj_T_BUSI_JSJ_ENTBADRECORD)) t4
+on t1.LGL_ORG_NO=t4.orgcode
+left join dm_jk_frfm_sfaj t5 --司法案件
+on t1.LGL_NO=t5.tyshxydm) ) where rn=1;
+
+
+-------------------------------------------------------------------------------------------------------------------------------
+drop table if EXISTS dm_frfmxxb_jk_temp02;
+create table  dm_frfmxxb_jk_temp02
+as 
+select 
+t1.LGL_NO
+,t1.aicentcode
+,t1.GLDM_CREATE_TIME --记录更新时间
+,t1.LGL_ORG_NO
+,t1.STREET_ID
+,t1.COMMUNITY_ID
+,t1.ADDRESS_DETAIL
+,t1.LGL_ID
+,t1.LGL_NAME
+,t1.fmxxlb
+,t1.SHJG
+,t1.ARRDATE
+,t1.USERID
+,t1.ARREAR_TYPE
+,t1.ENTNAME
+,t1.FILE_NO
+,t1.PUNISH_TIME
+,t1.BANK
+,t1.PENPAY
+,t1.DATE1
+,t1.KINDOFDOC
+,t1.DOCNUM
+,t1.EPNUM
+,t1.FOOD_ADMIN
+,t1.FZR_OR_JYZNAME
+,t1.LRBM
+,t1.SAJE
+,t1.HMDTYPE
+,t1.ZCPJJG
+,t1.XXBSJG
+,t1.SXXWJK
+,t1.BLACK_LIST_TYPE
+,t1.PUNISH_DETAIL
+,t1.INVALID_TIME
+,t1.REMOVE_REASON
+,t1.REMOVE_DT
+,t1.PUBLISH_TIME
+,t1.DOCTYPE
+,t1.RESTYPE
+,t1.RECDEPT
+,t1.BADSCORE
+,t1.BADFORM
+,t1.PRONAME
+,t1.PRONO
+,t1.BADNO
+,t1.TYPENAME
+,t1.PUNDOCNO
+,t1.APPFORM
+,t1.EMPNAME
+,t1.EMPID
+,t1.EMPSIGN
+,t1.EMPTYPE
+,t1.RECDATE
+,t1.CASE_NO
+,t1.CASEID
+,t1.REMARK
+,t1.SIGN
+,t1.CONTENT1
+,t1.PREJUDGE
+,t1.EXECASENO
+,t1.EXEACCORDING
+,t1.CASE_NAME
+,t1.PARTY_IDENTITY
+,t1.CASEFORMTYPE
+,t1.CASEREASON
+,t1.CASE_REASON
+,t1.SUITCLAIM
+,t1.SUITSTATUS
+,t1.PERPARTYSTATUS
+,t1.AICENTCODE01
+,t1.DECISION
+,cast(null as string) as USERNAME          -- 	投诉人（众信投诉信息表）
+,t0.COMPLAINTNO  --投诉受理编号（众信投诉信息表）
+,t0.COMPLAINTRESULT --投诉处理结果（众信投诉信息表）
+,t0.COMPLAINTCONTENT --投诉纠纷描述内容（众信投诉信息表）
+,t0.COMPLAINTTITLE --关键词（众信投诉信息表）
+,t0.COMPLAINTTIME --投诉发起时间（众信投诉信息表）
+,cast(null as string) as COMPLAINTDETAILURL 	--投诉详细链接地址（众信投诉信息表）
+,t2.SCD_ADDRESS        	--用电地址（电费欠费记录）
+,t2.SCD_ID_NO          	--客户证件号码（电费欠费记录）
+,t2.SCD_ID_TYPE        	--客户证件类型（电费欠费记录）
+,t2.SCD_CHARGE         	--欠费本金（电费欠费记录）
+,t2.SCD_PRINT_NO       	--账单编号（电费欠费记录）
+,t2.SCD_PAYMENT_CHARGE 	--缴费金额（电费欠费记录）
+,t2.SCD_PAYMENT_DATE   	--最后缴费时间（电费欠费记录）
+,t2.SCD_VKONT          	--合同帐户（电费欠费记录）
+,t2.SCD_PAYMENT_STATUS 	--缴费状态（电费欠费记录）
+,t3.FILENO             	--报告编号（食品安全抽检不合格信息）
+,t3.SPCHDATE           	--抽检日期（食品安全抽检不合格信息）
+,t3.SPCHPERSON         	--检验人（食品安全抽检不合格信息）
+,t3.ADDRESS            	--地址（食品安全抽检不合格信息、食品安全抽检不合格信息）
+,t3.CONTACT            	--联系人（食品安全抽检不合格信息）
+,t3.LOGO               	--标称商标（食品安全抽检不合格信息）
+,t3.MODEL              	--规格型号（食品安全抽检不合格信息）
+,t3.SCENTNAME          	--生产单位（食品安全抽检不合格信息）
+,cast(null as string) as SCDATE         --送审日期（食品安全抽检不合格信息、消防局消防安全检查）
+,t3.REJITEM            	--不合格项（食品安全抽检不合格信息）
+,t3.GGDATE             	--公告日期（食品安全抽检不合格信息）
+,t4.fkje as PUBLISH_MONEY      	--处罚金额（行政处罚）
+,cast(null as string) as CONFIS_MONEY       	--没收金额（行政处罚）
+,cast(null as string) as TRA_LAW            	--违反法规（行政处罚）
+,cast(null as string) as ENTTYPENO          	--企业类型编号（行政处罚）
+,cast(null as string) as TYPENO             	--类别编号（行政处罚）
+,cast(null as string) as FILEDATE           	--发文公示日期（行政处罚）
+,cast(null as string) as DEPTSIGN           	--单位标识（行政处罚）
+,cast(null as string) as ENTNO              	--企业编号（建筑企业不良行为记录、行政处罚）
+,cast(null as string) as PAYDATE            	--处罚金额支付日期（行政处罚）
+,cast(null as string) as OTHPUNISH          	--其它处罚（行政处罚）
+,cast(null as string) as ISSUESTATUS        	--公示状态（行政处罚）
+,cast(null as string) as SERVICEDATE        	--发文送达日期（行政处罚）
+,cast(null as string) as PERNAME            	--被处罚人员姓名（行政处罚）
+,cast(null as string) as DISBEGDATE         	--暂扣证书起始日期（行政处罚）
+,cast(null as string) as DISENDDATE         	--暂扣证书终止日期（行政处罚）
+,cast(null as string) as WFDD               	--违法地点（行政处罚）
+,cast(null as string) as SLRQ               	--处罚受理日期（行政处罚）
+,cast(null as string) as CASEVALUE          	--案值（行政处罚）
+,cast(null as string) as CASETYPE           	--案件类型（案件信息、行政处罚）
+,t4.gsqx as CF_GSQX            	--公示期限（行政处罚）
+,t4.sxbm as SXBM               	--事项编码（行政处罚）
+,cast(null as string) as QYDZ               	--企业地址（行政处罚）
+,cast(null as string) as CF_JD              	--处罚街道（行政处罚）
+,cast(null as string) as CF_XZJG            	--处罚行政单位（行政处罚）
+,cast(null as string) as CF_FR              	--处罚法人（行政处罚）
+,cast(null as string) as CF_XDR_SFZ         	--相对人居民身份证号（行政处罚）
+,cast(null as string) as CF_CFMC            	--处罚名称（行政处罚）
+,cast(null as string) as CF_XH              	--处罚序号（行政处罚）
+,cast(null as string) as LOCAL_CODE         	--处罚地方编码（行政处罚）
+,cast(null as string) as PUBLISH_END_DT     	--公示截止时间（行政处罚）
+,cast(null as string) as CURR_STATUS_CODE   	--处罚状态（行政处罚）
+,t4.cfjzq as PUNISH_EXP_DT      	--处罚截止日期（行政处罚）
+,t4.cfsxq as PUNISH_EFF_DT      	--处罚生效期（行政处罚）
+,t4.cfjg as PUNISH_RESULT      	--处罚结果（行政处罚）
+,t4.cfyj as PUNISH_BASIS       	--处罚依据（行政处罚）
+,t4.cfsy as PUNISH_REASON      	--处罚事由（行政处罚）
+,cast(null as string) as CLOSEDATE          	--结案日期（案件信息、行政处罚）
+,t4.cflb as PUNISH_CODE        	--处罚类别（行政处罚）
+,t5.JDJG               	--消防监督机构（政府挂牌督办重大火灾隐患单位）
+,t5.GPJB               	--挂牌级别（政府挂牌督办重大火灾隐患单位）
+,t5.GPDATE             	--挂牌日期（政府挂牌督办重大火灾隐患单位）
+,t5.ZGDATE             	--整改日期（政府挂牌督办重大火灾隐患单位）
+,t5.XADATE             	--销案日期（政府挂牌督办重大火灾隐患单位）
+,t5.ZPDATE             	--摘牌日期（政府挂牌督办重大火灾隐患单位）
+,t6.DWWGNR       --单位违规内容（住房公积金违规数据表）
+,t6.WGAJHM       --违规案件号码（住房公积金违规数据表）
+,t6.DWGJJH       --公积金号（住房公积金违规数据表）
+,t6.DWWGCLJG     --单位违规处理结果（住房公积金违规数据表）
+,t6.DWWGLX       --单位违规类型（住房公积金违规数据表）
+,t7.JAFS          --结案方式（案件信息、劳动仲裁信息）
+,t7.JADATE        --结案时间（劳动仲裁信息）
+,t7.LAJGMC        --立案结果名称（劳动仲裁信息）
+,t7.ZSLXMC        --主诉类型名称（劳动仲裁信息）
+,t7.JASIGN        --结案标志（劳动仲裁信息）
+,t7.BSQR          --被申请人（劳动仲裁信息）
+,t7.AJLXMC        --案件类型名称（劳动仲裁信息）
+,t7.DJH           --登记号（劳动仲裁信息）
+,t7.AJSSJGMC      --案件所属机构名称（劳动仲裁信息）
+,t7.SQR           --申请人（劳动仲裁信息）
+,T8.LIMITTIMEBEGIN AS LIMIT_START_TIME --
+,T8.LIMITTIMEEND AS LIMIT_END_TIME   
+,T8.JCTIME AS JC_TIME  
+,T8.LIMITSTATE AS LIMIT_STATE_CODE
+,T8.HZUSER AS HZ_UNIT    
+,T8.HZTIME AS HZ_TIME     
+,T8.XZLB AS LIMIT_CODE 
+,T8.HZUSER AS HZ_USER   
+,T8.LIMITYYCODE AS LIMIT_REASON_CODE 
+,T8.LIMITSM AS LIMIT_CONTENT      
+,T8.LIMITUSER AS LIMIT_USER  
+,cast(null as string) as ENTCODE        --社保单位编号（企业社保欠缴信息、拖欠贷款制裁记录）
+,t9.REVDATE            	--撤销时间（拖欠贷款制裁记录）
+,t9.LOANNUM            	--贷款证号（拖欠贷款制裁记录）
+,t9.SANDATE            	--制裁时间（拖欠贷款制裁记录）
+,t9.REVSIGN            	--撤销标志（拖欠贷款制裁记录）
+,t9.ISSEC              	--是否担保（拖欠贷款制裁记录）
+,t10.MORT_CONT_NAME_NUM as MORT_CONT_NAME_NUMS	--抵押合同编号（动产抵押）
+,t10.AUTHDATE as AUTH_DT            	--核准时间（动产抵押）
+,t10.REGI_CARD_STATE as REGI_STATUS_ID     	--登记状态（动产抵押、动产抵押）
+,cast(null as string) as MORTGAGOR_ENTRY_ID 	--抵押人身份识别码（动产抵押）
+,cast(null as string) as MORTGAGEE_ENTRY_ID   --抵押权人身份识别码（动产抵押）
+,t10.MORTGAGEE_ADDR as MORTGAGEE_ADDR   --抵押权人地址（动产抵押）
+,t10.MORT_NUM as MORT_NUMS          	--抵押物数量（动产抵押）
+,t10.MORT_NAME as MORT_NAME          	--抵押物名称（动产抵押）
+,t10.MORTGAGEE_TYPE as MORTGAGEE_CODE     	--抵押权人类型（动产抵押）
+,cast(null as string) as MORTGAGOR         --抵押人名称（动产抵押）
+,t10.REGI_CARD_NUM as REGI_CARD_NUM      	--登记证编号（动产抵押）
+,t10.MORT_VALU as MORT_VALUE         	--价值（动产抵押）
+,cast(null as string) as MORTGAGEE          	--抵押权人名称（动产抵押）
+,t11.YCSY as REMOVE_OA_REASON   --移出经营异常名录事由（经营异常名录）
+,t11.YCJYYCMLRQ as REMOVE_OA_DT   --移出经营异常名录日期（经营异常名录）
+,t11.ZRJYYCML as LOAD_OA_DT       -- 载入经营异常名录日期（经营异常名录）
+,t11.JDWSNR as DECISION_CONTENT   --决定文书内容（经营异常名录）
+,t11.JDWSH as DECISION_NO        --决定文书号（经营异常名录）
+,t11.ZRJYYCMLSY as LOAD_OA_REASON     --载入经营异常名录事由（经营异常名录）
+,t12.TRADENO as HGBM               	--海关编码（失信企业）
+,t12.FIRSTREGDATE as SCZCRQ             	--首次注册日期（失信企业）
+,t12.CREDITCLASS as XYDJ               	--信用等级（失信企业）
+,t12.CREDITCLASSDATE as DJRDSJ             	--等级认定时间（失信企业）
+,cast(null as string) as LOAD_TIME          	--载入时间（失信企业）
+,cast(null as string) as REMOVE_TIME        	--移除时间（失信企业）
+,cast(null as string) as CURRENT_STATU      	--当前状态（失信企业）
+,cast(null as string) as WFQX               	--违法情况（失信企业）
+,cast(null as string) as SXLX               	--失信类型（失信企业）
+,cast(null as string) as WFDZ               	--违法失信地址（交通违法单位、失信企业）
+,cast(null as string) as BUESINESSENTITY    	--企业法人姓名（失信企业）
+,cast(null as string) as GIST_CID           	--执行依据文号（失信企业）
+,cast(null as string) as GIST_UNIT          	--作出执行依据单位（失信企业）
+,cast(null as string) as COURT_NAME         	--执行法院（案件信息、失信企业）
+,cast(null as string) as PERFORMANCE        	--被执行人的履行情况（失信企业）
+,cast(null as string) as DISREPUT_TYPE_NAME 	--失信被执行人具体情形（失信企业）
+,cast(null as string) as PUBLISH_DATE       	--发布时间（失信企业）
+,cast(null as string) as REG_DATE           	--立案时间（案件信息、劳动仲裁信息、失信企业、政府挂牌督办重大火灾隐患单位、住房公积金违规数据表）
+,cast(null as string) as PERFORMED_PART     	--已履行部分（失信企业）
+,cast(null as string) as UNPERFORM_PART     	--未履行部分（失信企业）
+,cast(null as string) as DUTY               	--所负责任（交通事故责任单位、失信企业）
+,cast(null as string)as ACCHAPDATE         	--事故发生时间（安全事故信息）
+,cast(null as string)as ACCHAPCOUNT        	--事故数目（安全事故信息）
+,cast(null as string)as WXPZL              	--危险品种类（安全事故信息）
+,cast(null as string)as DWHFX              	--单位合法性（安全事故信息）
+,cast(null as string)as QMCYRY             	--期末从业人员（安全事故信息）
+,cast(null as string)as SSXY               	--所属行业（安全事故信息）
+,cast(null as string)as JD                 	--进度（安全事故信息）
+,cast(null as string)as LXDH               	--联系电话（安全事故信息、案件信息）
+,cast(null as string)as TBR                	--填表人（安全事故信息）
+,cast(null as string)as TBDWFZR            	--填报单位负责人（安全事故信息）
+,cast(null as string)as BGDW               	--报告单位（安全事故信息）
+,cast(null as string)as SGZT               	--事故状态（安全事故信息）
+,cast(null as string)as ZDRS               	--中毒人数（安全事故信息）
+,cast(null as string)as SGDJ               	--事故等级（安全事故信息）
+,cast(null as string)as SGJSSJ             	--事故结束时间（安全事故信息）
+,cast(null as string)as DEATHTOLL          	--事故死亡人数（安全事故信息）
+,cast(null as string)as INJUREDTOLL        	--事故受伤人数（安全事故信息）
+,t13.CWRY as FYZJZRDCWFZRZJHM             --负有直接责任的财务负责人证件号码（税务不良记录）
+,cast(null as string)FYZJZRDCWFZRZJMC    --负有直接责任的财务负责人证件名称（税务不良记录）
+,cast(null as string)FYZJZRDCWFZRXB      --负有直接责任的财务负责人性别（税务不良记录）
+,cast(null as string)FYZJZRDCWFZRXM      --负有直接责任的财务负责人姓名（税务不良记录）
+,cast(null as string)AJSBQ               --案件上报期（税务不良记录）
+,cast(null as string)ENDDATE             --结束时间（税务不良记录）
+,t13.CFQK as XGFLYJJSWCLCFQK     --相关法律依据及税务处理处罚情况（税务不良记录）
+,cast(null as string)PUNISH_DT           --处理处罚日期（税务不良记录、行政处罚）
+,t13.WFSS as MAIN_ILLEGAL_FACT   --主要违法违章事实（税务不良记录）
+,cast(null as string)MAIN_ILLEGAL_NAME   --主要违法违章名称（税务不良记录）
+,t13.NSRSBH as LGL_TAX_NO          --纳税人识别号（税务不良记录）
+,t13.CASETYPE as AJXZ                --案件性质（税务不良记录）
+,t13.ZJJG as FYZJZRDZJJGXXJQCYRY --XX负有直接责任的中介机构信息及其从业人员信息（税务不良记录）
+,cast(null as string)BEGDATE             --开始时间（税务不良记录）
+,t14.DRIVER         --司机姓名（交通事故责任单位）
+,t14.INJURY         --受伤人数（交通事故责任单位）
+,t14.DEAD           --死亡人数（交通事故责任单位）
+,t14.CAUSE          --事故原因（交通事故责任单位、企业黑名单）
+,t14.ACCIDATE       --事故时间（交通事故责任单位）
+,t14.ACCINO         --事故编号（交通事故责任单位）
+,t14.AREA           --所属辖区（交通事故责任单位）
+,t14.ACCIADDR       --事故地点（安全事故信息、交通事故责任单位）
+,cast(null as string) as HPZL             --车辆类型（交通违法单位）	
+,cast(null as string) as WFSJ             --违法时间（交通违法单位、行政处罚）	
+,cast(null as string) as WFNR             --违法内容（交通违法单位）	
+,cast(null as string) as WFXWCODE         --违法代码（交通违法单位）	
+,cast(null as string) as FXJGMC           --执法单位（交通违法单位）	
+,cast(null as string) as XMMC             --违法占道施工项目名称（交通违法单位）	
+,cast(null as string) as WFHG             --违法后果（交通违法单位）	
+,cast(null as string) as HPHM             --车牌号码（交通违法单位）	
+,cast(null as string) as PERIOD           --报告期（如2015年第1季度）（交通违法单位）	
+,cast(null as string) as AVERAGE          --平均每车违法次数（交通违法单位）	
+,cast(null as string) as WFTOTAL          --违法信息总数（交通违法单位）	
+,cast(null as string) as WFCARTOTAL       --违法车辆总数（交通违法单位）	
+,cast(null as string) as CARTOTAL         --车辆总数（交通违法单位）	
+from (select * from dm_frfmxxb_jk_temp01 where aicentcode is not null) t1 
+left join (select * from std_qfzggj_t_busi_zxzx_complaint where dt=(select max(dt) from std_qfzggj_t_busi_zxzx_complaint) and entid is not null) t0
+on t1.aicentcode=t0.entid
+left join (select * from std_qfzggj_t_busi_gdj_credit where dt=(select max(dt) from std_qfzggj_t_busi_gdj_credit) and aicentcode is not null) t2
+on t1.aicentcode=t2.aicentcode
+left join (select * from std_qfzggj_t_busi_yjj_examinereject where dt=(select max(dt) from std_qfzggj_t_busi_yjj_examinereject) and aicentcode is not null) t3
+on t1.aicentcode=t3.aicentcode
+LEFT join (select * from dwd_xzcfxx where dt=(select max(dt) from dwd_xzcfxx) and tyshxydm is not null) t4
+on t1.LGL_NO=t4.tyshxydm
+left join (select * from std_qfzggj_t_busi_xfj_hzyh where dt=(select max(dt) from std_qfzggj_t_busi_xfj_hzyh) and aicentcode is not null) t5
+on t1.aicentcode=t5.aicentcode
+left join (select * from std_qfzggj_T_BUSI_ZFGJJ_WGSJ where dt=(select max(dt) from std_qfzggj_T_BUSI_ZFGJJ_WGSJ)and aicentcode is not null) t6
+on t1.aicentcode=t6.aicentcode
+left join (select * from ods_qfzggj_T_BUSI_LDJ_LDZCJA where dt=(select max(dt) from ods_qfzggj_T_BUSI_LDJ_LDZCJA)and aicentcode is not null) t7
+on t1.aicentcode=t7.aicentcode
+left join (select * from std_qfzggj_tdxzsdinfo1 where dt=(select max(dt) from std_qfzggj_tdxzsdinfo1)and entid is not null) t8
+on t1.aicentcode=t8.entid
+left join (select * from ods_qfzggj_t_busi_rmyh_defloan where dt=(select max(dt) from ods_qfzggj_t_busi_rmyh_defloan) and aicentcode is not null) t9
+on t1.aicentcode=t9.aicentcode
+left join (select * from ods_qfg_t_busi_aic_pledgepro where dt=(select max(dt) from ods_qfg_t_busi_aic_pledgepro)and aicentcode is not null) t10
+on t1.aicentcode=t10.aicentcode
+left join (select * from std_schzljgw_jyycml2016105928 where dt=(select max(dt) from std_schzljgw_jyycml2016105928)and tyshxydm is not null) t11
+on t1.LGL_NO=t11.tyshxydm
+left join (select * from std_qfzggj_t_busi_hg_losscredit where dt=(select max(dt) from std_qfzggj_t_busi_hg_losscredit)and aicentcode is not null) t12
+on t1.aicentcode=t12.aicentcode
+left join (select * from std_qfzggj_t_busi_gsj_caseinfo where dt=(select max(dt) from std_qfzggj_t_busi_gsj_caseinfo)and orgcode is not null) t13
+on t1.LGL_ORG_NO=t13.orgcode
+left join (select * from std_qfzggj_t_busi_jjj_accident where dt=(select max(dt) from std_qfzggj_t_busi_jjj_accident)and aicentcode is not null) t14
+on t1.aicentcode=t14.aicentcode;
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+drop table if EXISTS dm_frfmxxb_jk_temp03;
+create table  dm_frfmxxb_jk_temp03
+as 
+select 
+t1.LGL_NO
+,t1.aicentcode
+,t1.GLDM_CREATE_TIME --记录更新时间
+,t1.LGL_ORG_NO
+,t1.STREET_ID
+,t1.COMMUNITY_ID
+,t1.ADDRESS_DETAIL
+,t1.LGL_ID
+,t1.LGL_NAME
+,t1.fmxxlb
+,t1.SHJG
+,t1.ARRDATE
+,t1.USERID
+,t1.ARREAR_TYPE
+,t1.ENTNAME
+,t1.FILE_NO
+,t1.PUNISH_TIME
+,t1.BANK
+,t1.PENPAY
+,t1.DATE1
+,t1.KINDOFDOC
+,t1.DOCNUM
+,t1.EPNUM
+,t1.FOOD_ADMIN
+,t1.FZR_OR_JYZNAME
+,t1.LRBM
+,t1.SAJE
+,t1.HMDTYPE
+,t1.ZCPJJG
+,t1.XXBSJG
+,t1.SXXWJK
+,t1.BLACK_LIST_TYPE
+,t1.PUNISH_DETAIL
+,t1.INVALID_TIME
+,t1.REMOVE_REASON
+,t1.REMOVE_DT
+,t1.PUBLISH_TIME
+,t1.DOCTYPE
+,t1.RESTYPE
+,t1.RECDEPT
+,t1.BADSCORE
+,t1.BADFORM
+,t1.PRONAME
+,t1.PRONO
+,t1.BADNO
+,t1.TYPENAME
+,t1.PUNDOCNO
+,t1.APPFORM
+,t1.EMPNAME
+,t1.EMPID
+,t1.EMPSIGN
+,t1.EMPTYPE
+,t1.RECDATE
+,t1.CASE_NO
+,t1.CASEID
+,t1.REMARK
+,t1.SIGN
+,t1.CONTENT1
+,t1.PREJUDGE
+,t1.EXECASENO
+,t1.EXEACCORDING
+,t1.CASE_NAME
+,t1.PARTY_IDENTITY
+,t1.CASEFORMTYPE
+,t1.CASEREASON
+,t1.CASE_REASON
+,t1.SUITCLAIM
+,t1.SUITSTATUS
+,t1.PERPARTYSTATUS
+,t1.AICENTCODE01
+,t1.DECISION
+,cast(null as string) as USERNAME          -- 	投诉人（众信投诉信息表）
+,cast(null as string) as COMPLAINTNO  --投诉受理编号（众信投诉信息表）
+,cast(null as string) as COMPLAINTRESULT --投诉处理结果（众信投诉信息表）
+,cast(null as string) as COMPLAINTCONTENT --投诉纠纷描述内容（众信投诉信息表）
+,cast(null as string) as COMPLAINTTITLE --关键词（众信投诉信息表）
+,cast(null as string) as COMPLAINTTIME --投诉发起时间（众信投诉信息表）
+,cast(null as string) as COMPLAINTDETAILURL 	--投诉详细链接地址（众信投诉信息表）
+,cast(null as string) as SCD_ADDRESS        	--用电地址（电费欠费记录）
+,cast(null as string) as SCD_ID_NO          	--客户证件号码（电费欠费记录）
+,cast(null as string) as SCD_ID_TYPE        	--客户证件类型（电费欠费记录）
+,cast(null as string) as SCD_CHARGE         	--欠费本金（电费欠费记录）
+,cast(null as string) as SCD_PRINT_NO       	--账单编号（电费欠费记录）
+,cast(null as string) as SCD_PAYMENT_CHARGE 	--缴费金额（电费欠费记录）
+,cast(null as string) as SCD_PAYMENT_DATE   	--最后缴费时间（电费欠费记录）
+,cast(null as string) as SCD_VKONT          	--合同帐户（电费欠费记录）
+,cast(null as string) as SCD_PAYMENT_STATUS 	--缴费状态（电费欠费记录）
+,cast(null as string) as FILENO             	--报告编号（食品安全抽检不合格信息）
+,cast(null as string) as SPCHDATE           	--抽检日期（食品安全抽检不合格信息）
+,cast(null as string) as SPCHPERSON         	--检验人（食品安全抽检不合格信息）
+,cast(null as string) as ADDRESS            	--地址（食品安全抽检不合格信息、食品安全抽检不合格信息）
+,cast(null as string) as CONTACT            	--联系人（食品安全抽检不合格信息）
+,cast(null as string) as LOGO               	--标称商标（食品安全抽检不合格信息）
+,cast(null as string) as MODEL              	--规格型号（食品安全抽检不合格信息）
+,cast(null as string) as SCENTNAME          	--生产单位（食品安全抽检不合格信息）
+,cast(null as string) as SCDATE         --送审日期（食品安全抽检不合格信息、消防局消防安全检查）
+,cast(null as string) as REJITEM            	--不合格项（食品安全抽检不合格信息）
+,cast(null as string) as GGDATE             	--公告日期（食品安全抽检不合格信息）
+,cast(null as string) as PUBLISH_MONEY      	--处罚金额（行政处罚）
+,cast(null as string) as CONFIS_MONEY       	--没收金额（行政处罚）
+,cast(null as string) as TRA_LAW            	--违反法规（行政处罚）
+,cast(null as string) as ENTTYPENO          	--企业类型编号（行政处罚）
+,cast(null as string) as TYPENO             	--类别编号（行政处罚）
+,cast(null as string) as FILEDATE           	--发文公示日期（行政处罚）
+,cast(null as string) as DEPTSIGN           	--单位标识（行政处罚）
+,cast(null as string) as ENTNO              	--企业编号（建筑企业不良行为记录、行政处罚）
+,cast(null as string) as PAYDATE            	--处罚金额支付日期（行政处罚）
+,cast(null as string) as OTHPUNISH          	--其它处罚（行政处罚）
+,cast(null as string) as ISSUESTATUS        	--公示状态（行政处罚）
+,cast(null as string) as SERVICEDATE        	--发文送达日期（行政处罚）
+,cast(null as string) as PERNAME            	--被处罚人员姓名（行政处罚）
+,cast(null as string) as DISBEGDATE         	--暂扣证书起始日期（行政处罚）
+,cast(null as string) as DISENDDATE         	--暂扣证书终止日期（行政处罚）
+,cast(null as string) as WFDD               	--违法地点（行政处罚）
+,cast(null as string) as SLRQ               	--处罚受理日期（行政处罚）
+,cast(null as string) as CASEVALUE          	--案值（行政处罚）
+,cast(null as string) as CASETYPE           	--案件类型（案件信息、行政处罚）
+,cast(null as string) as  CF_GSQX            	--公示期限（行政处罚）
+,cast(null as string)  as SXBM               	--事项编码（行政处罚）
+,cast(null as string) as QYDZ               	--企业地址（行政处罚）
+,cast(null as string) as CF_JD              	--处罚街道（行政处罚）
+,cast(null as string) as CF_XZJG            	--处罚行政单位（行政处罚）
+,cast(null as string) as CF_FR              	--处罚法人（行政处罚）
+,cast(null as string) as CF_XDR_SFZ         	--相对人居民身份证号（行政处罚）
+,cast(null as string) as CF_CFMC            	--处罚名称（行政处罚）
+,cast(null as string) as CF_XH              	--处罚序号（行政处罚）
+,cast(null as string) as LOCAL_CODE         	--处罚地方编码（行政处罚）
+,cast(null as string) as PUBLISH_END_DT     	--公示截止时间（行政处罚）
+,cast(null as string) as CURR_STATUS_CODE   	--处罚状态（行政处罚）
+,cast(null as string)  as PUNISH_EXP_DT      	--处罚截止日期（行政处罚）
+,cast(null as string) as PUNISH_EFF_DT      	--处罚生效期（行政处罚）
+,cast(null as string) as PUNISH_RESULT      	--处罚结果（行政处罚）
+,cast(null as string) as PUNISH_BASIS       	--处罚依据（行政处罚）
+,cast(null as string) as PUNISH_REASON      	--处罚事由（行政处罚）
+,cast(null as string) as CLOSEDATE          	--结案日期（案件信息、行政处罚）
+,cast(null as string) as PUNISH_CODE        	--处罚类别（行政处罚）
+,cast(null as string) as JDJG               	--消防监督机构（政府挂牌督办重大火灾隐患单位）
+,cast(null as string) as GPJB               	--挂牌级别（政府挂牌督办重大火灾隐患单位）
+,cast(null as string) as GPDATE             	--挂牌日期（政府挂牌督办重大火灾隐患单位）
+,cast(null as string) as ZGDATE             	--整改日期（政府挂牌督办重大火灾隐患单位）
+,cast(null as string) as XADATE             	--销案日期（政府挂牌督办重大火灾隐患单位）
+,cast(null as string) as ZPDATE             	--摘牌日期（政府挂牌督办重大火灾隐患单位）
+,cast(null as string) as DWWGNR       --单位违规内容（住房公积金违规数据表）
+,cast(null as string) as WGAJHM       --违规案件号码（住房公积金违规数据表）
+,cast(null as string) as DWGJJH       --公积金号（住房公积金违规数据表）
+,cast(null as string) as DWWGCLJG     --单位违规处理结果（住房公积金违规数据表）
+,cast(null as string) as DWWGLX       --单位违规类型（住房公积金违规数据表）
+,cast(null as string) as JAFS          --结案方式（案件信息、劳动仲裁信息）
+,cast(null as string) as JADATE        --结案时间（劳动仲裁信息）
+,cast(null as string) as LAJGMC        --立案结果名称（劳动仲裁信息）
+,cast(null as string) as ZSLXMC        --主诉类型名称（劳动仲裁信息）
+,cast(null as string) as JASIGN        --结案标志（劳动仲裁信息）
+,cast(null as string) as BSQR          --被申请人（劳动仲裁信息）
+,cast(null as string) as AJLXMC        --案件类型名称（劳动仲裁信息）
+,cast(null as string) as DJH           --登记号（劳动仲裁信息）
+,cast(null as string) as AJSSJGMC      --案件所属机构名称（劳动仲裁信息）
+,cast(null as string) as SQR           --申请人（劳动仲裁信息）
+,cast(null as string) AS LIMIT_START_TIME --
+,cast(null as string) AS LIMIT_END_TIME   
+,cast(null as string) AS JC_TIME  
+,cast(null as string)  AS LIMIT_STATE_CODE
+,cast(null as string)  AS HZ_UNIT    
+,cast(null as string) AS HZ_TIME     
+,cast(null as string)  AS LIMIT_CODE 
+,cast(null as string) AS HZ_USER   
+,cast(null as string) AS LIMIT_REASON_CODE 
+,cast(null as string) AS LIMIT_CONTENT      
+,cast(null as string)  AS LIMIT_USER  
+,cast(null as string) as ENTCODE        --社保单位编号（企业社保欠缴信息、拖欠贷款制裁记录）
+,cast(null as string) as REVDATE            	--撤销时间（拖欠贷款制裁记录）
+,cast(null as string) as LOANNUM            	--贷款证号（拖欠贷款制裁记录）
+,cast(null as string) as SANDATE            	--制裁时间（拖欠贷款制裁记录）
+,cast(null as string) as REVSIGN            	--撤销标志（拖欠贷款制裁记录）
+,cast(null as string) as ISSEC              	--是否担保（拖欠贷款制裁记录）
+,cast(null as string) as MORT_CONT_NAME_NUMS	--抵押合同编号（动产抵押）
+,cast(null as string) as AUTH_DT            	--核准时间（动产抵押）
+,cast(null as string)  as REGI_STATUS_ID     	--登记状态（动产抵押、动产抵押）
+,cast(null as string) as MORTGAGOR_ENTRY_ID 	--抵押人身份识别码（动产抵押）
+,cast(null as string) as MORTGAGEE_ENTRY_ID   --抵押权人身份识别码（动产抵押）
+,cast(null as string)  as MORTGAGEE_ADDR   --抵押权人地址（动产抵押）
+,cast(null as string) as  MORT_NUMS          	--抵押物数量（动产抵押）
+,cast(null as string) as MORT_NAME          	--抵押物名称（动产抵押）
+,cast(null as string) as MORTGAGEE_CODE     	--抵押权人类型（动产抵押）
+,cast(null as string) as MORTGAGOR         --抵押人名称（动产抵押）
+,cast(null as string) as REGI_CARD_NUM      	--登记证编号（动产抵押）
+,cast(null as string) as MORT_VALUE         	--价值（动产抵押）
+,cast(null as string) as MORTGAGEE          	--抵押权人名称（动产抵押）
+,cast(null as string)  as REMOVE_OA_REASON   --移出经营异常名录事由（经营异常名录）
+,cast(null as string) as REMOVE_OA_DT   --移出经营异常名录日期（经营异常名录）
+,cast(null as string) as LOAD_OA_DT       -- 载入经营异常名录日期（经营异常名录）
+,cast(null as string) as DECISION_CONTENT   --决定文书内容（经营异常名录）
+,cast(null as string) as DECISION_NO        --决定文书号（经营异常名录）
+,cast(null as string) as LOAD_OA_REASON     --载入经营异常名录事由（经营异常名录）
+,cast(null as string) as HGBM               	--海关编码（失信企业）
+,cast(null as string)  as SCZCRQ             	--首次注册日期（失信企业）
+,cast(null as string) as XYDJ               	--信用等级（失信企业）
+,cast(null as string)  as DJRDSJ             	--等级认定时间（失信企业）
+,cast(null as string) as LOAD_TIME          	--载入时间（失信企业）
+,cast(null as string) as REMOVE_TIME        	--移除时间（失信企业）
+,cast(null as string) as CURRENT_STATU      	--当前状态（失信企业）
+,cast(null as string) as WFQX               	--违法情况（失信企业）
+,cast(null as string) as SXLX               	--失信类型（失信企业）
+,cast(null as string) as WFDZ               	--违法失信地址（交通违法单位、失信企业）
+,cast(null as string) as BUESINESSENTITY    	--企业法人姓名（失信企业）
+,cast(null as string) as GIST_CID           	--执行依据文号（失信企业）
+,cast(null as string) as GIST_UNIT          	--作出执行依据单位（失信企业）
+,cast(null as string) as COURT_NAME         	--执行法院（案件信息、失信企业）
+,cast(null as string) as PERFORMANCE        	--被执行人的履行情况（失信企业）
+,cast(null as string) as DISREPUT_TYPE_NAME 	--失信被执行人具体情形（失信企业）
+,cast(null as string) as PUBLISH_DATE       	--发布时间（失信企业）
+,cast(null as string) as REG_DATE           	--立案时间（案件信息、劳动仲裁信息、失信企业、政府挂牌督办重大火灾隐患单位、住房公积金违规数据表）
+,cast(null as string) as PERFORMED_PART     	--已履行部分（失信企业）
+,cast(null as string) as UNPERFORM_PART     	--未履行部分（失信企业）
+,cast(null as string) as DUTY               	--所负责任（交通事故责任单位、失信企业）
+,cast(null as string)as ACCHAPDATE         	--事故发生时间（安全事故信息）
+,cast(null as string)as ACCHAPCOUNT        	--事故数目（安全事故信息）
+,cast(null as string)as WXPZL              	--危险品种类（安全事故信息）
+,cast(null as string)as DWHFX              	--单位合法性（安全事故信息）
+,cast(null as string)as QMCYRY             	--期末从业人员（安全事故信息）
+,cast(null as string)as SSXY               	--所属行业（安全事故信息）
+,cast(null as string)as JD                 	--进度（安全事故信息）
+,cast(null as string)as LXDH               	--联系电话（安全事故信息、案件信息）
+,cast(null as string)as TBR                	--填表人（安全事故信息）
+,cast(null as string)as TBDWFZR            	--填报单位负责人（安全事故信息）
+,cast(null as string)as BGDW               	--报告单位（安全事故信息）
+,cast(null as string)as SGZT               	--事故状态（安全事故信息）
+,cast(null as string)as ZDRS               	--中毒人数（安全事故信息）
+,cast(null as string)as SGDJ               	--事故等级（安全事故信息）
+,cast(null as string)as SGJSSJ             	--事故结束时间（安全事故信息）
+,cast(null as string)as DEATHTOLL          	--事故死亡人数（安全事故信息）
+,cast(null as string)as INJUREDTOLL        	--事故受伤人数（安全事故信息）
+,cast(null as string) as  FYZJZRDCWFZRZJHM             --负有直接责任的财务负责人证件号码（税务不良记录）
+,cast(null as string) as FYZJZRDCWFZRZJMC    --负有直接责任的财务负责人证件名称（税务不良记录）
+,cast(null as string) as FYZJZRDCWFZRXB      --负有直接责任的财务负责人性别（税务不良记录）
+,cast(null as string) as FYZJZRDCWFZRXM      --负有直接责任的财务负责人姓名（税务不良记录）
+,cast(null as string) as AJSBQ               --案件上报期（税务不良记录）
+,cast(null as string) as ENDDATE             --结束时间（税务不良记录）
+,cast(null as string)  as XGFLYJJSWCLCFQK     --相关法律依据及税务处理处罚情况（税务不良记录）
+,cast(null as string)  as PUNISH_DT           --处理处罚日期（税务不良记录、行政处罚）
+,cast(null as string) as  MAIN_ILLEGAL_FACT   --主要违法违章事实（税务不良记录）
+,cast(null as string) as MAIN_ILLEGAL_NAME   --主要违法违章名称（税务不良记录）
+,cast(null as string) as LGL_TAX_NO          --纳税人识别号（税务不良记录）
+,cast(null as string) as AJXZ                --案件性质（税务不良记录）
+,cast(null as string) as FYZJZRDZJJGXXJQCYRY --XX负有直接责任的中介机构信息及其从业人员信息（税务不良记录）
+,cast(null as string) as BEGDATE             --开始时间（税务不良记录）
+,cast(null as string) as DRIVER         --司机姓名（交通事故责任单位）
+,cast(null as string) as INJURY         --受伤人数（交通事故责任单位）
+,cast(null as string) as DEAD           --死亡人数（交通事故责任单位）
+,cast(null as string) as CAUSE          --事故原因（交通事故责任单位、企业黑名单）
+,cast(null as string) as ACCIDATE       --事故时间（交通事故责任单位）
+,cast(null as string) as ACCINO         --事故编号（交通事故责任单位）
+,cast(null as string) as AREA           --所属辖区（交通事故责任单位）
+,cast(null as string) as ACCIADDR       --事故地点（安全事故信息、交通事故责任单位）
+,cast(null as string) as HPZL             --车辆类型（交通违法单位）	
+,cast(null as string) as WFSJ             --违法时间（交通违法单位、行政处罚）	
+,cast(null as string) as WFNR             --违法内容（交通违法单位）	
+,cast(null as string) as WFXWCODE         --违法代码（交通违法单位）	
+,cast(null as string) as FXJGMC           --执法单位（交通违法单位）	
+,cast(null as string) as XMMC             --违法占道施工项目名称（交通违法单位）	
+,cast(null as string) as WFHG             --违法后果（交通违法单位）	
+,cast(null as string) as HPHM             --车牌号码（交通违法单位）	
+,cast(null as string) as PERIOD           --报告期（如2015年第1季度）（交通违法单位）	
+,cast(null as string) as AVERAGE          --平均每车违法次数（交通违法单位）	
+,cast(null as string) as WFTOTAL          --违法信息总数（交通违法单位）	
+,cast(null as string) as WFCARTOTAL       --违法车辆总数（交通违法单位）	
+,cast(null as string) as CARTOTAL         --车辆总数（交通违法单位）	
+from (select * from dm_frfmxxb_jk_temp01 where aicentcode is null) t1;
+
+--------------------------------------------------------------------------------------------------
+drop table if EXISTS dm_jk_frfmxxb;
+create table dm_jk_frfmxxb
+select 
+GLDM_CREATE_TIME --记录更新时间
+,STREET_ID
+,COMMUNITY_ID
+,ADDRESS_DETAIL
+,LGL_ID
+,LGL_NAME
+,FMXXLB
+,SHJG
+,ARRDATE
+,USERID
+,ARREAR_TYPE
+,ENTNAME
+,FILE_NO
+,PUNISH_TIME
+,BANK
+,PENPAY
+,DATE1
+,KINDOFDOC
+,DOCNUM
+,EPNUM
+,FOOD_ADMIN
+,FZR_OR_JYZNAME
+,LRBM
+,SAJE
+,HMDTYPE
+,ZCPJJG
+,XXBSJG
+,SXXWJK
+,BLACK_LIST_TYPE
+,PUNISH_DETAIL
+,INVALID_TIME
+,REMOVE_REASON
+,REMOVE_DT
+,PUBLISH_TIME
+,DOCTYPE
+,RESTYPE
+,RECDEPT
+,BADSCORE
+,BADFORM
+,PRONAME
+,PRONO
+,BADNO
+,TYPENAME
+,PUNDOCNO
+,APPFORM
+,EMPNAME
+,EMPID
+,EMPSIGN
+,EMPTYPE
+,RECDATE
+,CASE_NO
+,CASEID
+,REMARK
+,SIGN
+,CONTENT1
+,PREJUDGE
+,EXECASENO
+,EXEACCORDING
+,CASE_NAME
+,PARTY_IDENTITY
+,CASEFORMTYPE
+,CASEREASON
+,CASE_REASON
+,SUITCLAIM
+,SUITSTATUS
+,PERPARTYSTATUS
+,AICENTCODE
+,DECISION
+,USERNAME
+,COMPLAINTNO
+,COMPLAINTRESULT
+,COMPLAINTCONTENT
+,COMPLAINTTITLE
+,COMPLAINTTIME
+,COMPLAINTDETAILURL
+,SCD_ADDRESS
+,SCD_ID_NO
+,SCD_ID_TYPE
+,SCD_CHARGE
+,SCD_PRINT_NO
+,SCD_PAYMENT_CHARGE
+,SCD_PAYMENT_DATE
+,SCD_VKONT
+,SCD_PAYMENT_STATUS
+,FILENO
+,SPCHDATE
+,SPCHPERSON
+,ADDRESS
+,CONTACT
+,LOGO
+,MODEL
+,SCENTNAME
+,SCDATE
+,REJITEM
+,GGDATE
+,PUBLISH_MONEY
+,CONFIS_MONEY
+,TRA_LAW
+,ENTTYPENO
+,TYPENO
+,FILEDATE
+,DEPTSIGN
+,ENTNO
+,PAYDATE
+,OTHPUNISH
+,ISSUESTATUS
+,SERVICEDATE
+,PERNAME
+,DISBEGDATE
+,DISENDDATE
+,WFDD
+,SLRQ
+,CASEVALUE
+,CASETYPE
+,CF_GSQX
+,SXBM
+,QYDZ
+,CF_JD
+,CF_XZJG
+,CF_FR
+,CF_XDR_SFZ
+,CF_CFMC
+,CF_XH
+,LOCAL_CODE
+,PUBLISH_END_DT
+,CURR_STATUS_CODE
+,PUNISH_EXP_DT
+,PUNISH_EFF_DT
+,PUNISH_RESULT
+,PUNISH_BASIS
+,PUNISH_REASON
+,CLOSEDATE
+,PUNISH_CODE
+,JDJG
+,GPJB
+,GPDATE
+,ZGDATE
+,XADATE
+,ZPDATE
+,DWWGNR
+,WGAJHM
+,DWGJJH
+,DWWGCLJG
+,DWWGLX
+,JAFS
+,JADATE
+,LAJGMC
+,ZSLXMC
+,JASIGN
+,BSQR
+,AJLXMC
+,DJH
+,AJSSJGMC
+,SQR
+,LIMIT_START_TIME
+,LIMIT_END_TIME
+,JC_TIME
+,LIMIT_STATE_CODE
+,HZ_UNIT
+,HZ_TIME
+,LIMIT_CODE
+,HZ_USER
+,LIMIT_REASON_CODE
+,LIMIT_CONTENT
+,LIMIT_USER
+,ENTCODE
+,REVDATE
+,LOANNUM
+,SANDATE
+,REVSIGN
+,ISSEC
+,MORT_CONT_NAME_NUMS
+,AUTH_DT
+,REGI_STATUS_ID
+,MORTGAGOR_ENTRY_ID
+,MORTGAGEE_ENTRY_ID
+,MORTGAGEE_ADDR
+,MORT_NUMS
+,MORT_NAME
+,MORTGAGEE_CODE
+,MORTGAGOR
+,REGI_CARD_NUM
+,MORT_VALUE
+,MORTGAGEE
+,REMOVE_OA_REASON
+,REMOVE_OA_DT
+,LOAD_OA_DT
+,DECISION_CONTENT
+,DECISION_NO
+,LOAD_OA_REASON
+,HGBM
+,cast(null as string) as ONPAYCIRCS          --垫付金额（企业欠薪情况）
+,cast(null as string) as YHJE                --已还金额（企业欠薪情况）
+,cast(null as string) as DQSJ                --到期还款时间（企业欠薪情况）
+,cast(null as string) as JKSJ                --借款时间（企业欠薪情况）
+,cast(null as string) as JKJE                --借款金额（企业欠薪情况）
+,cast(null as string) as DEALCIRCS           --垫付时间（企业欠薪情况）
+,cast(null as string) as PROCESS_DETAIL      --处理情况（企业欠薪情况）
+,cast(null as string) as OVERDUE_SALARY_DETA --IL欠薪情况（企业欠薪情况）
+,cast(null as string) as OVERDUE_SALARY_NUMS --拖欠工资总人数（企业欠薪情况）
+,cast(null as string) as TOTAL_OVERDUE_SALAR --Y拖欠工资总额（企业欠薪情况）
+,cast(null as string) as BEGIN_OVERDUE_SALAR --Y开始拖欠工资时间（企业欠薪情况）
+,cast(null as string) as PROCESSED_FLAG      --是否移送公安部门（企业欠薪情
+,SCZCRQ
+,XYDJ
+,DJRDSJ
+,LOAD_TIME
+,REMOVE_TIME
+,CURRENT_STATU
+,WFQX
+,SXLX
+,WFDZ
+,BUESINESSENTITY
+,GIST_CID
+,GIST_UNIT
+,COURT_NAME
+,PERFORMANCE
+,DISREPUT_TYPE_NAME
+,PUBLISH_DATE
+,REG_DATE
+,PERFORMED_PART
+,UNPERFORM_PART
+,DUTY
+,ACCHAPDATE
+,ACCHAPCOUNT
+,WXPZL
+,DWHFX
+,QMCYRY
+,SSXY
+,JD
+,LXDH
+,TBR
+,TBDWFZR
+,BGDW
+,SGZT
+,ZDRS
+,SGDJ
+,SGJSSJ
+,DEATHTOLL
+,INJUREDTOLL
+,FYZJZRDCWFZRZJHM
+,FYZJZRDCWFZRZJMC
+,FYZJZRDCWFZRXB
+,FYZJZRDCWFZRXM
+,AJSBQ
+,ENDDATE
+,XGFLYJJSWCLCFQK
+,PUNISH_DT
+,MAIN_ILLEGAL_FACT
+,MAIN_ILLEGAL_NAME
+,LGL_TAX_NO
+,AJXZ
+,FYZJZRDZJJGXXJQCYRY
+,BEGDATE
+,cast(null as string) as ARRAMOUNT
+,cast(null as string) as FQBM
+,cast(null as string) as QJYS
+,cast(null as string) as CARNO
+,DRIVER
+,INJURY
+,DEAD
+,CAUSE
+,ACCIDATE
+,ACCINO
+,AREA
+,ACCIADDR
+,HPZL
+,WFSJ
+,WFNR
+,WFXWCODE
+,FXJGMC
+,XMMC
+,WFHG
+,HPHM
+,PERIOD
+,AVERAGE
+,WFTOTAL
+,WFCARTOTAL
+,CARTOTAL
+from (
+  select *,cast(null as string) as rn from dm_frfmxxb_jk_temp03
+  union all
+ select * from (
+select *,row_number() over(partition by LGL_NO,aicentcode order by LGL_ORG_NO desc nulls last ) as rn
+from dm_frfmxxb_jk_temp02 ) where rn=1
+);
+
+

@@ -1,0 +1,28 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-05-30 22:50:17
+--_********************************************************_
+drop table if exists dm_yqzc_lgsbyytcgswgry;
+create table dm_yqzc_lgsbyytcgswgry as
+ select
+	a.tyshxydm 
+	,a.gsmc  
+ 	,a.xm  
+	,a.xb  
+	,case when length(a.emp_card_no)=18 then cast(substr(current_date,1,4)-substr(a.emp_card_no,7,4) as string)  else null end nl
+	,a.emp_card_no
+       ,b.jdbm
+	   ,b.jdmc
+	   ,b.sqcode sqbm
+	   ,b.sqname sqmc
+       ,b.wgmc
+       ,b.wgbm 
+	   ,b.jycs
+	   ,cast(null as string) qylxdh
+from (select * from dm_jk_cyxx_qycyxx a where not exists (
+			select 1 from lgrkk.dwd_jbxx_syrkxx b where a.emp_card_no=b.zjhm
+		) and length(emp_card_no)<>6 and emp_resignation_time>='2020-12'
+	)a
+left join dm_jbxx_frjcdzxx b
+on a.tyshxydm=b.tyshxydm

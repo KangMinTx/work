@@ -1,0 +1,34 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-27 09:55:05
+--table_name : dm_zbzc_gdcz
+--use_tables : dwd_zbzc_gdcz (股东出资情况)
+--取数逻辑   : 直接从 dwd_zbzc_gdcz (股东出资情况) 取出所需字段
+--去重/筛选逻辑:  去掉frwybs为空的记录
+--_********************************************************_
+
+truncate table dm_zbzc_gdcz;
+insert into dm_zbzc_gdcz
+SELECT  id            AS id --主键 
+       ,frwybs        AS frwybs --法人唯一标识 
+       ,gd            AS gd --股东名称 
+       ,(case when gdlx !='' then gdlx else null end)         AS gdlx --股东类型 
+       ,(case when zjlx_gdgdzjlx !='' then zjlx_gdgdzjlx else null end) AS zjlx_gdgdzjlx --证件类型 
+       ,(case when zjhm_gdgdzjhm !='' then zjhm_gdgdzjhm else null end) AS zjhm_gdgdzjhm --证件号码 
+       ,(case when gdzzlx !='' then gdzzlx else null end)        AS gdzzlx --证照类型 
+       ,(case when sjcze !='' then sjcze else null end)        AS sjcze --实缴出资额 
+       ,(case when bzdm !='' then bzdm else null end)    AS bzdm --币种代码
+       ,(case when bz  !='' then bz else null end)          AS bz --币种 
+       ,(case when gdgj !='' then gdgj else null end)         AS gdgj --股东国籍 
+       ,xxlylx        AS xxlylx --信息来源类型 
+       ,lyb           AS lyb --来源表 
+       ,lyjg          AS lyjg --来源机构 
+       ,current_timestamp          AS yxsj --运行时间
+FROM dwd_zbzc_gdcz where 
+dt=(select max(dt) from dwd_zbzc_gdcz)
+and  (frwybs is not null or length(frwybs)>=1) AND gd is not null 
+--and  gdlx is not null and  zjlx_gdgdzjlx is not null 
+--and  zjhm_gdgdzjhm is not null and  gdzzlx is not null 
+--and  sjcze is not null and  bzdm is not null and  bz is not null and  gdgj is not null 
+

@@ -1,0 +1,70 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-27 15:50:32
+--table_name : dm_jbxx_frjcxx (法人基本信息)
+--use_tables : dwd_jbxx_frjcxx (法人基本信息)
+--取数逻辑   : 根据 dwd_jbxx_frjcxx (法人基本信息) 表取出所需对应字段
+--去重/筛选逻辑: 无
+--_********************************************************_
+ 
+truncate table dm_jbxx_frjcxx;
+insert into table dm_jbxx_frjcxx
+select 
+lgl_id  as lgl_id --法人唯一标识
+,lgl_name  as lgl_name --机构名称
+,lgl_short_name  as lgl_short_name --机构简称
+,lgl_english_name  as lgl_english_name --机构英文名称
+,tyshxydm  as tyshxydm --统一社会信用代码
+,zch  as zch --登记或注册号
+,zzjgdm  as zzjgdm --组织机构代码
+,lgl_organization_code  as lgl_organization_code --机构类型
+,lgl_organization_name as lgl_organization_name --机构类型名称
+,legal_person_name  as legal_person_name --法定代表人或负责人姓名
+,legal_person_card_no  as legal_person_card_no --法定代表人或负责人证件号码
+,business_scope  as business_scope --经营范围
+,substr(establish_date,1,19)  as establish_date --成立日期
+,substr(operate_state_time,1,19)  as operate_state_time --经营期限自
+,substr(operate_end_time,1,19)  as operate_end_time --经营期限至
+,hymldm as hymldm --行业门类
+,hyml as hyml-- 行业门类
+,(case when lsqymc !='' then lsqymc else null end) lsqymc-- 隶属企业名称
+,(case when lsqyzch !='' then lsqyzch else null end) lsqyzch-- 隶属企业注册号
+,sbsszb as sbsszb-- 申报实收资本
+,bzdm as bzdm --币种代码
+,bizhong as bizhong -- 币种
+,hydm as hydm-- 行业代码
+,hymc as hymc --行业名称
+,jycs as jycs -- 经营场所
+,(case when njqk !='' then njqk else null end) njqk-- 年检情况
+,(case when ndbgxx !='' then ndbgxx else null end) ndbgxx-- 年度报告信息
+,ssztlx as ssztlx-- 商事主体类型
+,yyzt as yyzt-- 企业状态
+,substr(gldm_create_time,1,19)  as gldm_create_time --记录创建时间
+,substr(gldm_update_time,1,19) as gldm_update_time --记录更新时间
+,legal_person_card_id  as legal_person_card_id --法定代表人或负责人证件类型
+,lgl_entstaus_no  as lgl_entstaus_no --法人主体状态
+,substr(lgl_authdate,1,19)  as lgl_authdate --核准日期
+,lgl_pbuitem  as lgl_pbuitem --许可经营项目
+,admin_org_unit_no  as admin_org_unit_no --登记管理部门h代码
+,admin_org_unit  as admin_org_unit --登记管理部门名称
+,building_id  as building_id --楼栋编码
+,house_id  as house_id --房屋编码
+,address_detail  as address_detail --详细地址
+,zcdz  as zcdz --注册地址
+,zcdz_code  as zcdz_code --注册地统一地址编码
+,jydz  as jydz --经营地址
+,jydz_code  as jydz_code --经营地统一地址编码
+,bgdz  as bgdz --办公地址
+,bgdz_code  as bgdz_code --办公地址一地址编码
+,scdz  as scdz --生产地址
+,scdz_code  as scdz_code --生产地址一地址编码
+,brsj  as brsj --搬入时间
+,blsj  as blsj --搬离时间
+,zbx  as zbx --坐标x
+,zby  as zby --坐标y
+,lyb  as lyb --来源表
+,lyjg  as lyjg --来源机构
+,substr(current_timestamp,1,19)  as yxsj --运行时间
+from dwd_jbxx_frjcxx
+where dt=(select max(dt) from dwd_jbxx_frjcxx)

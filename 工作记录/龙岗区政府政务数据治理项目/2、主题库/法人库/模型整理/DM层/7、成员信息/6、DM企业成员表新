@@ -1,0 +1,55 @@
+--SparkSQL
+--_********************************************************_
+--author: machuang
+--create time: 2021-08-05 11:09:52
+--_********************************************************
+
+--修改：
+--根据身份证件号码、社保单位编号、入职时间去重，并添加主键身份证件号码+社保单位编号
+--2021-10-27日数据备份到dm_jk_cyxx_qycyxx_20211027表中
+--2021-10-27
+insert overwrite table dm_jk_cyxx_qycyxx
+
+select 
+     concat_ws('',emp_card_no,sbdwbh) id
+	 ,xm		    --姓名
+     ,xb_dm		    --性别代码
+     ,xb		    --性别
+     ,emp_card_id	--身份证件类型
+     ,emp_card_no	--身份证件号码
+     ,person_si_id	--个人社保唯一标识
+     ,sbdwbh		--社保单位编号
+     ,gsmc		    --公司名称
+     ,tyshxydm		--统一社会信用代码
+     ,cbzt		    --当前参保状态
+     ,EMP_ENTRY_TIME	    --入职时间
+     ,EMP_RESIGNATION_TIME	--离职时间
+     ,JOB_TITLE		--职位
+     ,xxlylx		--信息来源类型
+     ,'dwd_cyxx_qycyxx_new' lyb	--来源表
+     ,lyjg		    --来源机构
+     ,yxsj		    --运行时间
+
+from (
+
+select 
+      xm		    --姓名
+     ,xb_dm		    --性别代码
+     ,xb		    --性别
+     ,emp_card_id	--身份证件类型
+     ,upper(emp_card_no) emp_card_no	--身份证件号码
+     ,person_si_id	--个人社保唯一标识
+     ,sbdwbh		--社保单位编号
+     ,gsmc		    --公司名称
+     ,tyshxydm		--统一社会信用代码
+     ,cbzt		    --当前参保状态
+     ,EMP_ENTRY_TIME	    --入职时间
+     ,EMP_RESIGNATION_TIME	--离职时间
+     ,JOB_TITLE		--职位
+     ,xxlylx		--信息来源类型
+     ,'dwd_cyxx_qycyxx_new' lyb	--来源表
+     ,lyjg		    --来源机构
+     ,yxsj		    --运行时间
+	 ,row_number() over(partition by upper(concat_ws('',emp_card_no,sbdwbh)) order by EMP_ENTRY_TIME) rn
+from dwd_cyxx_qycyxx_new where dt=(select max(dt) from dwd_cyxx_qycyxx_new) and cbzt='正常参保'
+) where rn =1;

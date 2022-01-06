@@ -1,0 +1,89 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-11 11:29:11
+--table_name : dm_zjbxx_hgqydjxx (海关企业登记信息) 
+--_********************************************************_
+truncate table  dm_jbxx_hgqydjxx;
+insert overwrite table dm_jbxx_hgqydjxx 
+select 
+	uuid() uuid --主键 
+	,lgl_id ztsfdm --主体身份代码 
+	,b.tyshxydm --统一社会信用代码 
+	,a.hgdjh --海关登记号 
+	,a.nsrbsh --纳税人标识号 
+	,nvl(b.lgl_name,a.gsmc) as gsmc --公司名称 
+	,a.gsywmc --公司英文名称 
+	,a.qyjb --企业级别 
+	,a.jydqfw --经营地区范围 
+	,a.tsqybz --特殊企业标志 
+    ,a.hyzldm--行业种类代码
+	,a.hyzl --行业种类 
+	,a.tzze --投资总额 
+	,a.nxbl --内销比率 
+	,a.mse --免税额 
+	,a.qysclx --企业生产类型 
+	,a.zycp --主要产品 
+	,a.zcrq --注册日期 
+	,a.zczb --注册资本 
+	,a.zczjbz --注册资金币制 
+	,a.dwzj --到位资金 
+	,a.lxr --联系人 
+	,a.lxdh --联系电话 
+	,a.jlzhm --居留证号码 
+	,a.frdb --法人代表 
+	,a.frdh --法人电话 
+	,a.qyywdz --企业英文地址 
+	,a.qyzwdz --企业中文地址 
+	,a.pzjg --批准机关 
+	,a.pzwh --批准文号 
+	,a.nsrq --年审日期 
+	,a.nsyf --年审月份 
+	,a.lyb --来源表 
+	,a.lyjg --来源机构 
+	,current_timestamp yxsj --运行时间 
+from  
+(
+select *
+from
+(select
+	ztsfdm
+	,nsrbsh --纳税人标识号 
+	,hgdjh --海关登记号 
+	,gsmc --公司名称 
+	,gsywmc --公司英文名称 
+	,qyjb --企业级别 
+	,jydqfw --经营地区范围 
+	,tsqybz --特殊企业标志 
+ 	,hyzldm --行业种类代码
+	,hyzl --行业种类 
+	,tzze --投资总额 
+	,nxbl --内销比率 
+	,mse --免税额 
+	,qysclx --企业生产类型 
+	,zycp --主要产品 
+	,zcrq --注册日期 
+	,zczb --注册资本 
+	,zczjbz --注册资金币制 
+	,dwzj --到位资金 
+	,lxr --联系人 
+	,lxdh --联系电话 
+	,jlzhm --居留证号码 
+	,frdb --法人代表 
+	,frdh --法人电话 
+	,qyywdz --企业英文地址 
+	,qyzwdz --企业中文地址 
+	,pzjg --批准机关 
+	,pzwh --批准文号 
+	,nsrq --年审日期 
+	,nsyf --年审月份 
+	,lyb --来源表 
+	,lyjg --来源机构 
+	,row_number() over(partition by nsrbsh,gsmc,tyshxydm,ztsfdm,hgdjh order by nsrq desc) rt
+ from dwd_zjbxx_hgqydjxx a where a.dt=(select max(dt) from dwd_zjbxx_hgqydjxx) 
+ ) where rt=1)a
+left join (
+	select  distinct lgl_id,lgl_name,tyshxydm,zch,legal_person_name from dwd_jbxx_frjcxx
+	where dt=(  select  max(dt) from dwd_jbxx_frjcxx) ) b
+	on a.ztsfdm=b.lgl_id;
+    

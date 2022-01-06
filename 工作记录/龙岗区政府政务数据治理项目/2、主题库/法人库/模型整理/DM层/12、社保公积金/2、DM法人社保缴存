@@ -1,0 +1,31 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-27 15:42:30
+--table_name : dm_jbxx_frsbjc (法人社保缴存)
+--use_table  : dwd_jbxx_frsbjc (法人社保缴存)
+--取数逻辑   : 从 dwd_jbxx_frsbjc (法人社保缴存) 取出对应字段
+--去重/筛选逻辑: 无
+--_********************************************************_
+truncate table dm_jbxx_frsbjc;
+insert into table dm_jbxx_frsbjc
+select 
+uuid  as UUID --主键
+,tyshxydm  as TYSHXYDM --统一社会信用代码
+,zzjgdm  as zzjgdm --组织机构代码
+,unit_sno  as UNIT_SNO --社保编号
+,dwmc  as DWMC --单位名称
+,accountdate  as ACCOUNTDATE --缴费到账日期
+,ic_flag  as IC_FLAG --养老参保情况
+,lc_flag  as LC_FLAG --工伤参保情况
+,kc_flag  as KC_FLAG --医疗参保情况
+,jc_flag  as JC_FLAG --生育参保情况
+,mc_flag  as MC_FLAG --失业参保情况
+,account_flag  as ACCOUNT_FLAG --到账状态
+,fqbm  as FQBM --分区编码
+,lyb  as lyb --来源表
+,lyjg  as lyjg --来源机构
+,CURRENT_TIMESTAMP  as yxsj --运行时间
+from dwd_jbxx_frsbjc 
+where dt=(select max(dt) from dwd_jbxx_frsbjc)
+ 

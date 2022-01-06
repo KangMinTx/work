@@ -1,0 +1,83 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2021-01-30 14:53:37
+--table_name : dm_frk_frgytj (法人雇员统计表)
+--修改人:TZM
+--修改时间:2021-02-07
+--修改逻辑:雇员人数来源修改成法人雇员信息
+--修改人:TZM
+--修改时间:2021-02-08
+--修改逻辑:补充龙岗非法人的雇员信息
+--修改人:TZM
+--修改时间:2021-02-09
+--修改逻辑:补充龙岗非法人的雇员信息,补充主表
+--_********************************************************_
+
+insert overwrite table dm_frk_frgytj 
+select 
+	a.lgl_id lgl_id										--法人唯一标识
+	,a.lgl_name lgl_name									--企业名称
+	,c.building_code building_id						--楼栋编码
+	,a.tyshxydm lgl_no									--统一社会信用代码
+	,coalesce(b.cnt,d.cnt) cnt									--雇员人数
+	,'dwd_jbxx_frjcxx,lgrkk.dwd_shhd_sbcb,dwd_cyxx_qycyxx,dwd_frdzxx' lyb	--来源表
+	,'人口库,区财政局,区发展改革局' lyjg										--数据来源机构
+	,now() yxsj											--运行时间
+from 
+	(select
+		distinct
+		tyshxydm,
+		lgl_id,
+		lgl_name
+	from 
+	(select
+				tyshxydm,
+				lgl_id,
+				lgl_name
+		from dwd_jbxx_frjcxx
+		where dt=(select max(dt) from dwd_jbxx_frjcxx) 
+		group by tyshxydm,
+				lgl_id,
+				lgl_name
+	union 
+		select
+				lgl_no tyshxydm,
+				lgl_id,
+				lgl_name
+		from lgrkk.dm_frk_frgyxx
+		where lgl_no is null
+		group by lgl_no,
+				lgl_id,
+				lgl_name
+				)
+	)a
+	left join
+	(
+	select
+      			distinct
+                count(emp_card_no) over(partition by lgl_no) cnt
+				,lgl_no tyshxydm
+			from  lgrkk.dm_frk_frgyxx 
+	)b
+	on trim(a.tyshxydm)=trim(b.tyshxydm)
+	left join
+	(
+	select 
+		tyshxydm,
+		building_code
+	from dwd_frdzxx
+	where dt=(select max(dt) from dwd_frdzxx)
+	group by tyshxydm,
+		building_code	
+	)c
+	on trim(a.tyshxydm)=trim(c.tyshxydm)
+	left join
+	(
+	select
+      			distinct
+                count(emp_card_no) over(partition by lgl_name) cnt
+				,lgl_name 
+			from  lgrkk.dm_frk_frgyxx 
+	)d
+	on trim(a.lgl_name)=trim(d.lgl_name)

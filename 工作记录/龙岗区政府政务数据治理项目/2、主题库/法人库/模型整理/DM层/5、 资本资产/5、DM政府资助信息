@@ -1,0 +1,29 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-07 17:40:31
+--内容描述:政府资助信息1张表,加工至dwd_lgfrk_zbzc(政府资助信息信息)
+--_********************************************************_
+truncate table dm_zbzc_zfzzxx;
+insert into table dm_zbzc_zfzzxx 
+select
+	uuid           ,--主键
+	b2.ztsfdm           ,--主体身份代码
+	nvl(b1.tyshxydm,b2.tyshxydm) as tyshxydm           ,--统一社会信用代码
+	nvl(b1.zzjgdm,b2.zzjgdm) zzjgdm           ,--组织机构代码
+	nvl(b1.zch,b2.zch) as zch           ,--登记/注册号
+	b1.lgl_name gsmc           ,--公司名称
+	b2.zzbh           ,--资助编号
+	b2.zzlb           ,--资助类别
+	b2.sqzzje           ,--申请资助金额
+	b2.hdzzje           ,--核定资助金额
+	b2.zzsm           ,--资助说明
+	b2.zzsj           ,--资助时间
+	b2.xxlylx           ,--信息来源类型
+	b2.lyb           ,--来源表
+	b2.lyjg           ,--来源机构
+	current_timestamp yxsj           --运行时间
+from dwd_zbzc_zfzzxx b2 
+inner join dwd_jbxx_frjcxx b1 on b1.tyshxydm=b2.tyshxydm
+where b2.dt=(select max(dt) from dwd_zbzc_zfzzxx)
+and  b1.dt=(select max(dt) from dwd_jbxx_frjcxx)

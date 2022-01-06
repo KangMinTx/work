@@ -1,0 +1,53 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-27 15:33:18
+--table_name : dm_scjy_qynbxx (企业年报信息)
+--use_tables : dwd_scjy_qynbxx (企业年报信息)
+--取数逻辑   : 从 dwd_scjy_qynbxx (企业年报信息) 表中 取出所需相应字段信息
+--去重/筛选逻辑 : 无
+--_********************************************************_
+truncate table dm_scjy_qynbxx;
+insert into table dm_scjy_qynbxx
+select 
+id  as uuid --主键
+,ancheyear  as ancheyear --年报年度
+,anchetype  as anchetype --年报类别
+,ztsfdm  as ztsfdm --主体身份代码
+,tyshxydm  as tyshxydm --统一社会信用代码
+,zch  as zch --注册号
+,gsmc  as gsmc --企业名称
+,busst  as busst --经营状态
+,mainbusiact  as mainbusiact --经营范围
+,relationtouniscid  as relationtouniscid --隶属企业统一码
+,relationto  as relationto --隶属企业
+,holdingsmsg_code as holdingsmsg_code --控股情况代码
+,case when length(holdingsmsg)=0 then null else holdingsmsg end as holdingsmsg --控股情况
+,ifpubholdingsmsg  as ifpubholdingsmsg --是否公示控股情况
+,ifhasweb  as ifhasweb --是否拥有网站
+,ifinvother  as ifinvother --是否有对外投资
+,ifhasgqzr  as ifhasgqzr --是否有股权转让
+,ifpub  as ifpub --是否公示
+,empnum  as empnum --从业人数
+,ifpubempnum  as ifpubempnum --是否公示从业人数
+,colgranum  as colgranum --其中高校毕业生人数(经营者)
+,colemplnum  as colemplnum --其中高校毕业生人数(雇工)
+,retsolnum  as retsolnum --其中退役士兵人数(经营者)
+,retemplnum  as retemplnum --其中退役士兵人数(雇工)
+,dispernum  as dispernum --其中残疾人人数(经营者)
+,disemplnum  as disemplnum --其中残疾人人数(雇工)
+,unenum  as unenum --其中失业人员再就业人数(经营者)
+,uneemplnum  as uneemplnum --其中失业人员再就业人数(雇工)
+,womempnum  as womempnum --女性从业人数
+,ifpubwomempnum  as ifpubwomempnum --是否公示女性从业人数
+,tel  as tel --电话
+,addr  as addr --地址
+,postalcode  as postalcode --邮编
+,email  as email --邮箱
+,firstpubtime  as firstpubtime --首次公示时间
+,anchedate  as anchedate --年报时间
+,lyb  as lyb --来源表
+,lyjg  as lyjg --来源机构
+,current_timestamp  as yxsj --运行时间
+from dwd_scjy_qynbxx
+where dt=(select max(dt) from dwd_scjy_qynbxx);

@@ -1,0 +1,28 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-07 16:01:19.84
+--所属主题:异常法人信息
+--内容描述:异常法人信息1张表,加工至dm_jbxx_ycfrxx(异常法人信息)
+--加载策略:全量
+--_********************************************************_
+truncate table dm_jbxx_ycfrxx;
+
+insert into table dm_jbxx_ycfrxx 
+select
+	 uuid		--主键
+	,tyshxydm	--统一社会信用代码
+	,nsrsbh		--纳税人识别号
+	,zzjgdm		--组织机构代码
+	,gsmc		--公司名称
+	,ycsm		--异常说明
+	,frsjlybm	--法人数据来源部门
+	,zjlx		--法定代表人证件类型
+	,zjhm		--法定代表人证件号码
+	,xm			--法定代表人姓名
+	,qyzt		--企业状态
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,substr(current_timestamp,1,19) as yxsj		--运行时间
+ from dwd_jbxx_ycfrxx
+ where dt=(select max(dt) from dwd_jbxx_ycfrxx)

@@ -1,0 +1,229 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2021-05-25 15:57:27
+--table_name : dm_sfsjzc_frsjzc (法人数据支持)
+--_********************************************************_
+
+insert overwrite table dm_sfsjzc_frsjzc 
+select 
+	zbdm			--指标代码
+	,zbmc			--指标名称
+	,dyzbzsl		--对应指标值数量
+	,zzbmc			--子指标名称
+	,dyzzbzsl		--对应子指标值数量
+	,ssztc			--所属主题层
+	,lyb			--来源表
+	,lyjg			--来源机构
+	,now() yxsj			--运行时间
+from 
+	(select
+		'001' zbdm,
+		'企业总数' zbmc,
+		dyzbzsl,
+		null zzbmc,			
+		null dyzzbzsl,		
+		'法人库' ssztc,
+		lyb,
+		lyjg
+	from 
+	(	select count(1) dyzbzsl ,'std_qfzggj_aic_base,std_qfzggj_aic_jgbase' as lyb ,lyjg from (
+					select *
+					from ods_qfzggj_aic_base a
+					where entstatuscode='1' and 
+					dt=(select  max(dt) from ods_qfzggj_aic_base) 
+				) a where exists(
+											select 1 from
+												ods_qfzggj_aic_jgbase b where b.dt=(select max(dt) from ods_qfzggj_aic_jgbase) and a.entid=b.entid and b.jgorgcode='4500'
+												)   
+												and bigenttype <> '个体工商户'
+												group by lyjg
+											)
+	union all
+	select
+		'002' zbdm,
+		'个体工商户总数' zbmc,
+		dyzbzsl,
+		null zzbmc,			
+		null dyzzbzsl,		
+		'法人库' ssztc,
+		lyb,
+		lyjg
+	from 
+	(	select count(1) dyzbzsl ,'std_qfzggj_aic_base,std_qfzggj_aic_jgbase' as lyb ,lyjg from (
+					select *
+					from ods_qfzggj_aic_base a
+					where entstatuscode='1' and 
+					dt=(select  max(dt) from ods_qfzggj_aic_base) 
+				) a where exists(
+											select 1 from
+												ods_qfzggj_aic_jgbase b where b.dt=(select max(dt) from ods_qfzggj_aic_jgbase) and a.entid=b.entid and b.jgorgcode='4500'
+												)   
+												and bigenttype = '个体工商户'
+												group by lyjg
+											)
+	
+	union all
+	select
+		'003' zbdm,
+		'社会组织总数' zbmc,
+		dyzbzsl,
+		null zzbmc,			
+		null dyzzbzsl,		
+		'法人库' ssztc,
+		lyb,
+		lyjg
+	from 
+	(	select 
+			count(distinct tyshxydm) dyzbzsl 
+			,'std_qmz_qmzjmbfqydwcldjxx,std_qfg_t_busi_mzj_jjh' lyb
+			,'区民政局,区发展改革局' lyjg 
+			from dwd_jbxx_frjcxx_sf  
+			where  lgl_organization_name in ('民办非企业单位','基金会')  and dt=(select max(dt) from dwd_jbxx_frjcxx_sf)
+											)
+	
+	union all
+	select
+		'004' zbdm,
+		'法人状态' zbmc,
+		dyzbzsl,
+		'状态数量' zzbmc,			
+		 dyzzbzsl,		
+		'法人库' ssztc,
+		lyb,
+		lyjg
+	from 
+	(	select nvl(entstatus,'其他') dyzbzsl ,count(1) dyzzbzsl,'std_qfzggj_aic_base,std_qfzggj_aic_jgbase' as lyb ,lyjg from (
+					select *
+					from ods_qfzggj_aic_base a
+					where --entstatuscode='1' and 
+					dt=(select  max(dt) from ods_qfzggj_aic_base) 
+				) a where exists(
+											select 1 from
+												ods_qfzggj_aic_jgbase b where b.dt=(select max(dt) from ods_qfzggj_aic_jgbase) and a.entid=b.entid and b.jgorgcode='4500'
+												)   
+												group by lyjg,entstatus
+												)
+	
+	union all
+	select
+		'005' zbdm,
+		'行业' zbmc,
+		dyzbzsl,
+		'数量' zzbmc,			
+		dyzzbzsl,		
+		'法人库' ssztc,
+		lyb,
+		lyjg
+	from 
+	(	 select bigindustry dyzbzsl ,count(1) dyzzbzsl,'std_qfzggj_aic_base,std_qfzggj_aic_jgbase' as lyb ,lyjg from (
+					select *
+					from ods_qfzggj_aic_base a
+					where entstatuscode='1' and 
+					dt=(select  max(dt) from ods_qfzggj_aic_base) 
+				) a where exists(
+											select 1 from
+												ods_qfzggj_aic_jgbase b where b.dt=(select max(dt) from ods_qfzggj_aic_jgbase) and a.entid=b.entid and b.jgorgcode='4500'
+												)   
+												group by lyjg,bigindustry
+												)
+					
+					
+	union all
+	select
+		'006' zbdm,
+		'资金区间' zbmc,
+		dyzbzsl,
+		'数量' zzbmc,			
+		dyzzbzsl,		
+		'法人库' ssztc,
+		lyb,
+		lyjg
+	from 
+	(	 select 
+			case when zczb>=500 and zczb <=1000 then '500-1000'
+				when zczb>1000 and zczb <=2000 then '1000-2000'
+				when zczb>2000 and zczb <=3000 then '2000-3000'
+				when zczb>3000 and zczb <=4000 then '3000-4000'
+				when zczb>4000 and zczb <=5000 then '4000-5000'
+				when zczb>5000 and zczb <=6000 then '5000-6000'
+				when zczb>6000 and zczb <=7000 then '6000-7000'
+				when zczb>7000 and zczb <=8000 then '7000-8000'
+				when zczb>8000 and zczb <=9000 then '8000-9000'
+				when zczb>9000 and zczb <=10000 then '9000-10000'
+				when zczb>10000  then '10000以上'
+				end dyzbzsl 
+			,count(1) dyzzbzsl
+			,'std_qfzggj_aic_base,std_schzljgw_sszt_jbxx110497' lyb
+			,'区发展改革局' lyjg
+			from (
+				select entid                 AS lgl_id 
+			   , case when currency='美元' then round(regcap*6.4354,4)
+when currency='欧元' then round(regcap*7.8434,4)
+when currency='挪威克朗' then round(regcap*0.76871,4)
+when currency='人民币' then round(regcap,4)
+when currency='新加坡元' then round(regcap*4.8305,4)
+when currency='香港元' then round(regcap*0.82828,4)
+when currency='泰国铢' then round(regcap*0.20505,4)
+when currency='日元' then round(regcap*0.059180,4)
+when currency='菲律宾比索' then round(regcap*0.13427,4)
+when currency='英镑' then round(regcap*9.1011,4)
+when currency='瑞士法郎' then round(regcap*7.1636,4)
+when currency='瑞典克朗' then round(regcap*0.77295,4)
+when currency='加元' then round(regcap*5.3279,4) else round(regcap,4) end as zczb -- 注册资本
+					from ods_qfzggj_aic_base a
+					where entstatuscode='1' and 
+					dt=(select  max(dt) from ods_qfzggj_aic_base) 
+				) a where exists(
+											select 1 from
+												ods_qfzggj_aic_jgbase b where b.dt=(select max(dt) from ods_qfzggj_aic_jgbase) and a.lgl_id=b.entid and b.jgorgcode='4500'
+												) and    zczb>=500
+			group by 
+					case when zczb>=500 and zczb <=1000 then '500-1000'
+				when zczb>1000 and zczb <=2000 then '1000-2000'
+				when zczb>2000 and zczb <=3000 then '2000-3000'
+				when zczb>3000 and zczb <=4000 then '3000-4000'
+				when zczb>4000 and zczb <=5000 then '4000-5000'
+				when zczb>5000 and zczb <=6000 then '5000-6000'
+				when zczb>6000 and zczb <=7000 then '6000-7000'
+				when zczb>7000 and zczb <=8000 then '7000-8000'
+				when zczb>8000 and zczb <=9000 then '8000-9000'
+				when zczb>9000 and zczb <=10000 then '9000-10000'
+				when zczb>10000  then '10000以上'
+				end
+				)
+					
+	union all
+	select
+		'007' zbdm,
+		'街道' zbmc,
+		dyzbzsl,
+		'数量' zzbmc,			
+		dyzzbzsl,		
+		'法人库' ssztc,
+		lyb,
+		lyjg
+	from 
+	(	 select 
+			nvl(b.jdmc,'其他') dyzbzsl 
+			,count(a.tyshxydm) dyzzbzsl
+			,'dwd_jbxx_frjcxx_sf,dwd_frdzxx' lyb
+			,'区发展改革局' lyjg
+			from (select entid                 AS lgl_id
+					,entsccode             AS tyshxydm 
+					from ods_qfzggj_aic_base a
+					where entstatuscode='1' and 
+					dt=(select  max(dt) from ods_qfzggj_aic_base)  and  exists(
+											select 1 from
+												ods_qfzggj_aic_jgbase b where b.dt=(select max(dt) from ods_qfzggj_aic_jgbase) and a.entid=b.entid and b.jgorgcode='4500'
+												)
+			)a
+			left join (
+			select * from dwd_frdzxx where dt=(select max(dt) from dwd_frdzxx)
+			)b on a.tyshxydm=b.tyshxydm
+			group by 
+					b.jdmc
+											)
+	
+	)
+    order by zbdm asc

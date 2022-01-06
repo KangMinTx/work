@@ -1,0 +1,35 @@
+--SparkSQL
+--_********************************************************_
+--author: luoyun
+--create time: 2021-08-13 14:31:33
+--_********************************************************_
+insert OVERWRITE table dm_jbxx_frsbjbxx
+SELECT
+	uuid	--	主键
+	,tyshxydm	--	统一社会信用代码
+	,zzjgdm	--	组织机构代码
+	,unit_sno	--	社保编号
+	,gsmc	--	公司名称
+	,accountdate	--	缴费到账日期
+	,ic_flag	--	养老参保情况
+	,lc_flag	--	工伤参保情况
+	,kc_flag	--	医疗参保情况
+	,jc_flag	--	生育参保情况
+	,mc_flag	--	失业参保情况
+	,account_flag	--	到账状态
+	,stayear	--	投保起始年
+	,stamonth	--	投保起始月
+	,stastatus	--	当前状态
+	,instotnum	--	参保总人数
+	,pensinsnum	--	养老参保人数
+	,mediinsnum	--	医疗参保人数
+	,wriinsnum	--	工伤参保人数
+	,unempinsnum	--	失业参保人数
+	,account_year	--	缴费到账年
+	,account_month	--	缴费到账月
+	,account_date	--	缴费到账日
+	,lyb	--	来源表
+	,lyjg	--	来源机构
+	,now() yxsj	--	运行时间
+from dwd_jbxx_frsbjbxx
+	where dt=(select max(dt) from dwd_jbxx_frsbjbxx)

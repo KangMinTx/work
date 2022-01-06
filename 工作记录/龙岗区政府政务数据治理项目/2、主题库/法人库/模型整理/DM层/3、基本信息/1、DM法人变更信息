@@ -1,0 +1,28 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-11-26 17:34:19
+--修改记录:
+-- 1230 He 新增关联法人基本信息 关键字段 主体身份代码,组织机构代码,公司名称 优先 从 法人基本信息中 取值
+--20210106 He 修改字段名 ztsfdm 和 zzjgdm
+--_********************************************************_
+truncate table dm_jbxx_frbgxx;
+insert into table dm_jbxx_frbgxx
+select  t1.recordid                     as recordid --主键 
+       ,nvl(t2.lgl_id,t1.ztsfdm)         as ztsfdm --主体身份代码 
+       ,t1.tyshxydm                     as tyshxydm --统一社会信用代码 
+       ,nvl(t2.zzjgdm,t1.zzjgdm) as zzjgdm --组织机构代码 
+       ,nvl(t2.lgl_name,t1.gsmc)        as gsmc --公司名称 
+       ,to_date(t1.alterdate)           as alterdate--变更时间 
+       ,t1.alteritemcode                as alteritemcode--变更代码 
+       ,t1.alteritem                    as alteritem--变更项 
+       ,t1.alterbefore                  as alterbefore--变更前内容 
+       ,t1.alterafter                   as alterafter--变更后内容 
+       ,t1.lyb                          as lyb--来源表 
+       ,t1.lyjg                         as lyjg--来源机构 
+       ,substr(now(),1,19)               as yxsj --运行时间
+from 
+(select * from dwd_jbxx_frbgxx where dt=(select max(dt) from dwd_jbxx_frbgxx) and tyshxydm is not null) t1
+left join 
+(select  tyshxydm,lgl_id,zzjgdm,lgl_name from dwd_jbxx_frjcxx where dt=(select  max(dt) from dwd_jbxx_frjcxx)) t2
+	on t1.tyshxydm=t2.tyshxydm 

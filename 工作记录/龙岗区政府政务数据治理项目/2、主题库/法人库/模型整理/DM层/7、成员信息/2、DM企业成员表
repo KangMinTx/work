@@ -1,0 +1,34 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-27 14:18:22
+--table_name : dm_cyxx_qycyxx (企业成员表)
+--use_tables : dwd_cyxx_qycyxx (企业成员表)
+--取数逻辑   : 取  dwd_cyxx_qycyxx (企业成员表) 对应字段信息 
+--去重/筛选逻辑 : 由于缺失原表 ods_srlzyhshbzj_sbgrxx110041 ( 个人基本信息)  证件类型代码,在此粗略处理
+--0301  LZ 修改 emp_resignation_time 取值为null
+--0317 He 修改 emp_entry_time 格式为YYYY-MM
+--_********************************************************_ 
+truncate table  dm_cyxx_qycyxx;
+insert into table dm_cyxx_qycyxx
+select 
+t1.tyshxydm  as tyshxydm --统一社会信用代码
+,t1.sbdwbh  as sbdwbh --社保单位编号
+,nvl(t2.lgl_name,t1.gsmc)  as gsmc --公司名称
+,t1.emp_card_no  as emp_card_no --身份证件号码
+,case when length(t1.emp_card_no)=18 then '身份证' else '其他' end  as emp_card_id --身份证件类型
+,t1.person_si_id  as person_si_id --个人社保唯一标识
+,t1.xm  as xm --姓名
+,t1.xb  as xb --性别
+,substr(to_date(t1.emp_resignation_time),1,7)  as emp_resignation_time --离职时间
+--,--null  as emp_resignation_time --离职时间
+,t1.emp_entry_time  as emp_entry_time --入职时间
+,t1.job_title  as job_title --职位
+,t1.xxlylx  as xxlylx --信息来源类型
+,t1.lyb  as lyb --来源表
+,t1.lyjg  as lyjg --来源机构
+,current_timestamp  as yxsj --运行时间
+from (select * from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) t2 
+left join (select * from dwd_cyxx_qycyxx t1 where t1.dt=(select max(dt) from dwd_cyxx_qycyxx)) t1
+on t1.tyshxydm=t2.tyshxydm
+--  and t1.emp_resignation_time is not null and t1.xm is not null ;-

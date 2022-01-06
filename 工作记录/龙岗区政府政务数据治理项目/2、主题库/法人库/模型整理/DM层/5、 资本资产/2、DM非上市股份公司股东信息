@@ -1,0 +1,27 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-27 10:25:38
+--table_name : dm_zbzc_fssgdgsxx(非上市股份公司股东信息)
+--use_tables : dwd_zbzc_fssgdgsxx(非上市股份公司股东信息)
+--取数逻辑   : 与原表一致,取出对应所需字段
+--去重/筛选逻辑: 筛选 aicentcode(主体身份代码) 不为空的记录
+--_********************************************************_
+truncate table dm_zbzc_fssgdgsxx;
+insert into table dm_zbzc_fssgdgsxx
+select  uuid       as uuid --主键 
+       ,zqdm       as zqdm --深柜代码 
+       ,gdxm       as gdxm --股东名称 
+       ,gdzjlb     as gdzjlb --股东证件类别 
+       ,gdzjhm     as gdzjhm --股东证件号码 
+       ,gdzzdmh    as gdzzdmh --股东机构代码 
+       ,gdgfye       as gdgfye --股东持股数量 
+       ,aicentcode as aicentcode --主体身份代码 
+       ,frwybs     as frwybs --法人唯一标识 
+       ,xxlylx     as xxlylx --信息来源类型 
+       ,lyb        as lyb --来源表 
+       ,lyjg       as lyjg --来源机构
+       ,current_timestamp as yxsj --运行时间
+from dwd_zbzc_fssgdgsxx
+where dt=( select max(dt) from dwd_zbzc_fssgdgsxx)
+and (aicentcode is not null or length(aicentcode)>=1 )

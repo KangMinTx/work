@@ -1,0 +1,49 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-07 15:40:35
+--_********************************************************_
+truncate table dm_zzxk_frxkzdjxx;
+with jbxx_frjcxx as(
+  select *,row_number()over(partition by lgl_name order by gldm_update_time) rn_name
+  ,row_number()over(partition by zzjgdm order by gldm_update_time) rn_zzjgdm
+  from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)
+  )
+insert into table dm_zzxk_frxkzdjxx 
+select
+	uuid			--主键
+	,COALESCE(b2.tyshxydm,b3.tyshxydm,b4.tyshxydm)	--统一社会信用代码
+	,COALESCE(b1.lgl_id,b3.lgl_id,b4.lgl_id,b2.ztsfdm) as ztsfdm			--主体身份代码
+	,COALESCE(b1.zzjgdm,b4.zzjgdm,b2.zzjgdm) as zzjgdm			--组织机构代码
+	,COALESCE(b1.zch,b3.zch,b4.zch,b2.zch) as zch			--登记/注册号
+	,COALESCE(b1.lgl_name,b3.lgl_name,b2.gsmc) as gsmc			--公司名称
+	,(case when length(b2.xzxkjdwsh)>1 and b2.xzxkjdwsh !=''		then b2.xzxkjdwsh	else null end)--文书号
+	,(case when length(b2.xzxkjdwsmc)>1	and b2.xzxkjdwsmc !=''	then b2.xzxkjdwsmc	else null end)--许可名称
+	,(case when length(b2.sxbm)>1 	and b2.sxbm !=''	then b2.sxbm	else null end) 			--事项编码
+	,(case when length(b2.xmmc)>1	and b2.xmmc !=''	then b2.xmmc	else null end)	--项目名称
+	,(case when length(b2.spzt)>1	and b2.spzt !=''	then b2.spzt	else null end)	--审批状态
+	,(case when length(b2.xkjg)>1	and b2.xkjg !=''	then b2.xkjg	else null end)	--许可机构
+	,(case when length(b2.xknr)>1	and b2.xknr !=''	then b2.xknr	else null end)	--许可内容
+	,(case when length(to_date(b2.yxrqzhi))>1 	and to_date(b2.yxrqzhi)!=''	then to_date(b2.yxrqzhi)	else null end)--有效日期至
+	,(case when length(to_date(b2.yxrqzi))>1  	and to_date(b2.yxrqzi) !=''	then to_date(b2.yxrqzi)	else null end)--有效日期自
+	,(case when length(to_date(b2.xkjdrq))>1	and to_date(b2.xkjdrq) !=''	then to_date(b2.xkjdrq)	else null end)--许可决定日期
+	,b2.lyb			--来源表
+	,b2.lyjg			--来源机构
+	,current_timestamp yxsj			--运行时间
+from  (select * from  dwd_zzxk_frxkzdjxx where dt=(select max(dt) from dwd_zzxk_frxkzdjxx)) b2
+left join jbxx_frjcxx b1
+on b1.tyshxydm=b2.tyshxydm
+left join jbxx_frjcxx b3
+on b2.zzjgdm = b3.zzjgdm
+and b3.rn_zzjgdm=1
+left join jbxx_frjcxx b4
+on b4.lgl_name = b2.gsmc
+and b4.rn_name=1
+
+
+
+
+
+
+
+

@@ -1,0 +1,59 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-27 15:08:35
+--table_name : dm_zzxk_rzqyxx(认证企业信息)
+--use_tables : dwd_zzxk_rzqyxx(认证企业信息)  
+--取数逻辑   : 从 dwd_zzxk_rzqyxx(认证企业信息) 取对应所需字段
+--去重/筛选逻辑 : 筛选 tyshxydm 不为空的企业
+--_********************************************************_
+truncate table dm_zzxk_rzqyxx;
+insert into table dm_zzxk_rzqyxx
+select
+tyshxydm
+,zzjgdm
+,zch
+,qymc
+,rznr
+,rzdj
+,zsbh
+,zskssj
+,yxqx
+,lyb
+,lyjg
+,yxsj
+from(
+  select
+tyshxydm
+,zzjgdm
+,zch
+,qymc
+,rznr
+,rzdj
+,zsbh
+,zskssj
+,yxqx
+,lyb
+,lyjg
+,yxsj
+,row_number() over(partition by concat_ws('',tyshxydm,rznr,zsbh) order by lyb) rn
+from(
+select 
+b2.tyshxydm  as tyshxydm --统一社会信用代码
+,nvl(b1.zzjgdm,b2.zzjgdm)  as zzjgdm --组织机构代码
+,nvl(b1.zch,b2.zch)  as zch --注册号
+,b1.lgl_name   as qymc --企业名称
+,(case when length(b2.rznr)>1 	and b2.rznr !='' then b2.rznr else null end) as rznr --认证内容
+,(case when length(b2.rzdj)>1 	and b2.rzdj !='' then b2.rzdj else null end) as rzdj --认证等级
+,(case when length(b2.zsbh)>1 	and b2.zsbh !='' then b2.zsbh else null end) as zsbh --证书编号
+,(case when length(b2.zskssj)>1 and b2.zskssj !='' then b2.zskssj else null end) as zskssj --认证开始日期
+,(case when length(b2.yxqx)>1   and b2.yxqx !='' then b2.yxqx  else null end) as yxqx --有效期限
+,b2.lyb  as lyb --来源表
+,b2.lyjg  as lyjg --来源机构
+,now()  as yxsj --运行时间
+
+from (select * from   dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b1
+inner join (select * from dwd_zzxk_rzqyxx where dt=(select max(dt) from dwd_zzxk_rzqyxx) and tyshxydm is not null) b2
+on trim(b1.tyshxydm)=trim(b2.tyshxydm)
+  ))where rn=1;
+

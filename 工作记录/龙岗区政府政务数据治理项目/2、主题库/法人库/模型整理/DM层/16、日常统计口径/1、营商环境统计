@@ -1,0 +1,23 @@
+--SparkSQL
+--_********************************************************_
+--author: tanzhiming
+--create time: 2021-10-15 10:28:52
+--_********************************************************_
+select count(distinct tyshxydm) from dwd_jbxx_frjcxx_sf where dt=(select max(dt) from dwd_jbxx_frjcxx_sf) /*and ztdl='个体工商户'*/ and yyzt='存续(在营、开业、在册)'; --328494 总数
+
+select count(distinct tyshxydm) from dwd_jbxx_frjcxx_sf where dt=(select max(dt) from dwd_jbxx_frjcxx_sf) and ztdl <> '个体工商户' and yyzt='存续(在营、开业、在册)'; --444935 总数
+
+select count(DISTINCT tyshxydm) from dwd_jbxx_frjcxx_sf where dt=(select max(dt) from dwd_jbxx_frjcxx_sf)
+and substr(establish_date,1,7)='2021-10' and yyzt='存续(在营、开业、在册)' and ztdl='个体工商户';  --4051  9月新增   几月新增填写几月
+
+
+select count(DISTINCT tyshxydm) from dwd_jbxx_frjcxx_sf where dt=(select max(dt) from dwd_jbxx_frjcxx_sf)
+and substr(establish_date,1,7)='2021-10' and yyzt='存续(在营、开业、在册)' and ztdl <> '个体工商户' --4619  9月新增  几月新增填写几月
+
+--商事主体数据统计
+select count(distinct a.recordid),count(distinct a.entsccode)  --782040   782039
+from std_qfzggj_aic_base a 
+where a.dt = (select max(dt) from std_qfzggj_aic_base)
+and a.entstatuscode = 1
+and exists(select 1 from std_qfzggj_aic_jgbase b where b.dt=(select max(dt) from std_qfzggj_aic_jgbase)
+           and a.entid=b.entid and b.jgorgcode='4500')

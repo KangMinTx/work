@@ -1,0 +1,41 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-04 15:01:19.84
+--所属主题:商标资产信息
+--内容描述:商标资产信息1张表,加工至dm_zczb_sbzcxx(商标资产信息)
+
+--加载策略:全量
+--_********************************************************_
+
+
+truncate table dm_zczb_sbzcxx;
+insert into table dm_zczb_sbzcxx 
+
+select
+	uuid		--主键
+	,a.tyshxydm	--统一社会信用代码
+	,a.ztsfdm as ztsfdm		--主体身份代码
+	,a.zzjgdm as zzjgdm		--组织机构代码
+	,a.zch as zch		--登记/注册号
+	,a.gsmc gsmc		--公司名称
+	,a.sq			--申请/注册号
+	,a.sbmc		--商标名称
+	,a.sblx		--商标类型
+	,a.zt			--状态
+	,a.zyqqx		--专用权期限
+	,a.qfrq		--签发日期
+	,a.msbzl		--名商标种类
+	,a.xxlylx		--信息来源类型
+	,a.lyb		--来源表
+	,a.lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+ from (select * from dwd_zczb_sbzcxx where dt=(select max(dt) from dwd_zczb_sbzcxx) )a
+
+ 
+ 
+
+ 
+
+
+ 

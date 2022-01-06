@@ -1,0 +1,65 @@
+--SparkSQL
+--_********************************************************_
+--author: luoyun
+--create time: 2021-08-17 16:30:46
+--_********************************************************_
+insert OVERWRITE table dm_frk_hqajzbsj
+SELECT
+	c_id	--	案件ID
+	,c_guid_id	--	唯一ID
+	,c_wf_inst_id	--	工作流实例ID
+	,c_title	--	案件标题
+	,c_code	--	案件号
+	,c_source	--	案件来源
+	,c_level	--	案件等级
+	,c_part_id	--	部件ID
+	,c_part_code	--	部件CODE
+	,c_class_type_id	--	类别类型 1：部件 2：事件
+	,c_class_big_id	--	类别大类ID
+	,c_class_small_id	--	类别小类ID
+	,c_class_custom_id	--	类别自定义ID
+	,c_address	--	事发位置
+	,c_desc	--	问题描述
+	,c_map_district_id	--	区ID
+	,c_map_street_id	--	街道ID
+	,c_map_community_id	--	社区ID
+	,c_map_grid_id	--	单元网格ID
+	,c_map_custom_id	--	所在管理网格
+	,c_reporter	--	举报人
+	,c_reporte_num	--	来电号码
+	,c_reply_way	--	回复号码或者邮件等
+	,c_reply_way_id	--	回复方式
+	,c_summary	--	备注
+	,c_key_word	--	关键字
+	,c_user_id	--	上报人
+	,c_date	--	上报时间
+	,c_is_reply	--	是否需要回复 0：否 1：是
+	,c_status	--	案件状态 0：未办结 1：办结-1：作废
+	,c_is_pj_sj	--	是否参与市局评价 0：否 1：是
+	,c_is_appraise	--	是否参与评价
+	,c_is_urgency	--	是否加急 0：否 1：是
+	,c_evt_from	--	接口案件(默认本系统)
+	,c_evt_no	--	接口案件编号
+	,c_db_create_date	--	创建时间
+	,c_db_create_id	--	创建人编号
+	,c_db_last_update_date	--	最近更新时间
+	,c_db_last_update_id	--	最近更新人编号
+	,c_db_status	--	数据状态 0：正常 1：删除
+	,c_is_pigeonhole	--	
+	,c_pigeonhole_time	--	
+	,c_village_in_city	--	
+	,c_zdxc_id	--	
+	,c_czc_code	--	
+	,c_is_atonce	--	
+	,timeflag	--	
+	,c_geo_x	--	经纬度X
+	,c_geo_y	--	经纬度Y
+	,c_abs_x	--	绝对坐标X
+	,c_abs_y	--	绝对坐标Y
+	,c_baidu_x	--	百度坐标X
+	,c_baidu_y	--	百度坐标Y
+	,lyjg	--	来源机构
+	,load_time	--	加载时间
+	,now() yxsj	--	运行时间
+from std_qcghzhzfj_t_um_event
+	where dt=(select max(dt) from std_qcghzhzfj_t_um_event)

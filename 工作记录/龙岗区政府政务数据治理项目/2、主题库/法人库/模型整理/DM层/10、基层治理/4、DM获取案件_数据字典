@@ -1,0 +1,25 @@
+--SparkSQL
+--_********************************************************_
+--author: luoyun
+--create time: 2021-08-17 16:26:48
+--_********************************************************_
+insert OVERWRITE table dm_frk_hqajsjzd
+SELECT
+	c_id	--	字典ID
+	,c_guid_id	--	唯一ID
+	,c_namespace_id	--	名词空间
+	,c_code	--	编码
+	,c_name	--	名称
+	,c_desc	--	描述
+	,c_sort	--	排序编号
+	,c_db_created_date	--	创建时间
+	,c_db_created_id	--	创建人编号
+	,c_db_updated_date	--	最近更新时间
+	,c_db_updated_id	--	最近更新人编号
+	,c_db_status	--	数据状态 0：正常 1：删除
+	,timeflag	--	
+	,lyjg	--	来源机构
+	,load_time	--	加载时间
+	,now() yxsj	--	运行时间
+from std_qcghzhzfj_t_pmi_dictionary
+	where dt=(select max(dt) from std_qcghzhzfj_t_pmi_dictionary)

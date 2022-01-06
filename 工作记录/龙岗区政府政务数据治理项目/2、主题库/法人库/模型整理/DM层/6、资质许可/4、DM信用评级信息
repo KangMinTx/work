@@ -1,0 +1,61 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-07 15:28:19.84
+--所属主题:信用评级信息
+--内容描述:信用评级信息1张表,加工至dm_zzxk_xypjxx(信用评级信息)
+
+
+--加载策略:全量
+--_********************************************************_
+truncate table dm_zzxk_xypjxx;
+insert into table dm_zzxk_xypjxx 
+SELECT
+uuid
+,ztsfdm
+,tyshxydm
+,zzjgdm
+,zch
+,gsmc
+,xydj
+,pjsm
+,pjsj
+,xxlylx
+,lyb
+,lyjg
+,yxsj
+from(
+SELECT
+uuid
+,ztsfdm
+,tyshxydm
+,zzjgdm
+,zch
+,gsmc
+,xydj
+,pjsm
+,pjsj
+,xxlylx
+,lyb
+,lyjg
+,yxsj
+,row_number() over(partition by concat_ws('',tyshxydm,PJSJ,XYDJ) order by lyb) rn
+from(
+select
+	uuid		--主键
+	,nvl(b1.lgl_id,a.ztsfdm) as  ztsfdm		--主体身份代码
+	,a.tyshxydm	--统一社会信用代码
+	,nvl(b1.zzjgdm,a.zzjgdm) as zzjgdm		--组织机构代码
+	,nvl(b1.zch,a.zch) as zch		--登记/注册号
+	,b1.lgl_name gsmc		--公司名称
+	,a.xydj		--信用等级
+	,a.pjsm		--评级说明
+	,a.pjsj pjsj		--评级时间
+	,a.xxlylx		--信息来源类型
+	,a.lyb		--来源表
+	,a.lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+ from (select * from   dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b1
+ inner join (select * from dwd_zzxk_xypjxx where dt=(select max(dt) from dwd_zzxk_xypjxx) )a
+ on trim(b1.tyshxydm)=trim(a.tyshxydm)
+ ))where rn=1;

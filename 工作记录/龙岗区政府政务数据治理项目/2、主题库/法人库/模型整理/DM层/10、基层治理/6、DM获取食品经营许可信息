@@ -1,0 +1,41 @@
+--SparkSQL
+--_********************************************************_
+--author: luoyun
+--create time: 2021-08-17 16:39:58
+--_********************************************************_
+insert OVERWRITE table dm_frk_hqspjyxkxx
+SELECT
+	id	--	ID
+	,ent_id	--	主体身份代码
+	,ent_name	--	企业名称
+	,ent_reg_no	--	注册号
+	,legal_present	--	法定代表人
+	,apply_date	--	成立日期
+	,address	--	地址
+	,license_type	--	许可类型
+	,license_name	--	许可证名称
+	,newtask_date	--	申请日期
+	,judge_date	--	决定日期
+	,license_no	--	许可证号
+	,certification_date	--	发证日期
+	,certification_organ_name	--	发证机关
+	,validity_from	--	有效期起
+	,validity_to	--	有效期止
+	,license_state	--	许可证状态
+	,annual_turnover	--	年营业额：万元
+	,duplicate_num	--	副本数
+	,staff_num	--	职工人数
+	,zip_code	--	邮编
+	,email	--	电邮
+	,main_format_code	--	主体业态代码
+	,main_format	--	主体业态
+	,engage_project_code	--	经营项目编码
+	,engage_project	--	经营项目
+	,udate	--	更新时间
+	,aicentcode	--	主体身份代码
+	,timeflag	--	
+	,lyjg	--	来源机构
+	,load_time	--	加载时间
+	,now() yxsj	--	运行时间
+from std_qfzggj_t_busi_aic_foodjyxk
+	where dt=(select max(dt) from std_qfzggj_t_busi_aic_foodjyxk)

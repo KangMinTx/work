@@ -1,0 +1,44 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-08 09:40:17
+--table_name : dm_cyxx_ggxx (高管信息)
+--内容描述:成员信息_高管信息1张表,dm_cyxx_ggxx(高管信息)
+--_********************************************************_
+truncate table dm_cyxx_ggxx;
+insert overwrite table dm_cyxx_ggxx
+select 
+	uuid --主键
+	,tyshxydm --统一社会信用代码
+	,ztsfdm --主体身份代码
+	,zzjgdm --组织机构代码
+	,zch --登记/注册号
+	,gsmc --公司名称
+	,ggzjlx --高管证件类型
+	,ggzjhm --高管证件号码
+	,ggxm --高管姓名
+    ,zwlx --职务类型
+	,zw --职务
+	,lyb --来源表
+	,lyjg --来源机构
+	,current_timestamp as yxsj --运行时间
+   from(
+select 
+	uuid --主键
+	,tyshxydm --统一社会信用代码
+	,ztsfdm --主体身份代码
+	,zzjgdm --组织机构代码
+	,zch --登记/注册号
+	,gsmc --公司名称
+	,ggzjlx --高管证件类型
+	,ggzjhm --高管证件号码
+	,ggxm --高管姓名
+    ,zwlx --职务类型
+	,zw --职务
+	,lyb --来源表
+	,lyjg --来源机构
+	,current_timestamp as yxsj --运行时间
+    ,row_number() over(partition by tyshxydm,zwlx,ggzjhm order by lyb desc) rn
+from dwd_cyxx_ggxx
+where dt=(select max(dt) from dwd_cyxx_ggxx)
+     )where rn=1;

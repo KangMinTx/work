@@ -1,0 +1,33 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-11 19:14:34
+--table_name : dm_zczb_frdkqq (法人贷款情况)
+
+--_********************************************************_
+truncate table dm_zczb_frdkqq;
+insert into table dm_zczb_frdkqq 
+select 
+uuid --主键 
+,ztsfdm --主体身份代码 
+,tyshxydm --统一社会信用代码 
+,zzjgdm --组织机构代码 
+,zch --登记/注册号 
+,gsmc --公司名称 
+,bank --贷款银行 
+,dkkh --贷款卡号 
+,dkje --贷款金额 
+,dksj --贷款时间 
+,dklv --贷款利率 
+,repay_interval --贷款截至时间 
+,yhbj --已归还本金 
+,yhlx --已归还利息 
+,dbjg --担保机构 
+,dbze --担保总额 
+,dbsxf --担保手续费 
+,xxlylx --信息来源类型 
+,lyb --来源表 
+,lyjg --来源机构 
+,current_timestamp yxsj --运行时间 
+from dwd_zczb_frdkqq
+where dt=(select max(dt) from  dwd_zczb_frdkqq);

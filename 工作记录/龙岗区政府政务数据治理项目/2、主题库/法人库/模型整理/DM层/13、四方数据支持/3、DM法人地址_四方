@@ -1,0 +1,31 @@
+--SparkSQL
+--_********************************************************_
+--author: machuang
+--create time: 2021-07-23 17:16:45
+--_********************************************************_
+insert overwrite table dm_frdzxx_sf
+SELECT  tyshxydm--统一社会信用代码 
+       ,zzjgdm--组织机构 
+       ,zch--注册号 
+       ,swdjh--税务登记号 
+       ,zh--企业名称 
+       ,house_code--房屋编码 
+       ,house_name--房屋名称 
+       ,building_code--楼栋编码 
+       ,building_name--楼栋名称 
+       ,district_bm--区域编码 
+       ,district--区域名称 
+       ,jdbm--街道编码 
+       ,jdmc--街道名称 
+       ,gridcode--网格编码 
+       ,grname--网格名称 
+       ,sqcode--社区编码 
+       ,sqname--社区名称 
+       ,jycs --经营场所
+       ,zbx--坐标X经度 
+       ,zby--坐标Y纬度 
+       ,lyb --来源表 
+       ,lyjg --来源机构 
+       ,yxsj --运行时间
+from dwd_frdzxx
+where dt=(select max(dt) from dwd_frdzxx);

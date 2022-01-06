@@ -1,0 +1,237 @@
+--SparkSQL
+--_********************************************************_
+--author: tanzhiming
+--create time: 2021-10-15 10:34:45
+--_********************************************************_
+
+drop table dm_frfm_dc;
+create table  dm_frfm_dc as
+select * from dm_jk_frfm_frlbbc where zxfmyf='2021-10' and jdmc='坂田'
+
+insert overwrite table  dm_jk_frfm_frlbbc 
+SELECT  DISTINCT tyshxydm --统一社会信用代码 
+       ,frmc --法人名称/字号 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,to_date(zxfmrq) zxfmrq --最新负面出现日期 
+       ,CASE WHEN (if(length(zxfmyf)=8,SUBSTR(zxfmyf,0,4) || '-' || SUBSTR(zxfmyf,4,2),zxfmyf)) !='' THEN (if(length(zxfmyf)=8,SUBSTR(zxfmyf,0,4) || '-' || SUBSTR(zxfmyf,4,2),zxfmyf))  
+	   ELSE null END zxfmyf --最新负面出现月份 
+       ,fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,fmms    --负面描述
+       ,substr(now(),1,19) as yxsj --运行时间 
+	from
+    (
+SELECT  DISTINCT nvl(m1.tyshxydm,m2.tyshxydm) tyshxydm --统一社会信用代码 
+       ,nvl(m1.frmc,m2.LGL_NAME) frmc --法人名称/字号 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,zxfmrq --最新负面出现日期 
+       ,zxfmyf --最新负面出现月份 
+       ,fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,fmms    --负面描述
+       ,yxsj --运行时间 
+from
+    (
+SELECT  DISTINCT b1.tyshxydm --统一社会信用代码 
+       ,cast(null as string) zzjgdm
+       ,gsmc frmc --法人名称/字号 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,qzrq zxfmrq --最新负面出现日期 
+       ,concat_ws("-",split(qzrq,'-')[0],split(qzrq,'-')[1]) zxfmyf --最新负面出现月份 
+       ,fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,zxqk fmms    --负面描述
+       ,now() yxsj --运行时间
+FROM dm_jk_frfm_xzqz b1
+left join (select tyshxydm,jycs gsdzxx from dm_jbxx_frdz ) b2
+on b1.tyshxydm=b2.tyshxydm
+
+union all
+
+/*欠费欠税欠薪*/
+SELECT  DISTINCT b1.tyshxydm --统一社会信用代码 
+       ,null zzjgdm
+       ,gsmc frmc --法人名称/字号 
+       ,sqdm --社区代码
+	   ,sqmc --社区名称 
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,fssj zxfmrq --最新负面出现日期 
+       ,concat_ws("-",split(fssj,'-')[0],split(fssj,'-')[1]) zxfmyf --最新负面出现月份 
+       ,fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,cast(null as string) fmms    --负面描述
+       ,now() yxsj --运行时间
+FROM dm_jk_frfm_qsqfqx b1
+left join (select tyshxydm,jycs gsdzxx from dm_jbxx_frdz ) b2
+on b1.tyshxydm=b2.tyshxydm
+
+union all
+/*经营异常*/
+SELECT  DISTINCT b1.tyshxydm --统一社会信用代码 
+       ,zzjgdm
+       ,gsmc frmc --法人名称/字号 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,zrrq zxfmrq --最新负面出现日期 
+       ,concat_ws("-",split(zrrq,'-')[0],split(zrrq,'-')[1]) zxfmyf --最新负面出现月份 
+       ,fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,nvl(jdwsnr,zrbt)fmms    --负面描述
+       ,now() yxsj --运行时间
+FROM dm_jk_frfm_jyyc b1
+left join (select tyshxydm,jycs gsdzxx from dm_jbxx_frdz ) b2
+on b1.tyshxydm=b2.tyshxydm
+
+union all
+/*司法案件*/
+SELECT  DISTINCT nvl(b1.tyshxydm,cast(null as string)) tyshxydm --统一社会信用代码 
+       ,nvl(b1.zzjgdm,cast(null as string)) zzjgdm
+       ,gsmc AS frmc --法人名称/字号 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,jarq zxfmrq --最新负面出现日期 
+       ,concat_ws("-",split(jarq,'-')[0],split(jarq,'-')[1]) zxfmyf --最新负面出现月份 
+       ,b1.fmxxlb fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,jaay fmms    --负面描述
+       ,now() yxsj --运行时间
+FROM dm_jk_frfm_sfaj b1
+left join (select tyshxydm,jycs gsdzxx from dm_jbxx_frdz ) b2
+on b1.tyshxydm=b2.tyshxydm
+
+union all
+/*事故隐患*/
+--先修改为sgfssj，让其能跑通
+SELECT  DISTINCT b1.tyshxydm --统一社会信用代码 
+       ,cast(null as string) zzjgdm
+       ,gsmc frmc --法人名称/字号 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,sgfssj zxfmrq --最新负面出现日期 
+       ,concat_ws("-",split(sgfssj,'-')[0],split(sgfssj,'-')[1]) zxfmyf --最新负面出现月份yhpcrq 
+       ,fmxxlb --负面信息类别
+       ,gsdzxx  --公司地址
+       ,sggk fmms    --负面描述 
+       ,now() yxsj --运行时间
+FROM dm_jk_frfm_sgyh b1
+left join (select tyshxydm,jycs gsdzxx from dm_jbxx_frdz ) b2
+on b1.tyshxydm=b2.tyshxydm
+
+union all
+/*
+1204:HHY
+失信企业筛选逻辑,根据统一社会信用代码,文书号进行去重
+*/
+SELECT  tyshxydm --统一社会信用代码 
+       ,zzjgdm 
+       ,frmc --法人名称/字号 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,zxfmrq --最新负面出现日期 
+       ,zxfmyf --最新负面出现月份 
+       ,fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,fmms    --负面描述
+       ,yxsj --运行时间
+FROM 
+(
+	SELECT  b1.tyshxydm --统一社会信用代码 
+	       ,zzjgdm 
+	       ,gsmc frmc --法人名称/字号 
+	       ,sqdm --社区代码 
+		   ,sqmc --社区名称
+	       ,jddm --街道代码
+		   ,jdmc --街道名称 
+	       ,cffbsj zxfmrq --最新负面出现日期 
+	       ,concat_ws("-",split(cffbsj,'-')[0],split(cffbsj,'-')[1]) zxfmyf --最新负面出现月份 
+	       ,fmxxlb --负面信息类别 
+           ,gsdzxx  --公司地址
+           ,cfsy fmms    --负面描述
+	       ,now() yxsj --运行时间 
+	       ,row_number() over(partition by xzcfjdwsh,b1.tyshxydm,gsmc,cffbsj ORDER BY cffbsj desc) rn
+	FROM dm_jk_frfm_qysx b1
+    left join (select tyshxydm,jycs gsdzxx from dm_jbxx_frdz ) b2
+    on b1.tyshxydm=b2.tyshxydm
+)
+WHERE rn=1  
+
+union all
+/*黑名单*/
+SELECT  DISTINCT b1.tyshxydm --统一社会信用代码 
+       ,zzjgdm
+       ,gsmc frmc --法人名称/字号 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,lrrq zxfmrq --最新负面出现日期 
+       ,concat_ws("-",split(lrrq,'-')[0],split(lrrq,'-')[1]) zxfmyf --最新负面出现月份 
+       ,fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,lrsy fmms    --负面描述
+       ,now() yxsj --运行时间
+FROM dm_jk_frfm_hmd b1
+left join (select tyshxydm,jycs gsdzxx from dm_jbxx_frdz ) b2
+on b1.tyshxydm=b2.tyshxydm
+
+union all
+/*行政处罚*/
+SELECT  DISTINCT b1.tyshxydm --统一社会信用代码 
+       ,zzjgdm
+       ,gsmc frmc --法人名称/字号 
+       ,sqdm --社区代码
+	   ,sqmc --社区名称 
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,cfsxq zxfmrq --最新负面出现日期 
+       ,concat_ws("-",split(cfsxq,'-')[0],split(cfsxq,'-')[1]) zxfmyf --最新负面出现月份 
+       ,fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,cfsy fmms    --负面描述
+       ,now() yxsj --运行时间
+FROM dm_jk_frfm_xzcf b1
+left join (select tyshxydm,jycs gsdzxx from dm_jbxx_frdz ) b2
+on b1.tyshxydm=b2.tyshxydm
+ 
+union all
+/*锁定限制企业*/       
+SELECT  DISTINCT b1.tyshxydm --统一社会信用代码 
+       ,cast(null as string) zzjgdm
+       ,gsmc frmc --法人名称/字号 
+       ,sqdm --社区代码 
+	   ,sqmc --社区名称
+       ,jddm --街道代码
+	   ,jdmc --街道名称 
+       ,xzkssj zxfmrq --最新负面出现日期 
+       ,concat_ws("-",split(xzkssj,'-')[0],split(xzkssj,'-')[1]) zxfmyf --最新负面出现月份 
+       ,fmxxlb --负面信息类别 
+       ,gsdzxx  --公司地址
+       ,xznr fmms    --负面描述
+       ,now() yxsj --运行时间
+FROM dm_jk_frfm_sdxzqy b1
+left join (select tyshxydm,jycs gsdzxx from dm_jbxx_frdz ) b2
+on b1.tyshxydm=b2.tyshxydm
+      
+    ) m1
+left join (select tyshxydm,zzjgdm,LGL_NAME  from dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) m2
+    on m1.zzjgdm=m2.zzjgdm 
+
+)where tyshxydm is not null;

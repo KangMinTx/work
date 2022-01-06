@@ -1,0 +1,46 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2021-01-13 14:32:16
+--_********************************************************_
+insert overwrite table dm_frk_dwmycbjfqk
+select
+dwbh              ,--单位编号
+zzjgdm              ,--组织机构代码
+dwmc              ,--单位名称
+gscbqk              ,--工伤参保情况
+ylcbqk              ,--医疗参保情况
+syucbqk              ,--生育参保情况
+ylsbqk              ,--养老参保情况
+dzzt              ,--到账状态
+jfdzn              ,--缴费到账年
+jfdzy              ,--缴费到账月
+jfdzr              ,--缴费到账日
+tbqsn              ,--投保起始年
+tbqsy              ,--投保起始月
+sbzt              ,--社保状态
+bz              ,--备注
+yxsj              ,--数据运行时间
+syecbqk              --失业参保情况
+from(
+select
+unit_sno dwbh              ,--单位编号
+zzjgdm zzjgdm              ,--组织机构代码
+gsmc dwmc              ,--单位名称
+lc_flag gscbqk              ,--工伤参保情况
+kc_flag ylcbqk              ,--医疗参保情况
+jc_flag syucbqk              ,--生育参保情况
+ic_flag ylsbqk              ,--养老参保情况
+account_flag dzzt              ,--到账状态
+account_year jfdzn              ,--缴费到账年
+account_month jfdzy              ,--缴费到账月
+account_date jfdzr              ,--缴费到账日
+stayear tbqsn              ,--投保起始年
+stamonth tbqsy              ,--投保起始月
+stastatus sbzt              ,--社保状态
+null bz              ,--备注
+substr(now(),1,19) yxsj              ,--数据运行时间
+mc_flag syecbqk              --失业参保情况
+,row_number()over(partition by unit_sno,gsmc,account_year,account_month order by account_month desc) rn
+from (select * from dwd_jbxx_frsbjbxx where dt=(select max(dt) from dwd_jbxx_frsbjbxx))b1)
+where rn=1;

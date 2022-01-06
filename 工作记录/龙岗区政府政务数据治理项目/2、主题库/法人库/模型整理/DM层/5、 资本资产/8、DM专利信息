@@ -1,0 +1,34 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-04 15:01:19.84
+--所属主题:资本资产
+--内容描述:专利信息1张表,加工至dm_zczb_zlxx(专利信息)
+
+--加载策略:全量
+--_********************************************************_
+truncate table dm_zczb_zlxx;
+
+insert into table dm_zczb_zlxx 
+select
+	uuid		--主键
+	,tyshxydm	--统一社会信用代码
+	,ztsfdm		--主体身份代码
+	,zzjgdm		--组织机构代码
+	,zch		--登记/注册号
+	,gsmc		--公司名称
+	,zlh		--专利号
+	,zlm		--专利名
+	,zllx		--专利类型
+	,dlr		--代理人
+	,zlzy		--专利摘要
+	,sqrq		--授权日期
+	,zlzt		--专利状态
+	,xxlylx		--信息来源类型
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+ from dwd_zczb_zlxx a
+ where a.dt=(select max(dt) from dwd_zczb_zlxx) 
+
+ 

@@ -1,0 +1,69 @@
+--SparkSQL
+--_********************************************************_
+--author: machuang
+--create time: 2021-07-22 19:38:46
+--_********************************************************_
+insert overwrite table dm_jbxx_frjcxx_sf
+select 
+      LGL_ID --法人唯一标识 
+       ,LGL_NAME --机构名称 
+       ,LGL_SHORT_NAME --机构简称 
+       ,LGL_ENGLISH_NAME --机构英文名称 
+       ,tyshxydm --统一社会信用代码 
+       ,zch --登记或注册号 
+       ,zzjgdm --组织机构代码 
+       ,LGL_ORGANIZATION_CODE --机构类型代码 
+       ,LGL_ORGANIZATION_NAME --机构类型
+       --,LEGAL_PERSON_NAME --法定代表人或负责人姓名 
+       --,LEGAL_PERSON_CARD_NO --法定代表人或负责人证件号码 
+       ,BUSINESS_SCOPE --经营范围 
+       ,ESTABLISH_DATE --成立日期 
+       ,OPERATE_STATE_TIME --经营期限自 
+       ,OPERATE_END_TIME --经营期限至
+	   /*========1223新增字段====================*/
+       ,hymldm  --行业门类代码 （0118新增）
+       ,hyml -- 行业门类
+	   ,ztdlbm--主体大类编码
+	   ,ztdl--主体大类
+       ,lsqymc -- 隶属企业名称
+       ,zczb   --注册资本
+	   ,lsqyzch -- 隶属企业注册号
+	   ,sbsszb -- 申报实收资本
+       ,bzdm    --币种代码
+	   ,bizhong -- 币种
+	   ,hydm -- 行业代码
+       ,hymc -- 行业名称（暂时空）
+	   ,jycs -- 经营场所
+	   ,njqk -- 年检情况
+	   ,ndbgxx -- 年度报告信息
+	   ,ssztlx -- 商事主体类型
+	   ,yyzt -- 企业状态
+	   /*===================*/
+       ,GLDM_CREATE_TIME --记录创建时间 
+       ,GLDM_UPDATE_TIME --记录更新时间 
+       --,LEGAL_PERSON_CARD_ID --法定代表人或负责人证件类型 
+       ,LGL_ENTSTAUS_NO --法人主体状态 
+       ,LGL_AUTHDATE --核准日期 
+       ,LGL_PBUITEM --许可经营项目 
+       ,ADMIN_ORG_UNIT_NO --登记管理部门代码 
+       ,ADMIN_ORG_UNIT --登记管理部门名称 
+       ,BUILDING_ID --楼栋编码 
+       ,HOUSE_ID --房屋编码 
+       ,ADDRESS_DETAIL --详细地址 
+       ,ZCDZ --注册地址 
+       ,ZCDZ_CODE --注册地统一地址编码 
+       ,JYDZ --经营地址 
+       ,JYDZ_CODE --经营地统一地址编码 
+       ,BGDZ --办公地址 
+       ,BGDZ_CODE --办公地址一地址编码 
+       ,SCDZ --生产地址 
+       ,SCDZ_CODE --生产地址一地址编码 
+       ,BRSJ --搬入时间 
+       ,BLSJ --搬离时间 
+       ,ZBX --坐标X 
+       ,ZBY --坐标Y 
+       ,lyb --来源表 
+       ,lyjg --来源机构 
+       ,yxsj --运行时间
+from  dwd_jbxx_frjcxx_sf 
+where dt=(select max(dt) from dwd_jbxx_frjcxx_sf);

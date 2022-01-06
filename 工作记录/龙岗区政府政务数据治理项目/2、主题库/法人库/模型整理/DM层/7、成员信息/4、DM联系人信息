@@ -1,0 +1,44 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-08 10:01:19.84
+--所属主题:成员信息_联系人信息
+--内容描述:成员信息_联系人信息(dwd层)1张表,加工至dm_cyxx_lxr(联系人信息)
+
+--加载策略:全量
+--_********************************************************_
+truncate table dm_cyxx_lxr;
+insert into table dm_cyxx_lxr 
+SELECT
+	 uuid			--主键
+	,tyshxydm		--统一社会信用代码
+	,ztsfdm			--主体身份代码
+	,zzjgdm			--组织机构代码
+	,zch			--登记/注册号
+	,gsmc			--公司名称
+	,lxrzjlx		--联系人证件类型
+	,(case when lxrzjh !='' then lxrzjh else null end) lxrzjh			--联系人证件号
+	,lxrlxfs		--联系人联系方式
+	,lxrxm			--联系人姓名
+	,lyb			--来源表
+	,lyjg			--来源机构
+	,current_timestamp yxsj			--运行时间
+   from(
+select
+	 uuid			--主键
+	,tyshxydm		--统一社会信用代码
+	,ztsfdm			--主体身份代码
+	,zzjgdm			--组织机构代码
+	,zch			--登记/注册号
+	,gsmc			--公司名称
+	,lxrzjlx		--联系人证件类型
+	,(case when lxrzjh !='' then lxrzjh else null end) lxrzjh			--联系人证件号
+	,lxrlxfs		--联系人联系方式
+	,lxrxm			--联系人姓名
+	,lyb			--来源表
+	,lyjg			--来源机构
+	,current_timestamp yxsj			--运行时间
+     ,row_number() over(partition by concat_ws('',tyshxydm,lxrzjh,lxrlxfs) order by lyb ) rn
+ from dwd_cyxx_lxr
+ where dt=(select max(dt) from dwd_cyxx_lxr)
+     )where rn=1;

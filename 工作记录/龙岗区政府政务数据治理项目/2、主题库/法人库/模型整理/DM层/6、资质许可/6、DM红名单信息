@@ -1,0 +1,22 @@
+--SparkSQL
+--_********************************************************_
+--author: lizheng
+--create time: 2021-12-21 16:46:37
+--_********************************************************_
+insert overwrite table dm_zzxk_hmdxx
+SELECT
+ztsfdm
+,tyshxydm
+,zzjgdm
+,gsmc
+,rzmc
+,rzbm
+,xydj
+,djrdsj
+,hyzl
+,zxbz
+,lyb
+,lyjg
+,now() yxsj
+from dwd_zzxk_hmdxx
+where dt=(select max(dt) from dwd_zzxk_hmdxx);

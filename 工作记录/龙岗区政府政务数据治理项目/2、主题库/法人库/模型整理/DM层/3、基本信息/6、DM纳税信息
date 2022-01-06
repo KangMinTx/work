@@ -1,0 +1,40 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-12-11 10:23:07
+--修改人: TZM
+--_********************************************************_
+truncate table dm_jbxx_frdz;
+insert into table dm_jbxx_frdz 
+select  
+		distinct
+		t1.tyshxydm--统一社会信用代码 
+       ,t1.zzjgdm--组织机构 
+       ,t1.zch--注册号 
+       ,t1.swdjh--税务登记号 
+       ,t1.zh--企业名称 
+       ,t1.house_code--房屋编码 
+       ,t1.house_name--房屋名称 
+       ,t1.building_code--楼栋编码 
+       ,t1.building_name--楼栋名称 
+       ,t1.district_bm--区域编码 
+       ,t1.district--区域名称 
+       ,case when jycs like '%南坑社区%' then '440307003' else jdbm end as jdbm--街道编码 
+       ,case when jycs like '%南坑社区%' then '坂田'else jdmc end as jdmc--街道名称 
+       ,t1.gridcode--网格编码 
+       ,t1.grname--网格名称 
+       ,case when jycs like '%南坑社区%' then '440307003008' else t1.sqcode end as sqcode--社区编码 
+       ,case when jycs like '%南坑社区%' then '南坑' else t1.sqname end as sqname--社区名称 
+       ,t1.zbx--坐标X经度 
+       ,t1.zby--坐标Y纬度 
+       ,t1.jycs--经营场所
+       ,t1.lyb --来源表 
+       ,t1.lyjg --来源机构 
+       ,current_timestamp yxsj --运行时间
+from dwd_frdzxx t1 
+where t1.dt=(select max(dt) from dwd_frdzxx)
+
+
+
+	
+			

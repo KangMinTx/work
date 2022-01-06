@@ -1,0 +1,53 @@
+--SparkSQL
+--_********************************************************_
+--author: TZM
+--create time: 2020-12-08 11:10:14
+--所属主题:生产经营_项目信息
+--内容描述:生产经营_项目信息(dwd层)1张表,加工至dm_scjy_xmxx(项目信息)
+--加载策略:全量
+--_********************************************************_	
+--修改时间：2021-03-17
+--修改项目开始时间，项目完成时间的格式为YYYY-MM-DD hh24:mi:ss
+truncate table dm_scjy_xmxx;		
+insert into table  dm_scjy_xmxx 
+select
+uuid() uuid           ,--主键
+tyshxydm           ,--统一社会信用代码
+ztsfdm           ,--主体身份代码
+zzjgdm           ,--组织机构代码
+zch           ,--登记/注册号
+gsmc           ,--公司名称
+xm_cgbh           ,--项目\成果编号
+xm_cgmc           ,--项目\成果名称
+xmztz           ,--项目总投资
+xmlxr           ,--项目联系人
+lxfs           ,--联系方式
+xmkssj as   xmkssj         ,--项目开始时间
+xmwcsj as   xmwcsj        ,--项目完成时间
+xmsm           ,--项目说明
+xxlylx           ,--信息来源类型
+lyb           ,--来源表
+lyjg           ,--来源机构
+current_timestamp yxsj           --运行时间
+from (select 
+		distinct 
+		tyshxydm           ,--统一社会信用代码
+		ztsfdm           ,--主体身份代码
+		zzjgdm           ,--组织机构代码
+		zch           ,--登记/注册号
+		gsmc           ,--公司名称
+		xm_cgbh           ,--项目\成果编号
+		xm_cgmc           ,--项目\成果名称
+		round(xmztz,2) xmztz          ,--项目总投资
+		xmlxr           ,--项目联系人
+		lxfs           ,--联系方式
+		xmkssj           ,--项目开始时间
+		xmwcsj           ,--项目完成时间
+		xmsm           ,--项目说明
+		xxlylx           ,--信息来源类型
+		lyb           ,--来源表
+		lyjg           --来源机构
+    from dwd_scjy_xmxx
+where dt=(select max(dt) from dwd_scjy_xmxx)
+)
+

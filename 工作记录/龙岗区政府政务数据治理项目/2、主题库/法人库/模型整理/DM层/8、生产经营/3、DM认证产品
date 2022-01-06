@@ -1,0 +1,33 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-08 11:01:19.84
+--所属主题:生产经营_认证产品
+--内容描述:生产经营_认证产品(dwd层)1张表,加工至dm_scjy_rzcp(认证产品)
+--加载策略:全量
+--_********************************************************_
+truncate table dm_scjy_rzcp;
+insert into table dm_scjy_rzcp 
+select
+	uuid			--主键
+	,b2.tyshxydm		--统一社会信用代码
+	,b2.ztsfdm			--主体身份代码
+	,b2.zzjgdm			--组织机构代码
+	,b2.zch			--登记/注册号
+	,b1.lgl_name gsmc			--公司名称
+	,b2.promodel		--产品规格型号
+	,b2.proname		--产品名称
+	,b2.fileno			--证书编号
+	,b2.gettitle		--获得称号
+	,b2.valdate		--有效期限
+	,b2.lyb			--来源表
+	,b2.lyjg			--来源机构
+	,current_timestamp yxsj		--运行时间
+ from(select * from   dwd_jbxx_frjcxx where dt=(select max(dt) from dwd_jbxx_frjcxx)) b1
+inner join (select * from  dwd_scjy_rzcp   where dt=(select max(dt) from dwd_scjy_rzcp))b2
+on trim(b1.tyshxydm)=trim(b2.tyshxydm);
+
+
+
+
+ 

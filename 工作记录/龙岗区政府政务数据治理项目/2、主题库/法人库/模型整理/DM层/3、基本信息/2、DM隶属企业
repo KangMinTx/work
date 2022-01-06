@@ -1,0 +1,23 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-11-27 11:24:29
+--0106 qymc 字段 -> gsmc 企业名称字段修改为公司名称
+--_********************************************************_
+truncate table dm_jbxx_lsqy;
+insert into table dm_jbxx_lsqy
+select
+tyshxydm             ,--统一社会信用代码
+zzjgdm             ,--组织机构代码
+zch             ,--注册号
+gsmc             ,--企业名称
+(case when lsqyzch !='' then lsqyzch else null end) lsqyzch            ,--隶属企业注册号
+(case when lsqymc !='' then lsqymc else null end)  lsqymc          ,--隶属企业名称
+ssztlx             ,--商事主体类型
+jyfw             ,--经营范围
+clrq             ,--成立日期
+lyb             ,--来源表
+lyjg             ,--来源机构
+CURRENT_TIMESTAMP as yxsj   --运行时间
+from dwd_jbxx_lsqy
+where dt=(select max(dt) from dwd_jbxx_lsqy) and tyshxydm is not null;

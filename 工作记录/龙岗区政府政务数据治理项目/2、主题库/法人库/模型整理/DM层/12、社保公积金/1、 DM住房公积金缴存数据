@@ -1,0 +1,32 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-11-26 16:19:28
+--修改人: TZM
+--修改时间:2020-11-28
+--修改内容:补充社会统一信用代码为空的
+--_********************************************************_
+truncate table dm_jbxx_zfgjjjc;
+insert into table   dm_jbxx_zfgjjjc
+select
+	a.tyshxydm             ,--统一社会信用代码
+	a.zch             ,--注册号
+	a.zzjgdm             ,--组织机构代码
+	dwgjjh             ,--公积金号
+	gsmc             ,--公司名称
+	gszcdz             ,--工商注册地址
+	frdbrxm             ,--法定代表人
+	frdbrzjlx             ,--法人代表证件类型
+	frdbrzjhm             ,--法人代表证件号
+	dwkhdate             ,--开户时间
+	gjjjcjzdate             ,--缴存截止时间
+	ljjce             ,--累计缴存额
+	j24y             ,--近12个月缴存(时间/人数/金额)
+	dwrjjcjs             ,--单位人均缴存基数
+	j24ydwzhzt             ,--近12个月单位账户状态
+	a.xxlylx             ,--信息来源类型
+	a.lyb             ,--来源表
+	a.lyjg             ,--来源机构
+	now() yxsj             --运行时间
+from dwd_jbxx_zfgjjjc a
+where a.dt=(select max(dt) from dwd_jbxx_zfgjjjc)  and tyshxydm is not null
