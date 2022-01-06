@@ -1,0 +1,33 @@
+--SparkSQL
+--_********************************************************_
+--author: lly
+--create time: 2020-11-22 14:32:22
+--_********************************************************_
+
+--select * from std_qrlzyj_qrlzyjhzdzzbysccrdzyjszg limit 1000;
+--select * from dwd_zzry_nlzzjbxx_zyjnzs_cs limit 1000;
+
+insert overwrite table dwd_zzry_nlzzjbxx_zyjnzs_cs partition (dt='${DayBeforeStartTime}')
+SELECT  '身份证' AS zjlx --证件类型
+,sfzjhm AS zjhm --证件号码
+,xm --姓名
+,ryssdq --人员所属地区
+,xl --系列
+,null AS zsbh --证书编号
+,null AS  zslx    --证书类型
+,zymc --专业名称
+,zgmc --资格名称
+,null AS zsdj --证书等级
+,qdfs --取得方式
+,qdsj  --取得时间
+,pwhmc  --评委会名称
+,fzjg --发证机关
+,cjgzsj --参加工作时间
+,xgzdw  --现工作单位
+,'权威' AS xxlylx --信息来源类型
+,lyb  --来源表
+,lyjg  --来源机构
+,CURRENT_TIMESTAMP AS yxrq  --运行时间
+FROM std_qrlzyj_qrlzyjhzdzzbysccrdzyjszg t1 
+WHERE t1.dt=( 
+SELECT  MAX(dt) from std_qrlzyj_qrlzyjhzdzzbysccrdzyjszg)

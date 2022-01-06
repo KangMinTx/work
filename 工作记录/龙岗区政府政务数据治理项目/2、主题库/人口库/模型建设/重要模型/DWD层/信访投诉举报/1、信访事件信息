@@ -1,0 +1,70 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-14 16:01:19.84
+--所属主题:信访事件
+--内容描述:信访事件1张表,加工至dwd_sssf_xfsjxx(信访事件)
+--加载策略:全量
+--_********************************************************_
+--truncate table dwd_sssf_xfsjxx;
+
+insert overwrite table dwd_sssf_xfsjxx partition (dt='${DayBeforeStartTime}')
+select
+	 uuid		--主键
+	,xfbh		--信访编号
+	,xjjb		--信件级别
+	,wxxjlx		--网信信件类型
+	,sjly		--数据来源
+	,blfs		--办理方式
+	,djsj		--登记时间
+	,sfdd		--上访地点
+	,jcqk		--检查情况
+	,spzt		--审批状态
+	,clzt		--处理状态
+	,jfsfmdpc	--接访是否矛盾排查
+	,jfsfsfss	--接访是否涉法涉诉
+	,jfsfldjf	--接访是否领导接访
+	,sfpdbst		--是否派代表商谈
+	,jtf			--集体访
+	,sfyj		--是否越级
+	,ldzt		--亮灯状态
+	,xbjzsj		--限办截止时间
+	,hbsx		--回报时限
+	,xjclwcsj	--信件处理完成时间
+	,mycd		--满意程度
+	,lczt		--流程状态
+	,gksj		--公开时间
+	,'std_qxfj_visit_contents' lyb			--来源表
+	,'区信访局' lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+ from (
+	select
+		
+		resourceid uuid		--主键
+		,visitnum xfbh		--信访编号
+		,visitlevel_name xjjb		--信件级别
+		,nettype_name wxxjlx		--网信信件类型
+		,sourcetype_name sjly		--数据来源
+		,handletype_name blfs		--办理方式
+		,djsj djsj		--登记时间
+		,lf_petitionaddress sfdd		--上访地点
+		,lf_situation jcqk		--检查情况
+		,approvestatus_name spzt		--审批状态
+		,prostatus_name clzt		--处理状态
+		,lf_iscontra_name jfsfmdpc	--接访是否矛盾排查
+		,lf_islaw_name jfsfsfss	--接访是否涉法涉诉
+		,lf_sleader_name jfsfldjf	--接访是否领导接访
+		,lf_discuss sfpdbst		--是否派代表商谈
+		,lf_collective_name jtf			--集体访
+		,lf_leapfrog_name sfyj		--是否越级
+		,lamp_name ldzt		--亮灯状态
+		,xbjzsj xbjzsj		--限办截止时间
+		,dc_timelimit hbsx		--回报时限
+		,finsh_time xjclwcsj	--信件处理完成时间
+		,fc_satisfied_name mycd		--满意程度
+		,wfstatus_name lczt		--流程状态
+		,public_time gksj		--公开时间
+	from std_qxfj_visit_contents
+	where dt=(select max(dt) from std_qxfj_visit_contents)
+ )
+ 

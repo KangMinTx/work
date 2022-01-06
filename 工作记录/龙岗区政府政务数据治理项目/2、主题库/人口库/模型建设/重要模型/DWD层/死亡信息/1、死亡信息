@@ -1,0 +1,213 @@
+--Spark SQL
+--_********************************************************_
+--author: lgrkk
+--create time: 2020-07-29 18:26:02
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS dwd_sw_swjbxx (
+    zjlx STRING COMMENT '证件类型',
+    zjhm STRING COMMENT '证件号码',
+    xm STRING COMMENT '姓名',
+    xbdm STRING COMMENT '性别代码',
+    xb STRING COMMENT '性别',
+    gjdm STRING COMMENT '国籍代码',
+    gj STRING COMMENT '国籍',
+    mzdm STRING COMMENT '民族代码',
+    mz STRING COMMENT '民族',
+    csrq STRING COMMENT '出生日期',
+    hjszd STRING COMMENT '户籍所在地',
+    hjshxdm STRING COMMENT '户籍省市县代码',
+    swzmbh STRING COMMENT '死亡证明编号',
+    swyydm STRING COMMENT '死亡原因代码',
+    swyy STRING COMMENT '死亡原因',
+    sfxgsw STRING COMMENT '是否宣告死亡',
+    swrq STRING COMMENT '死亡日期',
+    swxxlyjgmc STRING COMMENT '死亡信息来源机构名称',
+    jmswbzzbh STRING COMMENT '居民死亡殡葬证编号',
+    jsxm STRING COMMENT '家属姓名',
+    jssfzhm STRING COMMENT '家属身份证号码',
+    jsdz STRING COMMENT '家属地址',
+    hjzxrq STRING COMMENT '户籍注销日期',
+    hjzxpcsjgdm STRING COMMENT '户籍注销派出所机构代码',
+    hjzxpcsmc STRING COMMENT '户籍注销派出所名称',
+    hhrq STRING COMMENT '火化日期',
+    hhdah STRING COMMENT '火化档案号',
+    hhzh STRING COMMENT '火化证号',
+    hhbyg STRING COMMENT '火化殡仪馆',
+    tzrq STRING COMMENT '土葬日期',
+    mxzhm STRING COMMENT '墓穴证号码',
+    lyb STRING COMMENT '来源表',
+    yxsj TIMESTAMP COMMENT '运行时间',
+    lyjg STRING COMMENT '来源机构'
+)
+COMMENT '死亡基本信息'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/29 19:31:21
+--#模型说明： 
+--#加工方式： JOIN
+--#目标表  ： dwd_sw_swjbxx(死亡基本信息)
+--#源表    ： std_zfw_lgqsyrkxx(龙岗区实有人口信息详情)、std_mz_jmhhxx(居民火化信息)、std_wjw_rkjbxx(人口基本信息)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table dwd_sw_swjbxx partition (dt='${DayBeforeStartTime}')
+select    
+   
+	a.zjlx ,
+     a.zjhm,
+	a.xm as xm, -- 姓名
+	coalesce(b.xbdm,d.xbdm) as xbdm, -- 性别代码
+	coalesce(b.xb,d.xb) as xb, -- 性别
+	coalesce(b.gjdm,d.gjdm) as gjdm, -- 国籍代码
+	coalesce(b.gj,d.gj) as gj, -- 国籍
+	coalesce(b.mzdm,d.mzdm) as mzdm, -- 民族代码
+	coalesce(b.mz,d.mz) as mz, -- 民族
+	coalesce(b.csrq,d.csrq) as csrq, -- 出生日期
+	coalesce(b.hkszd,d.hjdxz) as hjszd, -- 户籍所在地
+	d.hjddm as hjshxdm, -- 户籍省市县代码
+	a.swzmbh as swzmbh, -- 死亡证明编号
+	a.swyydm as swyydm, -- 死亡原因代码
+	a.swyymc as swyy, -- 死亡原因
+	if(a.lyjg='法院',"是","否") as sfxgsw, -- 是否宣告死亡
+	a.swrq as swrq, -- 死亡日期
+	a.swxxlyjgmc as swxxlyjgmc, -- 死亡信息来源机构名称
+	'' as jmswbzzbh, -- 居民死亡殡葬证编号
+	'' as jsxm, -- 家属姓名
+	'' as jssfzhm, -- 家属身份证号码
+	'' as jsdz, -- 家属地址
+	'' as hjzxrq, -- 户籍注销日期
+	'' as hjzxpcsjgdm, -- 户籍注销派出所机构代码
+	'' as hjzxpcsmc, -- 户籍注销派出所名称
+	c.hhsj as hhrq, -- 火化日期
+	c.hhdabh as hhdah, -- 火化档案号
+	c.hhzh as hhzh, -- 火化证号
+	c.hhdwmc as hhbyg, -- 火化殡仪馆
+	'' as tzrq, -- 土葬日期
+	'' as mxzhm, -- 墓穴证号码
+	a.lyb as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-mm-dd hh:mm:ss') as yxsj, -- 运行时间
+	a.lyjg as lyjg -- 来源机构
+from(
+	select 
+	 t.zjlx, -- 证件类型
+	 t.zjhm, -- 证件号码
+	 t.xm, -- 姓名
+	 t.swzmbh, -- 死亡证明编号
+	 t.swbklx, -- 死亡报卡类型
+	 t.swxxlyjgdm, -- 死亡信息来源机构代码
+	 t.swxxlyjgmc, -- 死亡信息来源机构名称
+	 t.swrq, -- 死亡日期
+	 t.swyydm, -- 死亡原因代码
+	 t.swyymc, -- 死亡原因名称
+	 t.lyjg, -- 来源机构
+	 t.lyb, -- 来源表
+	 t.qwbz -- 权威标志(1-权威，0-参考)
+	from 
+	(
+	select      
+		tt.zjlx, -- 证件类型
+		tt.zjhm, -- 证件号码
+		tt.xm, -- 姓名
+		tt.swzmbh, -- 死亡证明编号
+		tt.swbklx, -- 死亡报卡类型
+		tt.swxxlyjgdm, -- 死亡信息来源机构代码
+		tt.swxxlyjgmc, -- 死亡信息来源机构名称
+		tt.swrq, -- 死亡日期
+		tt.swyydm, -- 死亡原因代码
+		tt.swyymc, -- 死亡原因名称
+		tt.lyjg, -- 来源机构
+		tt.lyb, -- 来源表
+		tt.qwbz, -- 权威标志(1-权威，0-参考)
+		row_number() over (partition by coalesce(tt.zjhm,'') order by tt.yxj  asc ) as rn
+	from 
+		(
+		select 
+			zjlx as zjlx, -- 证件类型
+			zjhm as zjhm, -- 证件号码
+			xm as xm, -- 姓名
+			'' as swzmbh, -- 
+			'' as swbklx, -- 
+			'' as swxxlyjgdm, -- 
+			lyjg as swxxlyjgmc, -- 死亡信息来源机构名称
+			zxrq as swrq, -- 死亡日期
+			'' as swyydm, -- 
+			'' as swyymc, -- 
+			lyjg as lyjg, -- 来源机构
+			"std_wjw_rkjbxx" as lyb, -- 来源表
+			"0" as qwbz, -- 权威标志(1-权威，0-参考)
+			1 as yxj   -- 优先级
+		from std_wjw_rkjbxx a  	join (select max(dt) maxdt from std_wjw_rkjbxx ) b on a.dt=b.maxdt and a.zxyy='4'	
+		union all
+		select 
+			zjlx as zjlx, -- 证件类型
+			zjhm as zjhm, -- 证件号码
+			xm as xm, -- 姓名
+			'' as swzmbh, -- 
+			'' as swbklx, -- 
+			'' as swxxlyjgdm, -- 
+			lyjg as swxxlyjgmc, -- 死亡信息来源机构名称
+			swrq as swrq, -- 死亡日期
+			'' as swyydm, -- 
+			'' as swyymc, -- 
+			lyjg as lyjg, -- 来源机构
+			"std_zfw_lgqsyrkxx" as lyb, -- 来源表
+			"0" as qwbz, -- 权威标志(1-权威，0-参考)
+			2 as yxj   -- 优先级
+		from std_zfw_lgqsyrkxx a join (select max(dt) maxdt from std_zfw_lgqsyrkxx ) b on a.dt=b.maxdt where swrq is not null and  swrq <>""
+		union all
+		select 
+			zjlx as zjlx, -- 证件类型
+			zjhm as zjhm, -- 证件号码
+			xm as xm, -- 姓名
+			hhdabh as swzmbh, -- 火化档案编号
+			'' as swbklx, -- 
+			'' as swxxlyjgdm, -- 
+			lyjg as swxxlyjgmc, -- 死亡信息来源机构名称
+			coalesce(swsj,hhsj) as swrq, -- 死亡时间
+			'' as swyydm, -- 
+			'' as swyymc, -- 
+			lyjg as lyjg, -- 来源机构
+			"std_smz_swrkxx107215" as lyb, -- 来源表
+			"0" as qwbz, -- 权威标志(1-权威，0-参考)
+			3 as yxj   -- 优先级
+		from std_mz_jmhhxx a join  (select max(dt) maxdt from std_mz_jmhhxx) b on a.dt=b.maxdt
+ ) tt ) t where t.rn=1)	a	
+left join(
+	select 
+		xbdm, -- 性别代码
+		xb, -- 性别
+		gjdm, -- 国籍代码
+		gj, -- 国籍
+		mzdm, -- 民族代码
+		mz, -- 民族
+		csrq, -- 出生日期
+		hkszd, -- 户籍所在地
+		zjhm, -- 证件号码
+		0   --结尾键
+	from std_zfw_lgqsyrkxx a join  	(select max(dt) maxdt from std_zfw_lgqsyrkxx) b on a.dt=b.maxdt )	b   on a.zjhm=b.zjhm	
+left join(
+	select 
+		hhsj, -- 火化日期
+		hhdabh, -- 火化档案编号
+		hhzh, -- 火化证号
+		hhdwmc, -- 火化单位名称
+		zjhm, -- 证件号码
+		0   --结尾键
+	from std_mz_jmhhxx a join  	(select max(dt) maxdt from std_mz_jmhhxx) b on a.dt=b.maxdt	) c   on a.zjhm=c.zjhm	
+left join(
+	select 
+		hjddm, -- 户籍地代码
+		zjhm, -- 证件号码
+		xb, -- 性别
+		xbdm, -- 性别代码
+		xm, -- 姓名
+		mz, -- 民族
+		gj, -- 国籍代码
+		gjdm, -- 国籍
+		hjdxz, -- 户籍地详址
+		csrq, -- 出生日期
+		mzdm, -- 民族代码
+		0   --结尾键
+	from std_wjw_rkjbxx a join	(select max(dt) maxdt from std_wjw_rkjbxx) b on a.dt=b.maxdt)	d   on a.zjhm=d.zjhm	
+;

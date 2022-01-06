@@ -1,0 +1,73 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2021-01-28 15:49:26
+--table_name : dwd_jbxx_csxx(出生信息)
+--use_tables : std_swsjkwyh_szsjhsyzm_11_0829170526 (深圳市计划生育证明)
+--取数逻辑   : 数据取于 计划生育证明，且父亲母亲证件号均在基本登记信息中的记录
+--去重逻辑   : 根据被办理人身份证，去重
+--_********************************************************_
+insert overwrite table dwd_jbxx_csxx partition (dt='${DayBeforeStartTime}')
+SELECT  t1.bblrcode                            AS bblrcode --被办理人身份证 
+       ,t1.jszh                                AS jszh --计生证号 
+       ,t1.zmtt                                AS zmtt --证明抬头 
+       ,t1.wname                               AS wname --女方姓名 
+       ,t1.wcode                               AS wcode --女方证件号码 
+       ,t1.mname                               AS mname --男方姓名 
+       ,t1.mcode                               AS mcode --男方证件号码 
+       ,t1.hjddz                               AS hjddz --女方户籍地 
+       ,t1.xjzddz                              AS xjzddz --女方现居住地 
+       ,t1.hyzk                                AS hyzk --婚姻状况 
+       ,t1.jsqk                                AS jsqk --计生情况 
+       ,t1.zns                                 AS zns --子女数 
+       ,t1.znqk                                AS znqk --子女情况 
+       ,t1.wfjhsyzc                            AS wfjhsyzc --违反计划生育政策 
+       ,case when substr(substr(jsclrq,instr(jsclrq,'-')+1),instr(substr(jsclrq,instr(jsclrq,'-')+1),'-')+1)>substr(current_date,3,2)
+ 		then to_date('19'||substr(substr(jsclrq,instr(jsclrq,'-')+1),instr(substr(jsclrq,instr(jsclrq,'-')+1),'-')+1)||'-'||
+ 					replace(substr(substr(jsclrq,instr(jsclrq,'-')+1),1,2),'月','')||'-'||
+ 					substr(jsclrq,1,2))
+ 		else to_date('20'||substr(substr(jsclrq,instr(jsclrq,'-')+1),instr(substr(jsclrq,instr(jsclrq,'-')+1),'-')+1)||'-'||
+					 replace(substr(substr(jsclrq,instr(jsclrq,'-')+1),1,2),'月','')||'-'||
+ 					substr(jsclrq,1,2)) end                              AS jsclrq --接受处理日期 
+       ,t1.qtsmqk                              AS qtsmqk --其他需要说明情况 
+       ,t1.bblr                                AS bblr --被办理人 
+       ,t1.blyt                                AS blyt --办理用途 
+       ,t1.jbr                                 AS jbr --经办人 
+       ,t1.jbrdh                               AS jbrdh --联系电话 
+       ,t1.jbdw                                AS jbdw --经办单位 
+       ,case when blrq is not null then 
+		to_date(case when substr(substr(blrq,instr(blrq,'-')+1),instr(substr(blrq,instr(blrq,'-')+1),'-')+1)<=21 then 
+		'20'||substr(substr(blrq,instr(blrq,'-')+1),instr(substr(blrq,instr(blrq,'-')+1),'-')+1)
+		||'-'||substr(substr(blrq,instr(blrq,'-')+1),1,instr(substr(blrq,instr(blrq,'-')+1),'月')-1)
+		||'-'|| substr(blrq,1,instr(blrq,'-')-1) 
+		else 
+		'19'||substr(substr(blrq,instr(blrq,'-')+1),instr(substr(blrq,instr(blrq,'-')+1),'-')+1)
+		||'-'||substr(substr(blrq,instr(blrq,'-')+1),1,instr(substr(blrq,instr(blrq,'-')+1),'月')-1)
+		||'-'|| substr(blrq,1,instr(blrq,'-')-1) 
+		end) else null end     AS blrq --办理日期 
+       ,t1.status                              AS status --状态 
+       ,t1.cert_seq                            AS cert_seq --证明流水号 
+       ,t1.lyjg                                AS lyjg --来源机构名称 
+       ,'std_swsjkwyh_szsjhsyzm_11_0829170526' AS lyb --来源表名称 
+       ,CURRENT_TIMESTAMP                      AS yxsj --运行时间
+FROM 
+(
+	SELECT  bblrcode,jszh,zmtt,wname,wcode,mname,mcode,hjddz,xjzddz,hyzk,jsqk,zns,znqk,wfjhsyzc,jsclrq,qtsmqk,bblr,blyt,jbr,jbrdh,jbdw
+,case when blrq like '%月%' then blrq
+when blrq like '%JAN%' then  replace(blrq,'JAN','1月 ')
+when blrq like '%FEB%' then replace(blrq,'FEB','2月 ')
+when blrq like '%MAR%' then replace(blrq,'MAR','3月 ') 
+when blrq like '%APR%' then  replace(blrq,'APR','4月 ')
+when blrq like '%MAY%' then replace(blrq,'MAY','5月 ')
+when blrq like '%JUN%' then replace(blrq,'JUN','6月 ')
+when blrq like '%JUL%' then replace(blrq,'JUL','7月 ')
+when blrq like '%AUG%' then replace(blrq,'AUG','8月 ')
+when blrq like '%SEP%' then replace(blrq,'SEP','9月 ')
+when blrq like '%OCT%' then replace(blrq,'OCT','10月 ')
+when blrq like '%NOV%' then replace(blrq,'NOV','11月 ')
+when blrq like '%DEC%' then replace(blrq,'DEC','12月 ')   end blrq,status,cert_seq,lyjg,row_number() over(partition by bblrcode order by blrq desc) rn
+	FROM std_swsjkwyh_szsjhsyzm_11_0829170526
+	WHERE dt=( SELECT  MAX(dt)
+	FROM std_swsjkwyh_szsjhsyzm_11_0829170526) AND zfyy is not null 
+) t1 where rn=1 and exists (select zjhm from dwd_jbxx_jbdjxx t2 where t1.wcode=t2.zjhm)
+and exists(select zjhm from  dwd_jbxx_jbdjxx t3 where t1.mcode=t3.zjhm)

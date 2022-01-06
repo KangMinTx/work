@@ -1,0 +1,287 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-14 17:42:26
+--应客户需求将id字段增加到模型里
+--_********************************************************_
+--与ZFW_RESIDENT1表一一对应，去除在ZFW_RESIDENT_LOGOUT1表中存在的数据
+insert overwrite table dwd_jbxx_syrkxx partition (dt='${DayBeforeStartTime}')
+select
+	id
+    ,zjlx
+	,zjhm
+	,bm
+	,xm
+	,gj
+	,gatbz
+	,if(length(csny)=21,substr(csny,1,19),csny)
+	,xb
+	,mz
+	,jg
+	,zjxy
+	,lsrq
+	,hyzk
+	,chrq
+	,swrq
+	,jkzk
+	,byyx
+	,hy
+	,zhy
+	,zc
+	,ysr
+	,sg
+	,zy
+	,`by`
+	,xx
+	,xw
+	,yhzgx
+	,hjlx
+	,yhj
+	,hklx
+	,hkxz
+	,sfds
+	,whcd
+	,zzmm
+	,hkszd
+	,gllb
+	,xzqhid
+	,sftj
+	,gxbz
+	,zjhm2
+	,xgljgid
+	,lkyy
+	,ckqk
+	,bydt
+	,sydt
+	,yx
+	,sj
+	,zzdh
+	,zslb
+	,gzdw
+	,dwdz
+	,bgdh
+	,jzfs
+	,jzlx
+	,sfbljzz
+	,qfjg
+	,jzddz
+	,jzdyzbm
+	,sfczwn
+	,jzfwid
+	,qyid
+	,jzfwdz
+	,fwbm
+	,jzdzx
+	,rzsj
+	,lksj
+	,sfczr
+	,sfgzdzgx
+	,sfgzbljzz
+	,zzsy
+	,blr
+	,blsj
+	,xgz
+	,xgsj
+	,cjsj
+	,cjz
+	,bz
+	,djr
+	,djsj
+	,crsj
+	,yxx
+	,yxrq
+	,lyb
+	,lyjg
+	,yxsj
+from
+(
+select
+   b1.id id ,--主键id
+	b1.cardtypeid_name zjlx                   ,--证件类型
+	b1.cardno zjhm                   ,--证件号码
+	b1.alias bm                   ,--别名
+	b1.name xm                   ,--姓名
+	b1.nationality_name gj                   ,--国籍
+	case when b1.gat_remark=1 then '香港人'
+  	when b1.gat_remark=2 then '台湾人' 
+    when  b1.gat_remark=3 then '澳门人'
+    else null end gatbz                   ,--港澳台标志
+	b1.birthday csny                   ,--出生年月
+	b1.sex_name xb                   ,--性别
+	b1.nationid_name mz                   ,--民族
+	b1.nativeplace_name jg                   ,--籍贯
+	b1.beliefid_name zjxy                   ,--宗教信仰
+	b1.intime1 lsrq                   ,--来深日期
+	b1.marryid_name hyzk                   ,--婚姻状况
+	b1.marrydate chrq                   ,--初婚日期
+	b1.diedate swrq                   ,--死亡日期
+	b1.health_name jkzk                   ,--健康状况
+	b1.finishschool byyx                   ,--毕业院校
+	b1.tradeid_name hy                   ,--行业
+	b1.jobid_name zhy                   ,--职业
+	b1.techtitleid_name zc                   ,--职称
+	b1.salary ysr                   ,--月收入
+	b1.height sg                   ,--身高
+	b1.speciality zy                   ,--专业
+	b1.escuageid_name `by`                   ,--兵役
+	b1.bloodtypeid_name xx                   ,--血型
+	b1.degree_name xw                   ,--学位
+	b1.leaserelationid_name yhzgx                   ,--与户主关系
+	b1.registerplace_name hjlx                   ,--户籍类型
+	b1.refisteraddresspre yhj                   ,--原户籍
+	b1.registerplace_name hklx                   ,--户口类型
+	b1.registertype hkxz                   ,--户口性质
+	b1.singlekid sfds                   ,--是否独生
+	b1.edulevelid_name whcd                   ,--文化程度
+	b1.politicsid_name zzmm                   ,--政治面貌
+	b1.registeraddress hkszd                   ,--户口所在地
+	b1.managetype gllb                   ,--管理类别
+	b1.qhareaid xzqhid                   ,--行政区划id
+	b1.isstat sftj                   ,--是否统计
+	b1.update_key_name gxbz                   ,--更新标志
+	b1.cardno2 zjhm2                   ,--证件号码2
+	b1.newareaid xgljgid                   ,--新管理机构id
+	b1.outreason lkyy                   ,--离开原因
+	b1.cardholders ckqk                   ,--持卡情况
+	b1.contraceptive_name bydt                   ,--避孕动态
+	b1.procreatedynamic_name sydt                   ,--生育动态
+	b1.email yx                   ,--邮箱
+	b1.mtel sj                   ,--手机
+	b1.tel zzdh                   ,--住宅电话
+	b1.domiciletype_name zslb                   ,--住所类别
+	b1.company gzdw                   ,--工作单位
+	b1.companyaddress dwdz                   ,--单位地址
+	b1.companytel bgdh                   ,--办公电话
+	b1.bidefashion_name jzfs                   ,--居住方式
+	b1.residenttype_name jzlx                   ,--居住类型
+	b1.istransact_name sfbljzz                   ,--是否办理居住证
+	b1.issuingorgan qfjg                   ,--签发机关
+	b1.resideinaddress jzddz                   ,--居住地地址
+	b1.resideinpostalcode jzdyzbm                   ,--居住地邮政编码
+	b1.ishouseout sfczwn                   ,--是否出租屋内
+	b1.houseid jzfwid                   ,--居住房屋id
+	b1.areaid qyid                   ,--区域id
+	b1.homeaddress jzfwdz                   ,--居住房屋地址
+	b1.housecode fwbm                   ,--房屋编码
+	b1.homeaddressnew jzdzx                   ,--居住地址新
+	b1.checkindate rzsj                   ,--入住时间
+	b1.leavedate lksj                   ,--离开时间
+	b1.islessee sfczr                   ,--是否承租人
+	b1.isaddressnot_name sfgzdzgx                  ,--是否告知地址改写
+	b1.isinhabitation_name sfgzbljzz                   ,--是否告知办理居住证
+	b1.leasereasonid_name zzsy                   ,--暂住事由
+	b1.transactor blr                   ,--办理人
+	b1.transacttime blsj                   ,--办理时间
+	b1.updater xgz                   ,--修改者
+	b1.updatetime xgsj                   ,--修改时间
+	b1.createtime cjsj                   ,--创建时间
+	b1.creator cjz                   ,--创建者
+	b1.remarks bz                   ,--备注
+	b1.registrar djr                   ,--登记人
+	b1.addtime djsj                   ,--登记时间
+	b1.inserttime crsj                   ,--插入时间
+	if(b1.isvalid=0,"暂离",if(b1.isvalid=1 or b1.isvalid is null,"有效",null)) yxx                   ,--有效性
+	b1.effectivedate yxrq                   ,--有效日期
+	b1.lyb  lyb                    ,--来源表
+	b1.lyjg lyjg                   ,--来源机构
+	now() yxsj                   ,--运行时间
+	row_number() over (partition by b1.cardno order by b1.updatetime desc) rank
+	from  (
+			select 
+      			id,
+				cardtypeid,
+				cardtypeid_name                    ,--证件类型
+				cardno                    ,--证件号码
+				alias                    ,--别名
+				name                    ,--姓名
+				nationality_name                    ,--国籍
+				gat_remark                    ,--港澳台标志
+				birthday                    ,--出生年月
+				sex_name                    ,--性别
+				nationid_name                    ,--民族
+				nativeplace_name                    ,--籍贯
+				beliefid_name                    ,--宗教信仰
+				intime1                    ,--来深日期
+				marryid_name                    ,--婚姻状况
+				marrydate                    ,--初婚日期
+				diedate                    ,--死亡日期
+				health_name                    ,--健康状况
+				finishschool                    ,--毕业院校
+				tradeid_name                    ,--行业
+				jobid_name                    ,--职业
+				techtitleid_name                    ,--职称
+				salary                    ,--月收入
+				height                    ,--身高
+				speciality                    ,--专业
+				escuageid_name                    ,--兵役
+				bloodtypeid_name                    ,--血型
+				degree_name                    ,--学位
+				leaserelationid_name                    ,--与户主关系
+				registerplace_name                    ,--户籍类型
+				refisteraddresspre                    ,--原户籍
+				registerplace_name                    ,--户口类型
+				registertype                    ,--户口性质
+				singlekid                    ,--是否独生
+				edulevelid_name                    ,--文化程度
+				politicsid_name                    ,--政治面貌
+				registeraddress                    ,--户口所在地
+				managetype                    ,--管理类别
+				qhareaid                    ,--行政区划id
+				isstat                    ,--是否统计
+				update_key_name                    ,--更新标志
+				cardno2                    ,--证件号码2
+				newareaid                    ,--新管理机构id
+				outreason                    ,--离开原因
+				cardholders                    ,--持卡情况
+				contraceptive_name                    ,--避孕动态
+				procreatedynamic_name                    ,--生育动态
+				email                    ,--邮箱
+				mtel                    ,--手机
+				tel                    ,--住宅电话
+				domiciletype_name                    ,--住所类别
+				company                    ,--工作单位
+				companyaddress                    ,--单位地址
+				companytel                    ,--办公电话
+				bidefashion_name                    ,--居住方式
+				residenttype_name                    ,--居住类型
+				istransact_name                    ,--是否办理居住证
+				issuingorgan                    ,--签发机关
+				resideinaddress                    ,--居住地地址
+				resideinpostalcode                    ,--居住地邮政编码
+				ishouseout                    ,--是否出租屋内
+				houseid                    ,--居住房屋id
+				areaid                    ,--区域id
+				homeaddress                    ,--居住房屋地址
+				housecode                    ,--房屋编码
+				homeaddressnew                    ,--居住地址新
+				checkindate                    ,--入住时间
+				leavedate                    ,--离开时间
+				islessee                    ,--是否承租人
+				isaddressnot_name                   ,--是否告知地址改写
+				isinhabitation_name                    ,--是否告知办理居住证
+				leasereasonid_name                    ,--暂住事由
+				transactor                    ,--办理人
+				transacttime                    ,--办理时间
+				updater                    ,--修改者
+				updatetime                    ,--修改时间
+				createtime                    ,--创建时间
+				creator                    ,--创建者
+				remarks                    ,--备注
+				registrar                    ,--登记人
+				addtime                    ,--登记时间
+				inserttime                    ,--插入时间
+				isvalid                  ,--有效性
+				effectivedate                    ,--有效日期
+				'std_qzfw_zfw_resident1' lyb                   ,--来源表
+				lyjg                   --来源机构
+			from std_qzfw_zfw_resident1 
+			where dt=(select max(dt) from std_qzfw_zfw_resident1)
+			) b1  
+/*	where not exists(
+						select 
+							cardtypeid
+							,cardno 
+						from std_qzfw_zfw_resident_logout1 b2 
+						where dt=(select max(dt) from std_qzfw_zfw_resident_logout1)  and b1.cardno=b2.cardno
+					) */
+)where rank=1

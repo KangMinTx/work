@@ -1,0 +1,46 @@
+--SparkSQL
+--_********************************************************_
+--author: 林志洪
+--create time: 2020-11-22 15:15:14
+--table_name:dwd_jbxx_sltz_info
+--use_tables:std_qwzfw_zfw_resident1(区委政法委-龙岗区实有人口信息详情)
+--取数逻辑:直接从std_qwzfw_zfw_resident1单表获取数据
+--去重逻辑：取修改时间updatetime最新的信息
+--_********************************************************_
+
+insert overwrite table dwd_jbxx_sltz_info partition (dt='${DayBeforeStartTime}')
+SELECT  
+cardtypeid --证件类别
+,cardno --证件号码
+,health --健康状况
+,'' --血型代码bloodtypeid为姓名
+,'' --血型
+,'' --体重
+,height --身高
+,'' --胸围
+,'' --左眼裸视力
+,'' --右眼裸视力
+,'' --左眼矫正视力
+,''yyjzsl --右眼矫正视力
+,''zctl --左侧听力
+,''yctl --右侧听力
+,''sfsm --是否色盲
+,'std_qzfw_zfw_resident1'  as lyb  --来源表
+,'区委政法委'  as lyjg    --来源机构
+,CURRENT_TIMESTAMP  as yxrq    --运行时间
+from (
+  select 
+  a.cardtypeid_name as cardtypeid --证件类别
+ ,a.cardno  as  cardno       --证件号码
+ ,a.health as  health        --健康状况
+ ,a.height  as height        --体重
+ ,a.updatetime  as updatetime--修改时间
+ ,a.dt as dt                 --分区
+ ,ROW_NUMBER() OVER (PARTITION BY a.cardno ORDER BY a.updatetime desc)  rn
+  from std_qzfw_zfw_resident1 a
+where a.dt=(select max(dt) from std_qzfw_zfw_resident1) )
+where rn = 1
+;
+
+
+ 

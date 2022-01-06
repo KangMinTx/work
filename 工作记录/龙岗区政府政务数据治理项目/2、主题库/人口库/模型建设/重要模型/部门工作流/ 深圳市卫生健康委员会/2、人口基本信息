@@ -1,0 +1,191 @@
+--Spark SQL
+--_********************************************************_
+--author: lgrkk
+--create time: 2020-07-28 14:09:52
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS std_wjw_rkjbxx (
+    rkbsid string COMMENT '人口标识ID',
+    zjhm string COMMENT '证件号码',
+    zjlx string COMMENT '证件类型',
+    zzmm string COMMENT '政治面貌',
+    xb string COMMENT '性别',
+    xbdm string COMMENT '性别代码',
+    xm string COMMENT '姓名',
+    mz string COMMENT '民族',
+    mzdm string COMMENT '民族代码',
+    whcd string COMMENT '文化程度',
+    csrq string COMMENT '出生日期',
+    chrq string COMMENT '初婚日期',
+    pobsid string COMMENT '配偶标识ID',
+    pogmsfhm string COMMENT '配偶公民身份号码',
+    poxm string COMMENT '配偶姓名',
+    gzdw string COMMENT '工作单位',
+    gj string COMMENT '国籍',
+    gjdm string COMMENT '国籍代码',
+    hjddm string COMMENT '户籍地代码',
+    hjdxz string COMMENT '户籍地详址',
+    hkxz string COMMENT '户口性质',
+    hybdrq string COMMENT '婚姻变动日期',
+    hyzk string COMMENT '婚姻状况',
+    lxdh string COMMENT '联系电话',
+    gdsjsfwzlzrq string COMMENT '广东省计生服务证领证日期',
+    gdsjsfwzzjhm string COMMENT '广东省计生服务证证件号码',
+    dqyxbycsbm string COMMENT '当前有效避孕措施编码',
+    dqyxbycslsrq string COMMENT '当前有效避孕措施落实日期',
+    ezs string COMMENT '儿子数',
+    nes string COMMENT '女儿数',
+    zns string COMMENT '子女数',
+    zxzncsrq string COMMENT '最小子女出生日期',
+    lgrzrq string COMMENT '领光荣证日期',
+    lldzrq string COMMENT '领流动证日期',
+    lcbdrq string COMMENT '流出本地日期',
+    ldzhm string COMMENT '流动证号码',
+    ldzyzrq string COMMENT '流动证验证日期',
+    ldzyxrq string COMMENT '流动证有效日期',
+    lrbdrq string COMMENT '流入本地日期',
+    nrjhsyjttbfzzddrq string COMMENT '纳入计划生育家庭特别扶助制度的日期',
+    nrncbfjhsyjtjlfzzddrq string COMMENT '纳入农村部分计划生育家庭奖励扶助制度的日期',
+    bcyy string COMMENT '不查原因',
+    yccs string COMMENT '应查次数',
+    sfbjlk string COMMENT '是否标记离开',
+    sfbjqc string COMMENT '是否标记迁出',
+    sfds string COMMENT '是否独生',
+    sfycdx string COMMENT '是否应查对象',
+    xjzddm string COMMENT '现居住地代码',
+    xjzdxz string COMMENT '现居住地详址',
+    zy string COMMENT '职业',
+    zxrq string COMMENT '注销日期',
+    zxyy string COMMENT '注销原因(1 超龄 4 死亡)',
+    bz string COMMENT '备注',
+    lyb string COMMENT '来源表',
+    lyjg string COMMENT '来源机构',
+    yxsj timestamp COMMENT '运行时间'
+)
+COMMENT '卫健委_人口基本信息'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/28 13:54:43
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_wj_rkjbxx(卫健委_人口基本信息)
+--#源表    ： std_swj_pop_person(人口基本信息)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_wjw_rkjbxx partition (dt='${DayBeforeStartTime}')
+select      
+	guid as rkbsid, -- 人口标识ID
+	identity_number as zjhm, -- 证件号码
+	identity_type as zjlx, -- 证件类型
+	political_landscape as zzmm, -- 政治面貌
+	gender as xb, -- 性别
+	xbdm as xbdm, -- 性别代码
+    if(person_name rlike '^[\u4E00-\u9FA5]+$',regexp_replace(NVL(person_name,''),'[\\s]+|[\\u3000]+|[\,]',''),person_name)as xm , -- 姓名
+	ethnic_group as mz, -- 民族
+    mzdm as mzdm, -- 民族代码
+	education_level as whcd, -- 文化程度
+	birthday as csrq, -- 出生日期
+	first_marriage_date as chrq, -- 初婚日期
+	spouse_guid as pobsid, -- 配偶标识ID
+	spouse_identity_number as pogmsfhm, -- 配偶公民身份号码
+	spouse_name as poxm, -- 配偶姓名
+	work_unit as gzdw, -- 工作单位
+	nationality as gj, -- 国籍
+	gjdm as gjdm, -- 国籍代码
+	household_division as hjddm, -- 户籍地代码
+	household_address as hjdxz, -- 户籍地详址
+	household_type as hkxz, -- 户口性质
+	marriage_change_date as hybdrq, -- 婚姻变动日期
+	marital_status as hyzk, -- 婚姻状况
+	contact_number as lxdh, -- 联系电话
+	provincial_cert_issue_date as gdsjsfwzlzrq, -- 广东省计生服务证领证日期
+	provincial_cert_number as gdsjsfwzzjhm, -- 广东省计生服务证证件号码
+	contraception_measures as dqyxbycsbm, -- 当前有效避孕措施编码
+	implement_measure_date as dqyxbycslsrq, -- 当前有效避孕措施落实日期
+	son_number as ezs, -- 儿子数
+	girl_number as nes, -- 女儿数
+	children_number as zns, -- 子女数
+	last_child_birthday as zxzncsrq, -- 最小子女出生日期
+	one_child_cert_date as lgrzrq, -- 领光荣证日期
+	national_cert_issue_date as lldzrq, -- 领流动证日期
+	move_out_date as lcbdrq, -- 流出本地日期
+	national_cert_number as ldzhm, -- 流动证号码
+	certification_verify_date as ldzyzrq, -- 流动证验证日期
+	national_cert_effective_date as ldzyxrq, -- 流动证有效日期
+	move_in_date as lrbdrq, -- 流入本地日期
+	fertility_reward_date as nrjhsyjttbfzzddrq, -- 纳入计划生育家庭特别扶助制度的日期
+	rural_fertility_reward_date as nrncbfjhsyjtjlfzzddrq, -- 纳入农村部分计划生育家庭奖励扶助制度的日期
+	not_check_reason as bcyy, -- 不查原因
+	should_check as yccs, -- 应查次数
+	mark_left as sfbjlk, -- 是否标记离开
+	mark_move_out as sfbjqc, -- 是否标记迁出
+	only_child as sfds, -- 是否独生
+	check_object as sfycdx, -- 是否应查对象
+	living_division as xjzddm, -- 现居住地代码
+	living_address as xjzdxz, -- 现居住地详址
+	employment_status as zy, -- 职业
+	cancel_date as zxrq, -- 注销日期
+	cancel_reason as zxyy, -- 注销原因(1 超龄 4 死亡)
+	remarks as bz, -- 备注
+	'std_swj_pop_person' as lyb, -- 来源表
+	lyjg as lyjg, -- 来源机构
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj -- 运行时间
+from
+(select 
+      guid, -- 人口标识ID
+      identity_number, -- 证件号码
+      identity_type, -- 证件类型
+      political_landscape, -- 政治面貌
+      gender, -- 性别
+      xbdm, -- 性别代码
+      person_name, -- 姓名
+      ethnic_group, -- 民族
+      mzdm,--民族代码
+      education_level, -- 文化程度
+      birthday, -- 出生日期
+      first_marriage_date, -- 初婚日期
+      spouse_guid, -- 配偶标识ID
+      spouse_identity_number, -- 配偶公民身份号码
+      spouse_name, -- 配偶姓名
+      work_unit, -- 工作单位
+      nationality, -- 国籍
+      gjdm, -- 国籍代码
+      household_division, -- 户籍地代码
+      household_address, -- 户籍地详址
+      household_type, -- 户口性质
+      marriage_change_date, -- 婚姻变动日期
+      marital_status, -- 婚姻状况
+      contact_number, -- 联系电话
+      provincial_cert_issue_date, -- 广东省计生服务证领证日期
+      provincial_cert_number, -- 广东省计生服务证证件号码
+      contraception_measures, -- 当前有效避孕措施编码
+      implement_measure_date, -- 当前有效避孕措施落实日期
+      son_number, -- 儿子数
+      girl_number, -- 女儿数
+      children_number, -- 子女数
+      last_child_birthday, -- 最小子女出生日期
+      one_child_cert_date, -- 领光荣证日期
+      national_cert_issue_date, -- 领流动证日期
+      move_out_date, -- 流出本地日期
+      national_cert_number, -- 流动证号码
+      certification_verify_date, -- 流动证验证日期
+      national_cert_effective_date, -- 流动证有效日期
+      move_in_date, -- 流入本地日期
+      fertility_reward_date, -- 纳入计划生育家庭特别扶助制度的日期
+      rural_fertility_reward_date, -- 纳入农村部分计划生育家庭奖励扶助制度的日期
+      not_check_reason, -- 不查原因
+      should_check, -- 应查次数
+      mark_left, -- 是否标记离开
+      mark_move_out, -- 是否标记迁出
+      only_child, -- 是否独生
+      check_object, -- 是否应查对象
+      living_division, -- 现居住地代码
+      living_address, -- 现居住地详址
+      employment_status, -- 职业
+      cancel_date, -- 注销日期
+      cancel_reason, -- 注销原因(1 超龄 4 死亡)
+      remarks, -- 备注
+      lyjg, -- 来源机构
+      row_number() over (partition by identity_number  order by uptime desc) as rn 
+from ods_swsjkwyh_pop_person  a join (select max(dt) maxdt from ods_swsjkwyh_pop_person) b on a.dt=b.maxdt)t
+where t.rn <= 1;	

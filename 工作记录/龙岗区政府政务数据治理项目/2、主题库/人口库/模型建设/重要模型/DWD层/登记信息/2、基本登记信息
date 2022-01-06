@@ -1,0 +1,561 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-16 15:01:19.84
+--所属主题:基本信息_基本登记信息
+--内容描述:基本登记信息1张表,加工至dwd_jbxx_jbdjxx(基本登记信息)
+--加载策略:全量
+--修改内容:
+--			TZM 增加字段籍贯
+--	   0127 He  增加字段年龄，文化程度（由于政法委实有人口信息中的学历字典表缺失，当前只使用了市人社局-个人基本信息）
+--     0128 He  逻辑变更 01 出租屋管理办的内地人口登记表  减去  内地人口信息注销表 再纳入到基本登记信息  02
+--注释掉子查询内distinct
+--晴风 2021-03-24
+--
+--修改人:TZM
+--修改时间:2021-04-25 10:40
+--修改内容:增加太极融合的ppu_zfw_fact_detail_info_hjbd表源,取不同于zfw_resident1的数据作为补充
+
+--修改人:TZM
+--修改时间:2021-04-26 14:10
+--修改内容:增加(低保资金发放表)qmzjdbzjffb
+--(低收入居民养育帮扶金给付)qmzjdsrjmyybfjgf
+--(生活无着救助人员台卡)qmzjshwzjzrytk
+--(残疾人信息)dwd_shhd_cjrxx的数据作为补充
+
+--修改人：He
+--修改时间：2021-05-10
+--修改内容：增加（广东省公共场所体温上报信息_粤康码）ods_tpr_record_new107706
+--				（上报信息表v20）ods_sdz_sbxxb109361 
+--			的数据做为补充
+
+
+--修改人：TZM
+--修改时间：2021-05-13
+--修改内容：剔除出租屋管理办的内地人口登记表,市公安局de深圳户藉人口基本信息2016只做补充,不作为表源,重新调整下表数据权威优先级
+--上报信息表跟粤康码只限制区域为龙岗的				
+--_********************************************************_
+--truncate table dwd_jbxx_jbdjxx;
+insert overwrite table dwd_jbxx_jbdjxx partition (dt='${DayBeforeStartTime}')
+select
+	nvl(a.zjlb,b.zjlb) zjlb					--证件类别
+	,upper(a.zjhm) zjhm									--证件号码
+	,nvl(a.xm,b.xm) xm	 					--姓名
+	,nvl(a.cym,b.cym) cym					--曾用名
+	,nvl(a.xb,b.xb) xb						--性别
+	,nvl(a.mz,b.mz) mz						--民族
+	,nvl(a.csrq,b.csrq)						--出生日期
+	,a.nl  nl							 	--年龄
+	,a.whcd 								--文化程度
+	,nvl(a.gj,b.gj) gj						--国籍
+	,nvl(a.jg,b.jg) jg    					--籍贯
+	,nvl(a.csdgjhdq,b.csdgjhdq) csdgjhdq	--出生地国家和地区
+	,nvl(a.csdssx,b.csdssx) csdssx			--出生地省市县
+	,a.zzmm									--政治面貌
+	,a.zjxy									--宗教信仰
+	,a.byzk									--兵役状况
+	,nvl(a.hklx,b.hklx) hklx				--户口类型
+	,a.sjdjsj								--数据登记时间
+	,a.lyb									--来源表
+	,a.lyjg									--来源机构
+	,a.yxsj									--运行时间
+from(
+	select
+		zjlb	--证件类别
+		,zjhm	--证件号码
+		,xm		--姓名
+		,cym	--曾用名
+		,xb		--性别
+		,mz		--民族
+		,if(length(csrq)=8,substr(csrq,1,4) || '-' || substr(csrq,5,2) || '-' || substr(csrq,7,2) || ' 00:00:00',if(length(csrq)=10,csrq || ' 00:00:00',csrq))	csrq--出生日期
+		,case when csrq is not null then cast(substr(current_date,1,4)-substr(csrq,1,4) as string)  else null end as nl --年龄
+		,whcd --文化程度
+		,gj		--国籍
+		,jg     --籍贯
+		,csdgjhdq	--出生地国家和地区
+		,csdssx		--出生地省市县
+		,zzmm		--政治面貌
+		,zjxy		--宗教信仰
+		,byzk		--兵役状况
+		,hklx		--户口类型
+		,sjdjsj		--数据登记时间
+		,lyb			--来源表
+		,lyjg		--来源机构
+		,yxsj		--运行时间
+	from
+	(
+	select
+		t1.zjlb	--证件类别
+		,t1.zjhm	--证件号码
+		,t1.xm		--姓名
+		,t1.cym	--曾用名
+		,t1.xb		--性别
+		,t1.mz		--民族
+		,t1.csrq	--出生日期
+		,t1.gj		--国籍
+		,t2.education_level_name as whcd --文化程度
+		,t1.jg     --籍贯
+		,t1.csdgjhdq	--出生地国家和地区
+		,t1.csdssx		--出生地省市县
+		,t1.zzmm		--政治面貌
+		,t1.zjxy		--宗教信仰
+		,t1.byzk		--兵役状况
+		,t1.hklx		--户口类型
+		,t1.sjdjsj		--数据登记时间
+		,t1.lyb			--来源表
+		,t1.lyjg		--来源机构
+		,current_timestamp yxsj		--运行时间
+		,row_number() over(partition by upper(t1.zjhm) order by case when lyb='std_qzfw_zfw_resident1,std_qgaj_ppu_zfw_fact_detail_info_hjbd' then '1' 
+		when lyb='std_gafj_spmj_tenementinfo,std_qgaj_ppu_zfw_fact_detail_info_hjbd' then '2'
+		when lyb='std_qgaj_ppu_zfw_fact_detail_info_hjbd' then '3'
+		when lyb='ods_sdz_sbxxb109361' then '4'
+		when lyb='ods_tpr_record_new107706' then '5'
+		when lyb='std_qmzj_qmzjdbzjffb' then '6'
+		when lyb='std_qmzj_qmzjdsrjmyybfjgf' then '7'
+		when lyb='std_qmzj_qmzjshwzjzrytk' then '8'
+		when lyb='dwd_shhd_cjrxx' then '9'
+		else '9' end asc
+		,t1.sjdjsj desc) rn
+	from (
+	
+	--std_qzfw_zfw_resident1
+		select
+			a.cardtypeid_name zjlb	--证件类别
+			,a.cardno zjhm	--证件号码
+			,nvl(a.name,c.name) xm		--姓名
+			,null cym	--曾用名
+			,a.sex_name xb		--性别
+			,a.nationid_name mz		--民族
+			,a.birthday csrq	--出生日期
+			,a.nationality_name gj		--国籍
+			,a.nativeplace jg           --籍贯
+			,a.registeraddress csdgjhdq	--出生地国家和地区
+			,a.registeraddress csdssx		--出生地省市县
+			,a.politicsid_name zzmm		--政治面貌
+			,a.beliefid_name zjxy		--宗教信仰
+			,a.escuageid_name byzk		--兵役状况
+			,person_type_name hklx		--户口类型
+			,nvl(a.addtime,c.addtime) sjdjsj		--数据登记时间
+			,'std_qzfw_zfw_resident1,std_qgaj_ppu_zfw_fact_detail_info_hjbd' lyb			--来源表
+			,'区委政法委' lyjg		--来源机构
+		from 
+			(
+				select
+					cardtypeid_name
+					,cardno
+					,sex_name
+					,nationid_name 
+					,birthday
+					,nationality_name
+					,nativeplace
+					,registeraddress
+					,politicsid_name
+					,beliefid_name
+					,escuageid_name
+					,addtime
+					,name
+				from
+					(select 
+						cardtypeid_name
+						,cardno
+						,sex_name
+						,nationid_name nationid_name
+						,to_date(birthday) birthday
+						,'中国' nationality_name
+						,nativeplace_name nativeplace
+						,registeraddress
+						,politicsid_name
+						,beliefid_name
+						,escuageid_name
+						,to_date(addtime) addtime
+						,name
+						,row_number() over(partition by cardno order by updatetime desc) rn
+						from std_qzfw_zfw_resident1 
+						where dt=(select max(dt) from  std_qzfw_zfw_resident1)  and cardno is not null and (cast(islogout as int)=0 or islogout is null)
+					) a 
+					where rn=1
+			) a
+		left join
+		(select
+				card_no
+				,person_type_name
+      			,name
+         		,addtime
+				from
+					(
+					select  
+						card_no 
+						,person_type_name
+						,row_number() over(partition by card_no order by addtime desc) rn
+                     	,name
+         				,addtime
+						from std_qgaj_ppu_zfw_fact_detail_info_hjbd a
+						where dt=(select max(dt) from  std_qgaj_ppu_zfw_fact_detail_info_hjbd) 
+					) a 
+					where rn=1
+			)c
+		on trim(c.card_no)=trim(a.cardno) 
+	
+	union   
+	--std_qgaj_ppu_zfw_fact_detail_info_hjbd
+		select
+			a.cardtypeid_name zjlb	--证件类别
+			,a.cardno zjhm	--证件号码
+			,a.name xm		--姓名
+			,null cym	--曾用名
+			,a.sex_name xb		--性别
+			,a.nationid_name mz		--民族
+			,a.birthday csrq	--出生日期
+			,a.nationality_name gj		--国籍
+			,a.nativeplace jg           --籍贯
+			,a.registeraddress csdgjhdq	--出生地国家和地区
+			,a.registeraddress csdssx		--出生地省市县
+			,a.politicsid_name zzmm		--政治面貌
+			,a.beliefid_name zjxy		--宗教信仰
+			,a.escuageid_name byzk		--兵役状况
+			,a.hklx hklx		--户口类型
+			,a.addtime sjdjsj		--数据登记时间
+			,'std_qgaj_ppu_zfw_fact_detail_info_hjbd' lyb			--来源表
+			,'区公安局' lyjg		--来源机构
+		from 
+			(
+				select
+					cardtypeid_name
+					,cardno
+					,sex_name
+					,nationid_name 
+					,birthday
+					,nationality_name
+					,nativeplace
+					,registeraddress
+					,politicsid_name
+					,beliefid_name
+					,escuageid_name
+					,addtime
+					,name
+					,hklx
+				from
+					(select  
+						null cardtypeid_name
+						,card_no cardno
+						,case when substr(card_no,17,1)%2=0 then '女' when (substr(card_no,17,1)+1)%2=0 then '男' else  null end  sex_name
+						,null nationid_name
+						,case when length(trim(card_no))=18 then concat(substr(card_no,7,4),'-',substr(card_no,11,2),'-',substr(card_no,13,2))  
+						else null end
+						birthday
+						,'中国' nationality_name
+						,null nativeplace
+						,null registeraddress
+						,null politicsid_name
+						,null beliefid_name
+						,null escuageid_name
+						,addtime addtime
+						,name
+						,person_type_name hklx
+						,row_number() over(partition by card_no order by addtime desc) rn
+						from std_qgaj_ppu_zfw_fact_detail_info_hjbd a
+						where dt=(select max(dt) from  std_qgaj_ppu_zfw_fact_detail_info_hjbd)  and not exists (select 1 from (select
+													cardno
+												from
+													(select 
+														cardno
+														,row_number() over(partition by cardno order by updatetime desc) rn
+														from std_qzfw_zfw_resident1 
+														where dt=(select max(dt) from  std_qzfw_zfw_resident1)  and cardno is not null and (cast(islogout as int)=0 or islogout is null)
+													) a 
+													where rn=1) b
+				where  trim(a.card_no)=trim(b.cardno))
+					) a 
+					where rn=1
+			) a
+	
+	union	
+	--std_gafj_spmj_tenementinfo
+		select
+			a.cardtypeid_name zjlb	--证件类别
+			,a.cardno zjhm	--证件号码
+			,nvl(a.name,c.name) xm		--姓名
+			,null cym	--曾用名
+			,a.sex_name xb		--性别
+			,a.nationid_name mz		--民族
+			,a.birthday csrq	--出生日期
+			,a.nationality_name gj		--国籍
+			,null jg           --籍贯
+			,a.registeraddress csdgjhdq	--出生地国家和地区
+			,a.registeraddress csdssx		--出生地省市县
+			,a.politicsid_name zzmm		--政治面貌
+			,a.beliefid_name zjxy		--宗教信仰
+			,a.escuageid_name byzk		--兵役状况
+			,c.person_type_name hklx		--户口类型
+			,nvl(a.addtime,c.addtime) sjdjsj		--数据登记时间
+			,'std_gafj_spmj_tenementinfo,std_qgaj_ppu_zfw_fact_detail_info_hjbd' lyb			--来源表
+			,'龙岗公安分局' lyjg		--来源机构
+		from 
+		(
+				select
+					cardtypeid_name
+					,cardno
+					,sex_name
+					,nationid_name 
+					,birthday
+					,nationality_name
+					,registeraddress
+					,politicsid_name
+					,beliefid_name
+					,escuageid_name
+					,addtime
+					,name
+				from
+					(select 
+	--					distinct 
+						cardtypeid_name
+						,cardno
+						,sex_name
+						,nationid_name 
+						,to_date(birthday,'yyyyMMdd') birthday
+						,nationality nationality_name
+						,registeraddress
+						,politicsid_name
+						,null beliefid_name
+						,null escuageid_name
+						,to_date(addtime) addtime
+						,name
+						,row_number() over(partition by cardno order by updatetime desc) rn
+						from std_gafj_spmj_tenementinfo 
+						where dt=(select max(dt) from  std_gafj_spmj_tenementinfo) and cast(isvalid as int)=1 and (cast(islogout as int)=0 or islogout is null) and cardno is not null
+					) a
+					where rn=1
+			) a
+		left join
+		(select
+				card_no
+				,person_type_name
+      			,name
+         		,addtime
+				from
+					(
+					select  
+						card_no 
+						,person_type_name
+						,row_number() over(partition by card_no order by addtime desc) rn
+                     	,name
+         				,addtime
+						from std_qgaj_ppu_zfw_fact_detail_info_hjbd a
+						where dt=(select max(dt) from  std_qgaj_ppu_zfw_fact_detail_info_hjbd) 
+					) a 
+					where rn=1
+			)c
+		on trim(c.card_no)=trim(a.cardno) 
+	
+	union 
+	--std_qmzj_qmzjdbzjffb
+	--std_qmzj_qmzjdsrjmyybfjgf
+	--std_qmzj_qmzjshwzjzrytk
+	--dwd_shhd_cjrxx
+		select
+			a.cardtypeid_name zjlb	--证件类别
+			,a.cardno zjhm	--证件号码
+			,a.name xm		--姓名
+			,null cym	--曾用名
+			,a.sex_name xb		--性别
+			,a.nationid_name mz		--民族
+			,a.birthday csrq	--出生日期
+			,a.nationality_name gj		--国籍
+			,a.nativeplace jg           --籍贯
+			,a.registeraddress csdgjhdq	--出生地国家和地区
+			,a.registeraddress csdssx		--出生地省市县
+			,a.politicsid_name zzmm		--政治面貌
+			,a.beliefid_name zjxy		--宗教信仰
+			,a.escuageid_name byzk		--兵役状况
+			,a.hklx hklx		--户口类型
+			,a.addtime sjdjsj		--数据登记时间
+			,lyb			--来源表
+			,lyjg		--来源机构
+		from(
+					select  
+						null cardtypeid_name
+						,sfzhm cardno
+						,case when length(sfzhm)=18 and substr(sfzhm,17,1)%2=0 then '女' when length(sfzhm)=18 and  (substr(sfzhm,17,1)+1)%2=0 then '男' else  null end  sex_name
+						,null nationid_name
+						,case when length(trim(sfzhm))=18 then concat(substr(sfzhm,7,4),'-',substr(sfzhm,11,2),'-',substr(sfzhm,13,2))  
+						else null end
+						birthday
+						,'中国' nationality_name
+						,null nativeplace
+						,null registeraddress
+						,null politicsid_name
+						,null beliefid_name
+						,null escuageid_name
+						,u_insert_time addtime
+						,xm name
+						,null hklx
+						,row_number() over(partition by sfzhm order by u_insert_time desc) rn
+						,'std_qmzj_qmzjdbzjffb' lyb
+						,lyjg
+						from std_qmzj_qmzjdbzjffb a
+						where dt=(select max(dt) from  std_qmzj_qmzjdbzjffb) and sfzhm is not null
+					union
+					select  
+						null cardtypeid_name
+						,sfzhm cardno
+						,case when length(sfzhm)=18 and substr(sfzhm,17,1)%2=0 then '女' when length(sfzhm)=18 and  (substr(sfzhm,17,1)+1)%2=0 then '男' else  null end  sex_name
+						,null nationid_name
+						,case when length(trim(sfzhm))=18 then concat(substr(sfzhm,7,4),'-',substr(sfzhm,11,2),'-',substr(sfzhm,13,2))  
+						else null end
+						birthday
+						,'中国' nationality_name
+						,null nativeplace
+						,null registeraddress
+						,null politicsid_name
+						,null beliefid_name
+						,null escuageid_name
+						,u_insert_time addtime
+						,xm name
+						,null hklx
+						,row_number() over(partition by sfzhm order by u_insert_time desc) rn
+						,'std_qmzj_qmzjdsrjmyybfjgf' lyb
+						,lyjg
+						from std_qmzj_qmzjdsrjmyybfjgf a
+						where dt=(select max(dt) from  std_qmzj_qmzjdsrjmyybfjgf) and sfzhm is not null
+					union
+					select  
+						null cardtypeid_name
+						,zjhm cardno
+						,xb_name  sex_name
+						,null nationid_name
+						,case when length(trim(zjhm))=18 then concat(substr(zjhm,7,4),'-',substr(zjhm,11,2),'-',substr(zjhm,13,2))  
+						else null end
+						birthday
+						,'中国' nationality_name
+						,null nativeplace
+						,null registeraddress
+						,null politicsid_name
+						,null beliefid_name
+						,null escuageid_name
+						,u_insert_time addtime
+						,xm name
+						,null hklx
+						,row_number() over(partition by zjhm order by u_insert_time desc) rn
+						,'std_qmzj_qmzjshwzjzrytk' lyb
+						,lyjg
+						from std_qmzj_qmzjshwzjzrytk a
+						where dt=(select max(dt) from  std_qmzj_qmzjshwzjzrytk) and zjhm is not null
+					union
+					select  
+						zjlx cardtypeid_name
+						,zjhm cardno
+						,xb sex_name
+						,null nationid_name
+						,case when length(trim(zjhm))=18 then concat(substr(zjhm,7,4),'-',substr(zjhm,11,2),'-',substr(zjhm,13,2))  
+						else null end
+						birthday
+						,'中国' nationality_name
+						,null nativeplace
+						,null registeraddress
+						,null politicsid_name
+						,null beliefid_name
+						,null escuageid_name
+						,yxsj addtime
+						,name
+						,null hklx
+						,row_number() over(partition by zjhm order by yxsj desc) rn
+						,'dwd_shhd_cjrxx' lyb
+						,lyjg
+						from dwd_shhd_cjrxx a
+						where dt=(select max(dt) from  dwd_shhd_cjrxx) 
+					union
+					--jczl.ods_tpr_record_new107706
+					select 
+						case when length(cid)=18 then '中华人民共和国居民身份证' else '其他' end  as  cardtypeid_name	--证件类别
+						,cid as cardno	--证件号码
+						,case when length(cid)=18 then case when mod(substr(cid,17,1),2)=0 then '女' else '男' end
+						else '未知的性别' end  as sex_name		--性别
+						,null as nationid_name		--民族
+						,case when length(cid)=18 then substr(cid,7,4)||'-'||substr(cid,11,2)||'-'||substr(cid,13,2)||' 00:00:00'
+						else null end  as birthday	--出生日期
+						,case when length(cid)=18 then '中国' else null end  as nationality_name		--国籍
+						,null nativeplace  --籍贯
+						,null registeraddress --出生地国家和地区
+						,null politicsid_name --政治面貌
+						,null beliefid_name --宗教信仰
+						,null escuageid_name --兵役状况
+						,create_time as addtime		--数据登记时间	
+						,name_ as name		--姓名
+						,null as  hklx		--户口类型
+						,row_number() over(partition by cid order by updatetime desc) rn
+						,'ods_tpr_record_new107706'	as lyb	 	--来源表
+						,lyjg	as lyjg	--来源机构
+						from 
+					jczl.ods_tpr_record_new107706  where dt =date_format(date_sub(now(),2),'yyyyMMdd')  and area like '%龙岗%'
+					union
+					select 
+						case when length(identity)=18 then '中华人民共和国居民身份证' else '其他' end  as  cardtypeid_name	--证件类别
+						,identity as cardno	--证件号码
+						,case when gender is null then '未知的性别' else gender end  as sex_name		--性别
+						,null as nationid_name		--民族
+						,birthday||' 00:00:00' as birthday	--出生日期
+						,case when length(identity)=18 then '中国' else null end  as nationality_name		--国籍
+						,null nativeplace  --籍贯
+						,null registeraddress --出生地国家和地区
+						,null politicsid_name --政治面貌
+						,null beliefid_name --宗教信仰
+						,null escuageid_name --兵役状况
+						,create_time as addtime		--数据登记时间
+						,username as name		--姓名
+						,null as  hklx		--户口类型
+						,row_number() over(partition by identity order by updatetime desc) rn
+						,'ods_sdz_sbxxb109361'	as lyb	 	--来源表
+						,lyjg	as lyjg	--来源机构
+					from  ods_sdz_sbxxb109361  
+				where trim(area) like '%龙岗%' and dt=(select max(dt) from ods_sdz_sbxxb109361)
+			)a where rn=1
+	
+	) t1 left join 
+	(select education_level_name,p_code from std_srlzyhshbzj_sbgrxx110041 where dt=(select max(dt) from std_srlzyhshbzj_sbgrxx110041)) t2
+	on t1.zjhm=t2.p_code
+	)
+ where rn =1
+)a
+left join (
+		--dwd_jbxx_hjxx_sh
+		select 
+			a.zjlx as zjlb
+			,a.ZJHM as zjhm
+			,a.xm as xm
+			,a.CYM as CYM
+			,a.XBMC as xb
+			,a.MZMC as mz
+			,a.CSRQ as csrq
+			,a.JGGJ as gj
+			,a.JGSSX as jg
+			,a.CSDGJ as csdgjhdq --出生地国家和地区
+			,a.CSDSSX as csdssx --出生地省市县 
+			,null  as zzmm --政治面貌
+			,null  as zjxy --宗教信仰
+			,null as byzk --兵役状况
+			,c.person_type_name as hklx -- 户口类型
+			,HSQL as sjdjsj --数据登记时间
+			,'dwd_jbxx_hjxx_sh' as lyb
+			,'市公安局' as lyjg 
+		from (select * from dwd_jbxx_hjxx_sh  where dt=(select max(dt) from dwd_jbxx_hjxx_sh)) a
+		left join (select
+						card_no
+						,person_type_name
+               			 ,name
+				from
+					(
+					select  
+						card_no 
+						,person_type_name
+                      	,name
+						,row_number() over(partition by card_no order by addtime desc) rn
+						from std_qgaj_ppu_zfw_fact_detail_info_hjbd a
+						where dt=(select max(dt) from  std_qgaj_ppu_zfw_fact_detail_info_hjbd) 
+					) a 
+					where rn=1
+			)c
+		on trim(c.card_no)=trim(a.ZJHM) and trim(c.name)=trim(a.xm)
+		)b
+on trim(a.zjhm)=trim(b.zjhm)
+
+  

@@ -1,0 +1,178 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-24 15:47:21
+--table_name : dwd_jbxx_wzfmxx_temp01 (父母信息-临时表01)
+--		 	   dwd_jbxx_wzfmxx_temp02 (父母信息-临时表02)
+--			   dwd_jbxx_wzfmxx (父母信息)
+/*取数逻辑   : 
+1、SZHJRKJBXX141281户籍信息中（取户籍信息在龙岗的数据），以“户号HH”为分组，取“与户主关系”为“户主、本人”信息，作为个人信息（主体）
+取“与户主关系”为“祖母、祖父母或外祖父母、祖父、外祖父、外祖母”数据，作为祖父母信息
+关系说明取“与户主关系” 
+
+SZHJRKJBXX141281户籍信息中（取户籍信息在龙岗的数据），以“户号HH”为分组，取“与户主关系”为“户主、本人”信息，作为祖父母信息
+取“与户主关系”为“孙子、孙女或外孙子、外孙女”数据，作为个人信息
+关系说明取“祖父母或外祖父母” 
+根据LGQGAFJ.PPU_ZFW_FACT_DETAIL_INFO_HJBD 取在龙岗数据
+
+2、取父母信息表，主体A对应父母B，B对应父母C，取A作为个人信息，C作为祖父母信息
+B为男：C为男则关系为“祖父”，C为女则关系为“祖母”
+B为女：C为男则关系为“外祖父”，C为女则关系为“外祖母”
+        
+*/
+
+--_********************************************************_
+/*
+step01:从户籍表中筛选属于龙岗户籍的人 person_type=1 ,将户号对应多个户主的记录筛掉
+再取 SZHJRKJBXX141281户籍信息中 zt =1 的记录
+取公民身份证号码不为空的记录
+取出关键字段整理成临时表 dwd_jbxx_wzfmxx_temp01
+*/
+
+drop table if exists dwd_jbxx_wzfmxx_temp01;
+create table dwd_jbxx_wzfmxx_temp01  as
+ select * from (
+SELECT  t2.dz 
+       ,t2.xm 
+       ,CASE WHEN t2.xbmc='男' THEN '男' 
+             WHEN t2.xbmc='女' THEN '女' ELSE null END AS xbmc 
+       ,t2.mzmc 
+       ,t2.gmsfhm 
+       ,t2.hh 
+       ,t2.yhzgxmc
+FROM 
+ /*取龙岗区户籍*/
+ (select card_no from 
+ (select card_no,person_type,row_number() over(partition by card_no order by timeflag desc,addtime desc,person_type desc ) rn
+  from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) where rn=1 and person_type=1) t1
+  inner join 
+  /*取出符合条件的记录*/
+ (select distinct dz,xm,xbmc,mzmc,gmsfhm,hh,YHZGXMC  from std_sgaj_szhjrkjbxx141281 where dt=(select max(dt) from std_sgaj_szhjrkjbxx141281) and zt=1) t2 on t1.card_no=t2.gmsfhm
+  inner join 
+  /*区一户只有一个户主的记录*/
+ ( select  hh  from std_sgaj_szhjrkjbxx141281 where  dt=(select max(dt) from std_sgaj_szhjrkjbxx141281)
+ and YHZGXMC='户主' 
+ group by hh having count(1)=1) t3 on t2.hh=t3.hh )
+ where  gmsfhm is not null;
+
+/*
+step02:将3个来源 union 在一起,成立成临时表 dwd_jbxx_fmxx_temp02
+*/
+
+drop table if exists dwd_jbxx_wzfmxx_temp02;
+create table dwd_jbxx_wzfmxx_temp02  as
+select * from (
+select 
+ zjlx
+,zjhm
+,xm
+,xb
+,zfmzjlx
+,zfmzjhm
+,zfmxm
+,zfmxb
+,gxsm
+,lyjg
+,lyb
+,row_number() over(partition by zjhm||zfmzjhm order by case when lyb='std_swsjkwyh_pop_children' then 1 else 2 end asc) as  rn 
+from 
+(
+ select 
+ t1.zjlx as zjlx 
+ ,t1.zjhm as zjhm
+ ,t1.xm as xm
+ ,t1.xb as xb
+ ,t2.fmzjlx as zfmzjlx
+ ,t2.fmzjhm as zfmzjhm
+ ,t2.fmxm as zfmxm
+ ,t2.fmxb as zfmxb
+ ,case when t1.gxsm='父亲' and t2.gxsm='父亲' then '祖父'
+ when t1.gxsm='父亲' and t2.gxsm='母亲' then '祖母'
+ when t1.gxsm='母亲' and t2.gxsm='父亲' then '外祖父'
+ when t1.gxsm='母亲' and t2.gxsm='母亲' then '外祖母'
+ else null end as gxsm
+ ,t1.lyjg as lyjg
+ ,'dwd_jbxx_fmxx' as lyb
+ from 
+(select * from dwd_jbxx_fmxx where dt=(select max(dt) from dwd_jbxx_fmxx)  )t1 
+ left join 
+ (select * from dwd_jbxx_fmxx where dt=(select max(dt) from dwd_jbxx_fmxx) ) t2
+ on t1.fmzjhm=t2.zjhm
+ where t2.fmzjhm is not null
+
+union 
+
+/*取“与户主关系”为“户主、本人”信息，作为个人信息（主体）*/
+  select 
+  case when length(t1.gmsfhm)=18 then '中华人民共和国居民身份证' else '其他' end as zjlx
+  ,t1.gmsfhm as zjhm
+  ,t1.xm as xm
+  ,t1.xbmc as xb
+  ,case when length(t2.gmsfhm)=18 then '中华人民共和国居民身份证' else '其他' end as znzjlx
+  ,t2.gmsfhm as fmzjhm
+  ,t2.xm as fmxm
+  ,t2.xbmc as fmxb
+  ,t2.yhzgxmc as gxsm
+  ,'市公安局' as lyjg
+  ,'std_sgaj_szhjrkjbxx141281' as lyb
+  from 
+ (select * from dwd_jbxx_wzfmxx_temp01 where yhzgxmc='户主' or yhzgxmc='本人') t1
+ left join 
+ (select * from dwd_jbxx_wzfmxx_temp01 where yhzgxmc in ('祖母','祖父母或外祖父母','祖父','外祖父','外祖母')) t2 
+ on t1.hh=t2.hh
+
+union 
+
+/*取“与户主关系”为'孙子','孙女','外孙子','外孙女','其他孙子、孙女或外孙子、外孙女','孙子、孙女或外孙子、外孙女' 数据，作为个人信息(主体)*/
+  select 
+  case when length(t1.gmsfhm)=18 then '中华人民共和国居民身份证' else '其他' end as zjlx
+  ,t1.gmsfhm as zjhm
+  ,t1.xm as xm
+  ,t1.xbmc as xb
+  ,case when length(t2.gmsfhm)=18 then '中华人民共和国居民身份证' else '其他' end as znzjlx
+  ,t2.gmsfhm as fmzjhm
+  ,t2.xm as fmxm
+  ,t2.xbmc as fmxb
+  ,case when t2.xbmc='男' and t1.yhzgxmc in ('孙子','孙女') then '祖父'
+  when t2.xbmc='女' and t1.yhzgxmc in ('孙子','孙女') then '祖母'
+  when t2.xbmc='男' and t1.yhzgxmc in ('外孙子','外孙女') then '外祖父'
+  when t2.xbmc='女' and t1.yhzgxmc in ('外孙子','外孙女') then '外祖母' 
+  when t1.yhzgxmc in ('其他孙子、孙女或外孙子、外孙女','孙子、孙女或外孙子、外孙女') then '祖父母或外祖父母'
+  else null end  as gxsm
+  ,'市公安局' as lyjg
+  ,'std_sgaj_szhjrkjbxx141281' as lyb
+  from 
+ (select * from dwd_jbxx_wzfmxx_temp01 where yhzgxmc in ('孙子','孙女','外孙子','外孙女','其他孙子、孙女或外孙子、外孙女','孙子、孙女或外孙子、外孙女')) t1
+ left join 
+ (select * from dwd_jbxx_wzfmxx_temp01 where yhzgxmc='户主' or yhzgxmc='本人') t2 
+ on t1.hh=t2.hh
+  ) ) where rn =1 ;
+  
+/*step03:
+从临时表02 中取出对应字段 插入目标表中 dwd_jbxx_wzfmxx
+表t 取所有龙岗区户籍
+inner join 
+表t1 取对应字段信息
+*/ 
+ insert overwrite table dwd_jbxx_wzfmxx partition (dt='${DayBeforeStartTime}')
+ select 
+ uuid() as uuid
+ ,zjlx as zjlx
+ ,zjhm as zjhm 
+ ,xm as xm
+ ,xb as xb
+ ,zfmzjlx as zfmzjlx
+ ,zfmzjhm as zfmzjhm
+ ,zfmxm as zfmxm
+ ,zfmxb as zfmxb
+ ,gxsm as gxsm
+ ,lyjg as lyjg
+ ,lyb as lyb
+ ,CURRENT_TIMESTAMP as yxsj
+ from
+ (select card_no from 
+ (select card_no,person_type,row_number() over(partition by card_no order by timeflag desc,addtime desc,person_type desc ) rn
+ from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) where rn=1 and person_type=1) t
+ inner join 
+ dwd_jbxx_wzfmxx_temp02 t1 
+ on t.card_no = t1.zjhm ;

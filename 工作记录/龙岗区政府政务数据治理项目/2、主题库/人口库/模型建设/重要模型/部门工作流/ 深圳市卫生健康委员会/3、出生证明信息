@@ -1,0 +1,153 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-19 15:37:33
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS std_wjw_cszmxx (
+    `csyxzmbh`  STRING  COMMENT '出生医学证明编号',
+    `csyxzmbb`  STRING  COMMENT '出生医学证明版本',
+    `xsexm`  STRING  COMMENT '新生儿姓名',
+    `xb`  STRING  COMMENT '性别',
+    `xbdm`  STRING  COMMENT '性别代码',
+    `fqxm`  STRING  COMMENT '父亲姓名',
+    `fqsfzjhm`  STRING  COMMENT '父亲身份证件号码',
+    `fqsfzjlx`  STRING  COMMENT '父亲身份证件类型',
+    `fqmz`  STRING  COMMENT '父亲民族',
+    `fqmzdm`  STRING  COMMENT '父亲民族代码',
+    `fqgj`  STRING  COMMENT '父亲国籍',
+    `fqgjdm`  STRING  COMMENT '父亲国籍代码',
+    `fqnl`  STRING  COMMENT '父亲年龄',
+    `mqxm`  STRING  COMMENT '母亲姓名',
+    `mqsfzjhm`  STRING  COMMENT '母亲身份证件号码',
+    `mqsfzjlx`  STRING  COMMENT '母亲身份证件类型',
+    `mqmz`  STRING  COMMENT '母亲民族',
+    `mqmzdm`  STRING  COMMENT '母亲民族代码',
+    `mqgj`  STRING  COMMENT '母亲国籍',
+    `mqgjdm`  STRING  COMMENT '母亲国籍代码',
+    `mqnl`  STRING  COMMENT '母亲年龄',
+    `hjdz`  STRING  COMMENT '户籍地址',
+    `xzdz`  STRING  COMMENT '现住地址',
+    `jtczdz`  STRING  COMMENT '家庭常住地址',
+    `csrq`  STRING  COMMENT '出生日期',
+    `csyz`  STRING  COMMENT '出生孕周',
+    `cssc`  STRING  COMMENT '出生身长',
+    `cstz`  STRING  COMMENT '出身体重',
+    `csd`  STRING  COMMENT '出生地',
+    `csdxzqh`  STRING  COMMENT '出生地行政区划',
+    `csdxzqhdm`  STRING  COMMENT '出生地行政区划代码',
+    `xsejkzk`  STRING  COMMENT '新生儿健康状况',
+    `xsejkzkdm`  STRING  COMMENT '新生儿健康状况代码',
+    `csyxzmqfrq`  STRING  COMMENT '出生医学证明签发日期',
+    `csyxzmqfjg`  STRING  COMMENT '出生医学证明签发机构',
+    `csyljg`  STRING  COMMENT '出生医疗机构',
+    `zcryxm`  STRING  COMMENT '助产人员姓名',
+    `lyb`  STRING  COMMENT '来源表',
+    `yxsj`  TIMESTAMP  COMMENT '运行时间',
+    `lyjg`  STRING  COMMENT '来源机构'
+)
+COMMENT '出生证明信息'
+PARTITIONED BY (
+    `dt`  STRING  COMMENT '日期分区'
+);
+
+
+
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/28 9:22:30
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_wj_cszmxx(出生证明信息)
+--#源表    ： std_swj_xsecszm111505(新生儿出生证明)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_wjw_cszmxx partition (dt='${DayBeforeStartTime}')
+select      
+	t.birth_no as csyxzmbh, -- 出生医学证明编号
+	'' as csyxzmbb, -- 出生医学证明版本
+	t.name as xsexm, -- 新生儿姓名
+	t.sex as xb, -- 性别
+	t.xbdm as xbdm, -- 性别代码
+	t.father_name as fqxm, -- 父亲姓名
+	t.father_card as fqsfzjhm, -- 父亲身份证件号码
+	'' as fqsfzjlx, -- 父亲身份证件类型
+	t.f_nation as fqmz, -- 父亲民族
+	t.f_nation_code as fqmzdm, -- 父亲民族代码
+	t.f_nationality as fqgj, -- 父亲国籍
+	t.f_nationality_code as fqgjdm, -- 父亲国籍代码
+	t.father_age as fqnl, -- 父亲年龄
+	t.mother_name as mqxm, -- 母亲姓名
+	t.mother_card as mqsfzjhm, -- 母亲身份证件号码
+	'' as mqsfzjlx, -- 母亲身份证件类型
+	t.m_nation as mqmz, -- 母亲民族
+	t.m_nation_code as mqmzdm, -- 母亲民族代码
+	t.m_nationality as mqgj, -- 母亲国籍
+	t.m_nationality_code as mqgjdm, -- 母亲国籍代码
+	t.mather_age as mqnl, -- 母亲年龄
+	t.addr_detail_hj as hjdz, -- 户籍地址
+	t.addr_detail_xz as xzdz, -- 现住地址
+	t.addr_detail_jt as jtczdz, -- 家庭常住地址
+	t.birthday as csrq, -- 出生日期
+	t.weeks as csyz, -- 出生孕周
+	t.height as cssc, -- 出生身长
+	t.weight as cstz, -- 出身体重
+	t.birth_address as csd, -- 出生地
+	t.admin as csdxzqh, -- 出生地行政区划
+	t.admin_code as csdxzqhdm, -- 出生地行政区划代码
+	t.health_status as xsejkzk, -- 新生儿健康状况
+	t.health_status_code as xsejkzkdm, -- 新生儿健康状况代码
+	t.send_date as csyxzmqfrq, -- 出生医学证明签发日期
+	t.org_code as csyxzmqfjg, -- 出生医学证明签发机构
+	t.nurse_org as csyljg, -- 出生医疗机构
+	t.nurse_name as zcryxm, -- 助产人员姓名
+	"std_swj_xsecszm111505" as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj, -- 运行时间
+	t.lyjg as lyjg -- 来源机构
+from
+(select 
+      birth_no, -- 出生医学证明编号
+      if(name  rlike '^[\u4E00-\u9FA5]+$',regexp_replace(NVL(name,''),'[\\s]+|[\\u3000]+|[\,]',''),name) as name, -- 新生儿姓名
+      sex, -- 性别
+      xbdm, -- 性别代码
+       if(father_name rlike '^[\u4E00-\u9FA5]+$',regexp_replace(NVL(father_name,''),'[\\s]+|[\\u3000]+|[\,]',''),father_name) as father_name,-- 父亲姓名
+      father_card, -- 父亲身份证
+      f_nation, -- 父亲民族
+      f_nation_code, -- 父亲民族代码
+      f_nationality, -- 父亲国籍
+      f_nationality_code, -- 父亲国籍代码
+      father_age, -- 父亲年龄
+       if(mother_name rlike '^[\u4E00-\u9FA5]+$',regexp_replace(NVL(mother_name,''),'[\\s]+|[\\u3000]+|[\,]',''),mother_name) as mother_name,-- 母亲姓名
+      mother_card, -- 母亲身份证
+      m_nation, -- 母亲民族
+      m_nation_code, -- 母亲民族代码
+      m_nationality, -- 母亲国籍
+      m_nationality_code, -- 母亲国籍代码
+      mather_age, -- 母亲年龄
+      addr_detail_hj, -- 户籍地址
+      addr_detail_xz, -- 现住地址
+      addr_detail_jt, -- 家庭常住地址
+      birthday, -- 出生日期时间
+      weeks, -- 出生孕周
+      height, -- 出生身长
+      weight, -- 出身体重
+      birth_address, -- 出生地
+      admin, -- 行政区划
+      admin_code, -- 行政区划代码
+      health_status, -- 新生儿健康状况
+      health_status_code, -- 新生儿健康状况代码
+      send_date, -- 签发日期
+      org_code, -- 签证机构名称
+      nurse_org, -- 助产机构
+      nurse_name, -- 助产人员姓名
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(create_date,'') order by send_date desc) as rn 
+from std_swj_xsecszm111505 a join (select max(dt) maxdt from std_swj_xsecszm111505 ) b on a.dt=b.maxdt)t
+where t.rn <= 1;	
+
+ 
+ 
+ 
+ 
+ 
+ 
+

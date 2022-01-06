@@ -1,0 +1,479 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-19 09:27:28
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS dwd_sfxx_djrkjbxx (
+    zjhm string COMMENT '证件号码',
+    zjlx string COMMENT '证件类型',
+    xm string COMMENT '姓名',
+    cym string COMMENT '曾用名',
+    ywxm string COMMENT '英文姓名',
+    xbdm string COMMENT '性别代码',
+    xb string COMMENT '性别',
+    csrq string COMMENT '出生日期',
+    gj string COMMENT '国籍',
+    gjdm string COMMENT '国籍代码',
+    mz string COMMENT '民族',
+    mzdm string COMMENT '民族代码',
+    hjlx string COMMENT '户籍类型',
+    hjlxdm string COMMENT '户籍类型代码',
+    hh string COMMENT '户号',
+    hhid string COMMENT '户号ID',
+    hjszd string COMMENT '户籍所在地',
+    hklx string COMMENT '户口类型',
+    hkszd string COMMENT '户口所在地',
+    hkxz string COMMENT '户口性质',
+    hyzk string COMMENT '婚姻状况',
+    hyzkdm string COMMENT '婚姻状况代码',
+    jg string COMMENT '籍贯',
+    jgdm string COMMENT '籍贯代码',
+    byyx string COMMENT '毕业院校',
+    swrq string COMMENT '死亡日期',
+    whcddm string COMMENT '文化程度代码',
+    whcd string COMMENT '文化程度',
+    zjxy string COMMENT '宗教信仰',
+    byzk string COMMENT '兵役状况',
+    byzkdm string COMMENT '兵役状况代码',
+    xwdm string COMMENT '学位代码',
+    xw string COMMENT '学位',
+    xx string COMMENT '血型',
+    dwdz string COMMENT '单位地址',
+    gzdw string COMMENT '工作单位',
+    xy string COMMENT '行业',
+    yhzgxdm string COMMENT '与户主关系代码',
+    yhzgx string COMMENT '与户主关系',
+    fwbm string COMMENT '房屋编码',
+    gatbz string COMMENT '港澳台标志',
+    gllb string COMMENT '管理类别',
+    xzqhid string COMMENT '行政区划id',
+    jzddz string COMMENT '居住地地址',
+    jzfs string COMMENT '居住方式',
+    jzfwdz string COMMENT '居住房屋地址',
+    jzlx string COMMENT '居住类型',
+    jzsy string COMMENT '居住事由',
+    lsrq string COMMENT '来深日期',
+    lkrq string COMMENT '离开日期',
+    lkyy string COMMENT '离开原因',
+    qfjg string COMMENT '签发机关',
+    sfbljzz string COMMENT '是否办理居住证',
+    zzsy string COMMENT '暂住事由',
+    zp string COMMENT '照片',
+    zzmm string COMMENT '政治面貌',
+    zc string COMMENT '职称',
+    zy string COMMENT '职业',
+    zslb string COMMENT '住所类别',
+    zxbj string COMMENT '注销标记',
+    zxsj string COMMENT '注销时间',
+    rksjly string COMMENT '人口数据来源',
+    zxyy string COMMENT '注销原因',
+    gljg string COMMENT '管理机构',
+    fwid string COMMENT '房屋ID',
+    fh string COMMENT '房号',
+    hzzjhm string COMMENT '户主证件号码',
+    hzxm string COMMENT '户主姓名',
+    sqbm string COMMENT '社区编码',
+    sqmc string COMMENT '社区名称',
+    wgbm string COMMENT '网格编码',
+    wgmc string COMMENT '网格名称',
+    lyjg string COMMENT '来源机构',
+    lyb string COMMENT '来源表',
+    yxsj timestamp COMMENT '运行时间'
+)
+COMMENT '登记人口基本信息'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+
+
+
+insert overwrite table dwd_sfxx_djrkjbxx partition (dt='${DayBeforeStartTime}')
+select     
+DISTINCT
+	a.zjhm as zjhm, -- 证件号码
+	a.zjlx as zjlx, -- 证件类型
+	a.xm as xm, -- 姓名
+	'' as cym, -- 曾用名
+	c.ywxm as ywxm, -- 英文姓名
+	a.xbdm as xbdm, -- 性别代码
+	a.xb as xb, -- 性别
+	a.csrq as csrq, -- 出生日期
+	a.gj as gj, -- 国籍
+	a.gjdm as gjdm, -- 国籍代码
+	a.mz as mz, -- 民族
+	a.mzdm as mzdm, -- 民族代码
+	b.hjlx as hjlx, -- 户籍类型
+	b.hjlxdm as hjlxdm, -- 户籍类型代码
+	'' as hh, -- 户号
+	'' as hhid, -- 户号ID
+	'' as hjszd, -- 户籍所在地
+	b.hklx as hklx, -- 户口类型
+	b.hkszd as hkszd, -- 户口所在地
+	b.hkxz as hkxz, -- 户口性质
+	a.hyzk as hyzk, -- 婚姻状况
+	a.hyzkdm as hyzkdm, -- 婚姻状况代码
+	b.jg as jg, -- 籍贯
+	b.jgdm as jgdm, -- 籍贯代码
+	b.byyx as byyx, -- 毕业院校
+	b.swrq as swrq, -- 死亡日期
+	a.whcddm as whcddm, -- 文化程度代码
+	a.whcd as whcd, -- 文化程度
+	b.zjxy as zjxy, -- 宗教信仰
+	b.byzk as byzk, -- 兵役状况
+	b.byzkdm as byzkdm, -- 兵役状况代码
+	b.xwdm as xwdm, -- 学位代码
+	b.xw as xw, -- 学位
+	b.xx as xx, -- 血型
+	coalesce(g.dwdz,a.dwdz) as dwdz, -- 单位地址
+	coalesce(g.gzdw,a.gzdw) as gzdw, -- 工作单位
+	a.xy as xy, -- 行业
+	a.yhzgxdm as yhzgxdm, -- 与户主关系代码
+	a.yhzgx as yhzgx, -- 与户主关系
+	a.fwbm as fwbm, -- 房屋编码
+	b.gatbz as gatbz, -- 港澳台标志
+	b.gllb as gllb, -- 管理类别
+	b.xzqhid as xzqhid, -- 行政区划id
+	b.jzddz as jzddz, -- 居住地地址
+	a.jzfs as jzfs, -- 居住方式
+	b.jzfwdz as jzfwdz, -- 居住房屋地址
+	b.jzlx as jzlx, -- 居住类型
+	d.jzsy as jzsy, -- 居住事由
+	a.lsrq as lsrq, -- 来深日期
+	a.lkrq as lkrq, -- 离开日期
+	a.lkyy as lkyy, -- 离开原因
+	b.qfjg as qfjg, -- 签发机关
+	b.sfbljzz as sfbljzz, -- 是否办理居住证
+	b.zzsy as zzsy, -- 暂住事由
+	a.zp as zp, -- 照片
+	b.zzmm as zzmm, -- 政治面貌
+	b.zc as zc, -- 职称
+	b.zhy as zy, -- 职业
+	a.zslb as zslb, -- 住所类别
+	coalesce(e.sfzx,a.zxbj) as zxbj, -- 注销标记
+	coalesce(e.zxsj,a.zxsj) as zxsj, -- 注销时间
+	a.rksjly as rksjly, -- 人口数据来源
+	c.zxyy as zxyy, -- 注销原因
+	c.gljg as gljg, -- 管理机构
+	a.fwid as fwid, -- 房屋ID
+	a.fh as fh, -- 房号
+	d.hzzjhm as hzzjhm, -- 户主证件号码
+	d.zshzxm as hzxm, -- 户主姓名
+	f.sqbm as sqbm, -- 社区编码
+	f.sqmc as sqmc, -- 社区名称
+	f.wgbm as wgbm, -- 网格编码
+	f.wgmc as wgmc, -- 网格名称
+	a.lyjg as lyjg, -- 来源机构
+	a.lyb as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj -- 运行时间
+from(
+	select      
+	 t.zjhm, -- 证件号码
+	 t.zjlx, -- 证件类型
+	 t.gj, -- 国籍
+	 t.gjdm, -- 国籍代码
+	 t.xm, -- 姓名
+	 t.fwid, -- 房屋ID
+     t.fwbm, --房屋编码
+	 t.lyb, -- 来源表
+	 t.lyjg, -- 来源机构
+	 t.xb, -- 性别
+	 t.xbdm, -- 性别代码
+	 t.csrq, -- 出生日期
+	 t.hyzk, -- 婚姻状况
+	 t.xy, -- 行业
+	 t.yhzgxdm, -- 与户主关系代码
+	 t.yhzgx, -- 与户主关系
+	 t.jzfs, -- 居住方式
+	 t.lsrq, -- 来深日期
+	 t.lkrq, -- 离开日期
+	 t.lkyy, -- 离开原因
+	 t.zp, -- 照片
+	 t.zslb, -- 住所类别
+	 t.zxbj, -- 注销标记
+	 t.zxsj, -- 注销时间
+	 t.rksjly, -- 人口数据来源
+	 t.fh, -- 房号
+     t.dwdz,--单位地址
+     t.gzdw, --工作单位
+     t.mz, -- 民族
+     t.mzdm, -- 民族代码
+     t.hyzkdm, -- 婚姻状况代码
+     t.whcd, -- 文化程度
+	 t.whcddm, -- 文化程度代码
+	 t.cjsj, --创建时间
+     t.xgsj	--	修改时间
+from 
+	(
+	select      
+		tt.zjhm, -- 证件号码
+		tt.zjlx, -- 证件类型
+		tt.gj, -- 国籍
+		tt.gjdm, -- 国籍代码
+		tt.xm, -- 姓名
+		tt.fwid, -- 房屋ID
+        tt.fwbm, --房屋编码
+		tt.lyb, -- 来源表
+		tt.lyjg, -- 来源机构
+		tt.xb, -- 性别
+		tt.xbdm, -- 性别代码
+		tt.csrq, -- 出生日期
+		tt.hyzk, -- 婚姻状况
+		tt.xy, -- 行业
+		tt.yhzgxdm, -- 与户主关系代码
+		tt.yhzgx, -- 与户主关系
+		tt.jzfs, -- 居住方式
+		tt.lsrq, -- 来深日期
+		tt.lkrq, -- 离开日期
+		tt.lkyy, -- 离开原因
+		tt.zp, -- 照片
+		tt.zslb, -- 住所类别
+		tt.zxbj, -- 注销标记
+		tt.zxsj, -- 注销时间
+		tt.rksjly, -- 人口数据来源
+		tt.fh, -- 房号
+        tt.dwdz,	--单位地址
+        tt.gzdw,	--工作单位
+        tt.mz, -- 民族
+		tt.mzdm, -- 民族代码
+		tt.hyzkdm, -- 婚姻状况代码
+		tt.whcd, -- 文化程度
+		tt.whcddm, -- 文化程度代码
+		tt.cjsj,--创建时间
+        tt.xgsj,	--	修改时间
+		row_number() over (partition by coalesce(tt.zjhm,'') order by tt.yxj  asc ) as rn
+	from 
+		(
+          select 
+			zjhm as zjhm, -- 证件号码
+			zjlx as zjlx, -- 证件类型
+			gj as gj, -- 国籍
+			gjdm as gjdm, -- 国籍代码
+			xm as xm, -- 姓名
+			jzfwid as fwid, -- 居住房屋id
+			fwbm as fwbm, -- 房屋编码
+			"std_zfw_lgqsyrkxx" as lyb, -- 来源表
+			lyjg as lyjg, -- 来源机构
+			xb as xb, -- 性别
+			xbdm as xbdm, -- 性别代码
+			csrq as csrq, -- 出生日期
+			hyzk as hyzk, -- 婚姻状况
+			xy as xy, -- 行业
+			yhzgxdm as yhzgxdm, -- 与户主关系代码
+			yhzgx as yhzgx, -- 与户主关系
+			jzfs as jzfs, -- 居住方式
+			lsrq as lsrq, -- 来深日期
+			lksj as lkrq, -- 离开时间
+			lkyy as lkyy, -- 离开原因
+			zp as zp, -- 照片
+			zslb as zslb, -- 住所类别
+			sfzx as zxbj, -- 是否注销
+			zxsj as zxsj, -- 注销时间
+			rksjly as rksjly, --人口数据来源
+			'' as fh, -- 
+			dwdz as dwdz, -- 单位地址
+			gzdw as gzdw, -- 工作单位
+			mz as mz, -- 民族
+			mzdm as mzdm, -- 民族代码
+			hyzkdm as hyzkdm, -- 婚姻状况代码
+			whcd as whcd, -- 文化程度
+			whcddm as whcddm, -- 文化程度代码
+            cjsj as cjsj, -- 创建时间
+            xgsj as xgsj,	--	修改时间
+			1 as yxj   -- 优先级
+		from std_zfw_lgqsyrkxx  a  join (select max(dt)  maxdt from std_zfw_lgqsyrkxx  ) b on a.dt=b.maxdt
+		union all
+		select 
+			zjhm as zjhm, -- 证件号码
+			zjlx as zjlx, -- 证件类型
+			gj as gj, -- 国籍
+			gjdm as gjdm, -- 国籍代码
+			zwxm as xm, -- 中文姓名
+			fwid as fwid, -- 房屋ID
+			fwbm as fwbm, -- 房屋编码
+			"std_czg_wgrjzxxdjb" as lyb, -- 来源表
+			lyjg as lyjg, -- 来源机构
+			xb as xb, -- 性别
+			xbdm as xbdm, -- 性别代码
+			'' as csrq, -- 
+			'' as hyzk, -- 
+			'' as xy, -- 
+			'' as yhzgxdm, -- 
+			'' as yhzgx, -- 
+			'' as jzfs, -- 
+			'' as lsrq, -- 
+			lkrq as lkrq, -- 离开日期
+			lkyy as lkyy, -- 离开原因
+			'' as zp, -- 
+			'' as zslb, -- 
+			zxbj as zxbj, -- 注销标记
+			zxsj as zxsj, -- 注销时间
+			'' as rksjly, -- 人口数据来源
+			fh as fh, -- 房号
+			'' as dwdz, -- 
+			'' as gzdw, -- 
+			'' as mz, -- 
+			'' as mzdm, -- 
+			'' as hyzkdm, -- 
+			'' as whcd, -- 
+			'' as whcddm, -- 
+            cjsj as cjsj, -- 创建时间
+           gxsj as xgsj,	--	修改时间
+			2 as yxj   -- 优先级
+		from std_czg_wgrjzxxdjb  a  join (select max(dt)  maxdt from std_czg_wgrjzxxdjb) b on a.dt=b.maxdt
+		union all
+		select 
+			zjhm as zjhm, -- 证件号码
+			zjlx as zjlx, -- 证件类型
+			'' as gj, -- 
+			'' as gjdm, -- 
+			xm as xm, -- 姓名
+			fwid as fwid, -- 房屋ID
+			fwbm as fwbm, -- 房屋编码
+			"std_czg_gatjzryxxdjb" as lyb, -- 来源表
+			lyjg as lyjg, -- 来源机构
+			xb as xb, -- 性别
+			xbdm as xbdm, -- 性别代码
+			csny as csrq, -- 出生日期
+			hyzk as hyzk, -- 婚姻状况
+			xy as xy, -- 行业
+			yhzgxdm as yhzgxdm, -- 与户主关系代码
+			yhzgx as yhzgx, -- 与户主关系
+			jzfs as jzfs, -- 居住方式
+			lsrq as lsrq, -- 来深日期
+			lkrq as lkrq, -- 离开时间
+			lkyy as lkyy, -- 离开原因
+			zp as zp, -- 照片
+			zslb as zslb, -- 住所类别
+			zxbj as zxbj, -- 注销标记(0,未注销1.已注销)
+			zxsj as zxsj, -- 注销时间
+			'' as rksjly, -- 人口数据来源
+			fh as fh, -- 房号
+			fwdwdz as dwdz, -- 服务单位地址
+			fwdw as gzdw, -- 服务单位
+			'' as mz, -- 
+			'' as mzdm, -- 
+			'' as hyzkdm, -- 
+			'' as whcd, -- 
+			'' as whcddm, -- 
+            cjsj as cjsj, -- 创建时间
+            gxsj as xgsj,	--更新时间
+			3 as yxj   -- 优先级
+		from std_czg_gatjzryxxdjb  a  join (select max(dt)  maxdt from std_czg_gatjzryxxdjb ) b on a.dt=b.maxdt
+		union all
+		select 
+			zjhm as zjhm, -- 证件号码
+			zjlx as zjlx, -- 证件类型
+			gj as gj, -- 国籍
+			gjdm as gjdm, -- 国籍代码
+			xm as xm, -- 姓名
+			fwid as fwid, -- 房屋ID
+			fwbm as fwbm, -- 房屋编码
+			lyb as lyb, -- 来源表
+			lyjg as lyjg, -- 来源机构
+			xb as xb, -- 性别
+			xbdm as xbdm, -- 性别代码
+			'' as csrq, -- 
+			hyzk as hyzk, -- 婚姻状况
+			xy as xy, -- 行业
+			yhzgxdm as yhzgxdm, -- 与户主关系代码
+			yhzgx as yhzgx, -- 与户主关系
+			jzfs as jzfs, -- 居住方式
+			lsrq as lsrq, -- 来深日期
+			zxrq as lkrq, -- 注销日期
+			'' as lkyy, -- 
+			zp as zp, -- 照片
+			jzcslx as zslb, -- 居住处所类型
+			sfzx as zxbj, -- 是否注销（0.未注销 1.已注销）
+			zxrq as zxsj, -- 注销日期
+			'' as rksjly, -- 
+			'' as fh, -- 
+			'' as dwdz, -- 
+			gzdw as gzdw, -- 工作单位（服务处所）
+			mz as mz, -- 民族
+			mzdm as mzdm, -- 民族代码
+			hyzkdm as hyzkdm, -- 婚姻状况代码
+			whcd as whcd, -- 文化程度
+			whcddm as whcddm, -- 文化程度代码
+            cjsj as cjsj, -- 创建时间
+            xgsj as xgsj,	--	修改时间
+			4 as yxj   -- 优先级
+		from std_qga_zhb  a  join (select max(dt)  maxdt from std_qga_zhb ) b on a.dt=b.maxdt
+ ) tt ) t where t.rn=1)	a	
+left join(
+	select 
+		mz, -- 民族
+		mzdm, -- 民族代码
+		hjlx, -- 户籍类型
+		hjlxdm, -- 户籍类型代码
+		hklx, -- 户口类型
+		hkszd, -- 户口所在地
+		hkxz, -- 户口性质
+		hyzkdm, -- 婚姻状况代码
+		jg, -- 籍贯
+		jgdm, -- 籍贯代码
+		byyx, -- 毕业院校
+		swrq, -- 死亡日期
+		whcddm, -- 文化程度代码
+		whcd, -- 文化程度
+		zjxy, -- 宗教信仰
+		byzk, -- 兵役状况
+		byzkdm, -- 兵役状况代码
+		xwdm, -- 学位代码
+		xw, -- 学位
+		xx, -- 血型
+		dwdz, -- 单位地址
+		gzdw, -- 工作单位
+		fwbm, -- 房屋编码
+		gatbz, -- 港澳台标志
+		gllb, -- 管理类别
+		xzqhid, -- 行政区划id
+		jzddz, -- 居住地地址
+		jzfwdz, -- 居住房屋地址
+		jzlx, -- 居住类型
+		qfjg, -- 签发机关
+		sfbljzz, -- 是否办理居住证
+		zzsy, -- 暂住事由
+		zzmm, -- 政治面貌
+		zc, -- 职称
+		zhy, -- 职业
+		zjhm, -- 证件号码
+		0   --结尾键无实际意义
+	from std_zfw_lgqsyrkxx a  join (select max(dt) maxdt from std_zfw_lgqsyrkxx) b on a.dt=b.maxdt )	b   on a.zjhm=b.zjhm	
+left join(
+	select 
+		ywxm, -- 英文姓名
+		zxyy, -- 注销原因
+		gljg, -- 管理机构
+		zjhm, -- 证件号码
+		0   --结尾键无实际意义
+	from std_czg_wgrjzxxdjb a  join (select max(dt) maxdt from std_czg_wgrjzxxdjb) b on a.dt=b.maxdt)	c   on a.zjhm=c.zjhm	
+left join(
+	select 
+		jzsy, -- 居住事由
+		hzzjhm, -- 户主证件号码
+		zshzxm, -- 在深户主姓名
+		zjhm, -- 证件号码
+		0   --结尾键无实际意义
+	from std_czg_gatjzryxxdjb a  join (select max(dt) maxdt from std_czg_gatjzryxxdjb) b  on  a.dt=b.maxdt)	d   on a.zjhm=d.zjhm	
+left join(
+	select 
+		zjhm, -- 证件号码
+        zxsj,--注销时间
+        sfzx,--是否注销
+		0   --结尾键无实际意义
+	from std_zfw_lgqzxrkxx a  join (select max(dt) maxdt from std_zfw_lgqzxrkxx) b on a.dt=b.maxdt)	e   on a.zjhm=e.zjhm	and date_format(e.zxsj,'yyyyMMdd')>=date_format(a.xgsj,'yyyyMMdd')	
+left join(
+	select 
+		sqbm, -- 社区编码
+		sqmc, -- 社区名称
+		wgbm, -- 网格编码
+		wgmc, -- 网格名称
+        ldbm, -- 楼栋编码
+		0   --结尾键无实际意义
+	from std_zfw_fwwgsqxx a  join (select max(dt) maxdt from std_zfw_fwwgsqxx) b on a.dt=b.maxdt)	f   on left(a.fwbm,19)=f.ldbm
+    left join(
+	select 
+       zjhm,--	证件号码
+       gzdw,--	工作单位
+       dwdz,--	单位地址
+	   0   --结尾键无实际意义
+	from std_rs_gzdw a  join (select max(dt) maxdt from std_rs_gzdw ) b on a.dt=b.maxdt)	g   on a.zjhm=g.zjhm	
+;

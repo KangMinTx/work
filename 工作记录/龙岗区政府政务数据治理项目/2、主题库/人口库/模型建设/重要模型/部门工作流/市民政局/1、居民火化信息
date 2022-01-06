@@ -1,0 +1,89 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-19 09:32:10
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS std_mz_jmhhxx (
+    hhdabh STRING COMMENT '火化档案编号',
+    hhzh STRING COMMENT '火化证号',
+    zjlx STRING COMMENT '证件类型',
+    zjhm  STRING COMMENT '证件号码',
+    xm STRING COMMENT '姓名',
+    mz STRING COMMENT '民族',
+    xb STRING COMMENT '性别',
+    xbdm STRING COMMENT '性别代码',
+    nl STRING COMMENT '年龄',
+    swsj STRING COMMENT '死亡时间',
+    sfbdhk STRING COMMENT '是否本地户口',
+    hhsj STRING COMMENT '火化时间',
+    zxbz STRING COMMENT '注销标志',
+    cbrlxdh STRING COMMENT '承办人联系电话',
+    hhdwzzjgdm STRING COMMENT '火化单位组织机构代码',
+    hhdwmc STRING COMMENT '火化单位名称',
+    hkszd STRING COMMENT '户口所在地',
+    sqzz STRING COMMENT '生前住址',
+    timeflag STRING COMMENT '系统更新时间',
+    lyjg STRING COMMENT '来源机构',
+    lyb STRING COMMENT '来源表',
+    yxsj TIMESTAMP COMMENT '运行时间'
+)
+COMMENT '居民火化信息'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/29 18:23:45
+--#模型说明： 临时视图
+--#加工方式： 单表映射
+--#目标表  ： std_mz_jmhhxx(居民火化信息)
+--#源表    ： std_smz_swrkxx107215(火化人口信息)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_mz_jmhhxx partition (dt='${DayBeforeStartTime}')
+select      
+	t.dabh as hhdabh, -- 火化档案编号
+	t.hhzh as hhzh, -- 火化证号
+	coalesce(t.zjlx,if(t.sfzhm RLIKE '(^[1-9][0-9]{5}(18|19|([23][0-9]))[0-9]{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)[0-9]{3}[0-9Xx]$)|(^[1-9][0-9]{5}[0-9]{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)[0-9]{3}$)',"中华人民共和国居民身份证","未知")) as zjlx, -- 证件类型
+	t.sfzhm as zjhm, -- 证件号码
+     if(t.xm rlike '^[\u4E00-\u9FA5]+$',regexp_replace(NVL(t.xm,''),'[\\s]+|[\\u3000]+|[\,]',''),t.xm) as xm, -- 姓名
+	t.mz as mz, -- 民族
+	t.xb as xb, -- 性别
+	t.xbdm as xbdm, -- 性别代码
+	t.nl as nl, -- 年龄
+	t.swsj as swsj, -- 死亡时间
+	t.sfbdhk as sfbdhk, -- 是否本地户口
+	t.hhsj as hhsj, -- 火化时间
+	t.zxbz as zxbz, -- 注销标志
+	t.cbrlxdh as cbrlxdh, -- 承办人联系电话
+	t.hhdwzzjgdm as hhdwzzjgdm, -- 火化单位组织机构代码
+	t.hhdwmc as hhdwmc, -- 火化单位名称
+	t.hkszd as hkszd, -- 户口所在地
+	t.sqzz as sqzz, -- 生前住址
+	t.timeflag as timeflag, -- 系统更新时间
+	t.lyjg as lyjg, -- 来源机构
+	"std_smz_swrkxx107215" as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-mm-dd hh:mm:ss') as yxsj -- 运行时间
+from
+(select 
+      dabh, -- 档案编号
+      hhzh, -- 火化证号
+      zjlx, -- 证件类型
+      sfzhm, -- 身份证号码
+      xm, -- 姓名
+      mz, -- 民族
+      xb, -- 性别
+      xbdm, -- 性别代码
+      nl, -- 年龄
+      swsj, -- 死亡时间
+      sfbdhk, -- 是否本地户口
+      hhsj, -- 火化时间
+      zxbz, -- 注销标志
+      cbrlxdh, -- 承办人联系电话
+      hhdwzzjgdm, -- 火化单位组织机构代码
+      hhdwmc, -- 火化单位名称
+      hkszd, -- 户口所在地
+      sqzz, -- 生前住址
+      timeflag, -- 系统更新时间
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(sfzhm,'') order by timeflag desc) as rn 
+from std_smz_swrkxx107215  a join (select max(dt)  maxdt from std_smz_swrkxx107215) b on a.dt=b.maxdt)t
+where t.rn <= 1;

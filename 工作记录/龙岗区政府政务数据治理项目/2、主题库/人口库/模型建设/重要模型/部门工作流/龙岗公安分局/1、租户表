@@ -1,0 +1,206 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-20 09:13:33
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS std_qga_zhb (
+    zjlx string COMMENT '证件类型',
+    zjhm string COMMENT '证件号码',
+    xm string COMMENT '姓名',
+    xb string COMMENT '性别',
+    xbdm string COMMENT '性别代码',
+    mz string COMMENT '民族',
+    mzdm string COMMENT '民族代码',
+    hyzk string COMMENT '婚姻状况',
+    hyzkdm string COMMENT '婚姻状况代码',
+    whcd string COMMENT '文化程度',
+    whcddm string COMMENT '文化程度代码',
+    zzmm string COMMENT '政治面貌',
+    xy string COMMENT '行业',
+    zy string COMMENT '职业',
+    zc string COMMENT '职称',
+    jzfs string COMMENT '居住方式',
+    sj string COMMENT '手机',
+    hjlx string COMMENT '户籍类型',
+    yhzgxdm string COMMENT '与户主关系代码',
+    yhzgx string COMMENT '与户主关系',
+    csny string COMMENT '出生年月',
+    sfgzbljzz string COMMENT '是否告知办理居住证（0.否 1.是）',
+    sfgzdzgx string COMMENT '是否告知地址改写（0.否 1.是）',
+    sydt string COMMENT '生育动态',
+    bydt string COMMENT '避孕动态',
+    ckqk string COMMENT '持卡情况',
+    gj string COMMENT '国籍',
+    gjdm string COMMENT '国籍代码',
+    hjszd string COMMENT '户籍所在地',
+    zp string COMMENT '照片',
+    jzcslx string COMMENT '居住处所类型',
+    gzdw string COMMENT '工作单位（服务处所）',
+    lsrq string COMMENT '来深日期',
+    djsj string COMMENT '登记时间',
+    djr string COMMENT '登记人',
+    bz string COMMENT '备注',
+    cjsj string COMMENT '创建时间',
+    xgsj string COMMENT '修改时间',
+    yxx string COMMENT '有效性（0无效 1有效）',
+    lsjzsy string COMMENT '来深居住事由',
+    jg string COMMENT '籍贯',
+    jkzk string COMMENT '健康状况',
+    xjzfwdz string COMMENT '现居住房屋地址',
+    qyid string COMMENT '区域ID',
+    fwid string COMMENT '房屋ID',
+    sg string COMMENT '身高',
+    fwbm string COMMENT '房屋编码',
+    sfzx string COMMENT '是否注销（0.未注销 1.已注销）',
+    zxr string COMMENT '注销人',
+    zxrq string COMMENT '注销日期',
+    lksj string COMMENT '离开日期',
+    rzrq string COMMENT '入住日期',
+    gxbz string COMMENT '更新标志（0.新增 1.更新 2.删除）',
+    xzqhid string COMMENT '行政区划ID',
+    sfyzj string COMMENT '是否有证件（0没证件1有证件）',
+    wzyy string COMMENT '无证原因',
+    sfzrr string COMMENT '是否责任人',
+    sczjz string COMMENT '手持证件照',
+    lyjg string COMMENT '来源机构',
+    lyb string COMMENT '来源表',
+    yxsj timestamp COMMENT '运行时间'
+)
+COMMENT '区公安_租户表'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/8/1 21:20:55
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_qga_zhb(区公安_租户表)
+--#源表    ： std_qga_spmj_tenementinfo(租户表)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_qga_zhb partition (dt='${DayBeforeStartTime}')
+select      
+	t.cardtypeid as zjlx, -- 证件类型
+	t.cardno as zjhm, -- 证件号码
+    if(t.name like "%[吖-座]%",regexp_replace(NVL(t.name,''),'[\\s]+|[\\u3000]+|[\,]',''),t.name)as  xm, -- 中文姓名
+	t.sex as xb, -- 性别
+	t.xbdm as xbdm, -- 性别代码
+	t.nationid as mz, -- 民族
+    t.mzdm as mzdm, --民族代码
+	t.marryid as hyzk, -- 婚姻状况
+    t.hyzkdm as hyzkdm,--婚姻状况代码
+	t.edulevelid as whcd, -- 文化程度
+    t.whcddm as whcddm,-- 文化程度代码
+	t.politicsid as zzmm, -- 政治面貌
+	t.tradeid as xy, -- 行业
+	t.jobid as zy, -- 职业
+	t.techtitleid as zc, -- 职称
+	t.bidefashion as jzfs, -- 居住方式
+	t.mtel as sj, -- 手机
+	t.registerplace as hjlx, -- 户籍类型
+	t.yhzgxdm as yhzgxdm, -- 与户主关系代码
+	t.leaserelationid as yhzgx, -- 与户主关系
+	t.birthday as csny, -- 出生年月
+	t.isinhabitation as sfgzbljzz, -- 是否告知办理居住证（0.否 1.是）
+	t.isaddressnot as sfgzdzgx, -- 是否告知地址改写（0.否 1.是）
+	t.procreatedynamic as sydt, -- 生育动态
+	t.contraceptive as bydt, -- 避孕动态
+	t.cardholders as ckqk, -- 持卡情况
+	t.nationality as gj, -- 国籍
+	t.gjdm as gjdm, -- 国籍代码
+	t.registeraddress as hjszd, -- 户籍所在地
+	t.photo as zp, -- 照片
+	t.domiciletype as jzcslx, -- 居住处所类型
+	t.company as gzdw, -- 工作单位（服务处所）
+	t.intime1 as lsrq, -- 来深日期
+	t.addtime as djsj, -- 登记时间
+	t.registrar as djr, -- 登记人
+	t.remarks as bz, -- 备注
+    t.createtime as cjsj,--创建时间
+	t.updatetime as xgsj, -- 修改时间
+	t.isvalid as yxx, -- 有效性（0无效 1有效）
+	t.leasereasonid as lsjzsy, -- 来深居住事由
+	t.refisteraddresspre as jg, -- 籍贯
+	t.health as jkzk, -- 健康状况
+	t.homeaddress as xjzfwdz, -- 现居住房屋地址
+	t.areaid as qyid, -- 区域ID
+	t.houseid as fwid, -- 房屋ID
+	t.height as sg, -- 身高
+	t.housecode as fwbm, -- 房屋编码
+	t.islogout as sfzx, -- 是否注销（0.未注销 1.已注销）
+	t.logoutor as zxr, -- 注销人
+	t.logouttime as zxrq, -- 注销日期
+	t.leavedate as lksj, -- 离开日期
+	t.checkindate as rzrq, -- 入住日期
+	t.update_key as gxbz, -- 更新标志（0.新增 1.更新 2.删除）
+	t.qhareaid as xzqhid, -- 行政区划ID
+	t.hascardno as sfyzj, -- 是否有证件（0没证件1有证件）
+	t.cause as wzyy, -- 无证原因
+	t.isleader as sfzrr, -- 是否责任人
+	t.photo2 as sczjz, -- 手持证件照
+	t.lyjg as lyjg, -- 来源机构
+	"std_qga_spmj_tenementinfo" as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj -- 运行时间
+from
+(select 
+      cardtypeid, -- 证件类型
+      cardno, -- 证件号码
+      name, -- 姓名
+      sex, -- 性别
+      xbdm, -- 性别代码
+      nationid, -- 民族
+      mzdm,--民族代码
+      marryid, -- 婚姻状况
+      hyzkdm,-- 婚姻状况代码
+      edulevelid, -- 文化程度
+      whcddm,-- 文化程度代码
+      politicsid, -- 政治面貌
+      tradeid, -- 行业
+      jobid, -- 职业
+      techtitleid, -- 职称
+      bidefashion, -- 居住方式
+      mtel, -- 手机
+      registerplace, -- 户籍类型
+      yhzgxdm, -- 与户主关系代码
+      leaserelationid, -- 与户主关系
+      birthday, -- 出生年月
+      isinhabitation, -- 是否告知办理居住证（0.否 1.是）
+      isaddressnot, -- 是否告知地址改写（0.否 1.是）
+      procreatedynamic, -- 生育动态
+      contraceptive, -- 避孕动态
+      cardholders, -- 持卡情况
+      nationality, -- 国籍
+      gjdm, -- 国籍代码
+      registeraddress, -- 户籍所在地
+      photo, -- 照片
+      domiciletype, -- 居住处所类型
+      company, -- 工作单位（服务处所）
+      intime1, -- 来深日期
+      addtime, -- 登记时间
+      registrar, -- 登记人
+      remarks, -- 备注
+      createtime,--创建时间
+      updatetime, -- 修改时间
+      isvalid, -- 有效性（0无效 1有效）
+      leasereasonid, -- 来深居住事由
+      refisteraddresspre, -- 原户籍（来自地区）
+      health, -- 健康状况
+      homeaddress, -- 现居住房屋地址
+      areaid, -- 区域ID
+      houseid, -- 居住房屋ID
+      height, -- 身高
+      housecode, -- 房屋编码
+      islogout, -- 是否注销（0.未注销 1.已注销）
+      logoutor, -- 注销人
+      logouttime, -- 注销时间
+      leavedate, -- 离开时间
+      checkindate, -- 入住时间
+      update_key, -- 更新标志（0.新增 1.更新 2.删除）
+      qhareaid, -- 行政区划ID
+      hascardno, -- 是否有证件（0没证件1有证件）
+      cause, -- 无证原因
+      isleader, -- 是否责任人
+      photo2, -- 手持证件照
+      lyjg,
+      row_number() over (partition by coalesce(cardno,'') order by updatetime ) as rn 
+from std_qga_spmj_tenementinfo a  join  (select max(dt) maxdt from std_qga_spmj_tenementinfo) b on a.dt=b.maxdt )t
+where t.rn <= 1;	

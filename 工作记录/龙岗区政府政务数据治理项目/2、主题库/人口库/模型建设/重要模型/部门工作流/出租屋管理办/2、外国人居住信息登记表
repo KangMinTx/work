@@ -1,0 +1,116 @@
+--Spark SQL
+--_********************************************************_
+--author: lgrkk
+--create time: 2020-07-30 11:27:35
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS std_czg_wgrjzxxdjb (
+    zxbj string COMMENT '注销标记',
+    zjlx string COMMENT '证件类型',
+    zjhm string COMMENT '证件号码',
+    xb string COMMENT '性别',
+    xbdm string COMMENT '性别代码',
+    gj string COMMENT '国籍',
+    gjdm string COMMENT '国籍代码',
+    zwxm string COMMENT '中文姓名',
+    ywxm string COMMENT '英文姓名',
+    rksjly string COMMENT '人口数据来源',
+    zxyy string COMMENT '注销原因',
+    zxsj string COMMENT '注销时间',
+    zxr string COMMENT '注销人',
+    lkyy string COMMENT '离开原因',
+    lkrq string COMMENT '离开日期',
+    jzdz string COMMENT '居住地址',
+    gljg string COMMENT '管理机构',
+    gxsj string COMMENT '更新时间',
+    gxr string COMMENT '更新人',
+    fwbm string COMMENT '房屋编码',
+    fwid string COMMENT '房屋ID',
+    fh string COMMENT '房号',
+    djsj string COMMENT '登记时间',
+    djr string COMMENT '登记人',
+    cjsj string COMMENT '创建时间',
+    cjr string COMMENT '创建人',
+    bz string COMMENT '备注',
+    lyjg string  COMMENT '来源机构',
+    lyb string COMMENT '来源表',
+    yxsj timestamp COMMENT '运行时间'
+)
+COMMENT '外国人居住信息登记表'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/29 14:34:50
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_czg_wgrjzxxdjb(外国人居住信息登记表)
+--#源表    ： std_czg_wgrjzxxdjb_10_1010194622(外国人居住信息登记表)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_czg_wgrjzxxdjb partition (dt='${DayBeforeStartTime}')
+select      
+	if(t.islogout="未注销",0,1) as zxbj, -- 注销标记
+	"居住证" as zjlx, -- 证件类型
+	t.cardno as zjhm, -- 证件号码
+	t.sex as xb, -- 性别
+	t.xbdm as xbdm, -- 性别代码
+	t.nationality as gj, -- 国籍
+	t.gjdm as gjdm, -- 国籍代码
+    if(t.cnname rlike '^[\u4E00-\u9FA5]+$',regexp_replace(NVL(t.cnname,''),'[\\s]+|[\\u3000]+|[\,]',''),t.cnname)as  zwxm, -- 中文姓名
+	t.enname as ywxm, -- 英文姓名
+	t.residenttype as rksjly, -- 人口数据来源
+	t.logoutreason as zxyy, -- 注销原因
+	t.logouttime as zxsj, -- 注销时间
+	t.logoutor as zxr, -- 注销人
+	t.outreason as lkyy, -- 离开原因
+	t.leavedate as lkrq, -- 离开日期
+	t.homeaddress as jzdz, -- 居住地址
+	t.areaid as gljg, -- 管理机构
+	t.updatetimes as gxsj, -- 更新时间
+	t.updater as gxr, -- 更新人
+	t.housecode as fwbm, -- 房屋编码
+	t.houseid as fwid, -- 房屋ID
+	t.rommno as fh, -- 房号
+	t.addtime as djsj, -- 登记时间
+	t.registrar as djr, -- 登记人
+	t.createtime as cjsj, -- 创建时间
+	t.creator as cjr, -- 创建人
+	t.remarks as bz, -- 备注
+	t.lyjg as lyjg, -- 来源机构
+	"std_qzf_zfw_resident_logout1" as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj -- 运行时间
+from
+(select 
+      islogout, -- 注销标记
+      cardtypeid, -- 证件类型
+      cardno, -- 证件号码
+      sex, -- 性别
+      xbdm, -- 性别代码
+      nationality, -- 国籍
+      gjdm, -- 国籍代码
+      cnname, -- 中文姓名
+      enname, -- 英文姓名
+      residenttype, -- 人口数据来源
+      logoutreason, -- 注销原因
+      logouttime, -- 注销时间
+      logoutor, -- 注销人
+      outreason, -- 离开原因
+      leavedate, -- 离开日期
+      homeaddress, -- 居住地址
+      areaid, -- 管理机构
+      updatetimes, -- 更新时间
+      updater, -- 更新人
+      housecode, -- 房屋编码
+      houseid, -- 房屋ID
+      rommno, -- 房号
+      addtime, -- 登记时间
+      registrar, -- 登记人
+      createtime, -- 创建时间
+      creator, -- 创建人
+      remarks, -- 备注
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(cardno,'') order by updatetimes desc) as rn 
+from std_czg_wgrjzxxdjb_10_1010194622 a join ( select max(dt)  as maxdt from std_czg_wgrjzxxdjb_10_1010194622) b on a.dt=b.maxdt) t
+where t.rn <= 1 and left(housecode,6)='440307';
+
+

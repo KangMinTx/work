@@ -1,0 +1,5 @@
+CREATE OR REPLACE PROCEDURE LQGSM.dm_rkk_hs_dsdd AS
+BEGIN
+    DELETE FROM DM_RKK_SYRKFYQK_1 WHERE TO_DATE( to_char(SYSDATE,'yyyy-mm-dd'),'yyyy-mm-dd')-TO_DATE(substr(hsjcsj,1,10),'yyyy-mm-dd')>60;
+    DELETE FROM DM_YQ_HSJCJG WHERE TO_DATE( to_char(SYSDATE,'yyyy-mm-dd'),'yyyy-mm-dd')-TO_DATE(substr(COLLECTION_TIME,1,10),'yyyy-mm-dd')>60;
+END;

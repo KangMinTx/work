@@ -1,0 +1,56 @@
+--Spark SQL
+--_********************************************************_
+--author: lgrkk
+--create time: 2020-07-27 09:18:54
+--_********************************************************_
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/27 9:06:23
+--#模型说明： 
+--#加工方式： 多源数据融合
+--#目标表  ： std_fg_lxdh(发改_联系电话)
+--#源表    ： std_qfg_t_busi_gtxh_sb(个私协社保信息)、std_qfg_t_busi_jsj_admtecpri(建筑企业行政技术负责人信息)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_fg_lxdh partition (dt='${DayBeforeStartTime}')
+select      
+	 t.zjlx, -- 证件类型
+	 t.zjhm, -- 证件号码
+	 t.xm, -- 姓名
+	 t.lxdh, -- 联系电话
+	 t.djsj, -- 登记时间
+	 t.lyb, -- 来源表
+	 t.lyjg -- 来源机构
+from 
+	(
+	select      
+		tt.zjlx, -- 证件类型
+		tt.zjhm, -- 证件号码
+		tt.xm, -- 姓名
+		tt.lxdh, -- 联系电话
+		tt.djsj, -- 登记时间
+		tt.lyb, -- 来源表
+		tt.lyjg, -- 来源机构
+		row_number() over (partition by coalesce(tt.zjlx,''),coalesce(tt.zjhm,''),coalesce(tt.lxdh,'') order by tt.djsj desc ) as rn
+	from 
+		(
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			idcard as zjhm, -- 身份证号
+			jyzname as xm, -- 经营者姓名
+			mobileno as lxdh, -- 电话
+			udate as djsj, -- 更新时间
+			"std_qfg_t_busi_gtxh_sb" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_qfg_t_busi_gtxh_sb a join (select max(dt) maxdt from  	std_qfg_t_busi_gtxh_sb ) b on a.dt=b.maxdt
+		union all
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			idcn as zjhm, -- 身份证号
+			name as xm, -- 名称
+			COALESCE(mobile,phone) as lxdh, -- 电话
+			udate as djsj, -- 更新时间
+			"std_qfg_t_busi_jsj_admtecpri" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_qfg_t_busi_jsj_admtecpri a join (select max(dt) maxdt from  	std_qfg_t_busi_jsj_admtecpri ) b on a.dt=b.maxdt
+ ) tt ) t where t.rn=1;

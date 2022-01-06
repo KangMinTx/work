@@ -1,0 +1,24 @@
+--SparkSQL
+--_********************************************************_
+--author: chenbaokang
+--create time: 2021-09-18 16:01:32
+--_********************************************************_
+--推前两个月的核酸至oracle数据库（没有与实有人口关联）
+drop table if EXISTS dm_rkk_syrkfyqk_incre_hsxg_qler;
+create table dm_rkk_syrkfyqk_incre_hsxg_qler
+select * from (
+select substr(now(),1,19) as YXSJ_bd,a.*from dm_yq_hsjcjg_incre_lsqlb a)
+where datediff(YXSJ_bd,COLLECTION_TIME)<61;
+
+
+--推前两个月的核酸至oracle数据库（与实有人口关联）
+drop table if EXISTS dm_rkk_syrkfyqk_qler;
+create table dm_rkk_syrkfyqk_qler
+select * from (
+select substr(now(),1,19) as YXSJ_bd,a.*from dm_rkk_syrkfyqk_lsql_bqb a)
+where datediff(YXSJ_bd,hsjcsj)<61;
+
+
+
+select count(1) from dm_rkk_syrkfyqk_incre_hsxg_qler;--7744798
+select count(1) from dm_rkk_syrkfyqk_qler;--7744798

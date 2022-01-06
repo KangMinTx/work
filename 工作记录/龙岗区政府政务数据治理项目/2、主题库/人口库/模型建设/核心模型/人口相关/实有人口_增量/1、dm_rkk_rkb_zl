@@ -1,0 +1,976 @@
+--SparkSQL
+--_********************************************************_
+--author: lizheng
+--create time: 2021-08-24 14:15:58
+--_********************************************************_
+
+
+--制作太极平台增量表对应的表
+drop table if exists dm_rkk_rkb_zl;
+CREATE TABLE dm_rkk_rkb_zl as
+select 
+id,
+ syrkjzdz       ,-- 实有人口居住地址
+    fwmc        ,--房屋名称
+    zjlx        ,--证件类型
+    zjhm        ,--证件号码
+    bm          ,--别名
+    xm          ,--姓名
+    gj          ,--国籍
+    gatbz       ,-- 港澳台标志
+    csny        ,--出生年月
+    xb          ,--性别
+    mz          ,--民族
+    jg          ,--籍贯
+    zjxy        ,--宗教信仰
+    lsrq        ,--来深日期
+    hyzk        ,--婚姻状况
+    chrq        ,--初婚日期
+    swrq        ,--死亡日期
+    jkzk        ,--健康状况
+    byyx        ,--毕业院校
+    hy          ,--行业
+    zhy         ,-- 职业
+    zc          ,--职称
+    ysr         ,-- 月收入
+    sg          ,--身高
+    zy          ,--专业
+    by          ,--兵役
+    xx          ,--血型
+    xw          ,--学位
+    yhzgx       ,-- 与户主关系
+    hjlx        ,--户籍类型
+    yhj         ,-- 原户籍
+    hklx        ,--户口类型
+    hkxz        ,--户口性质
+    sfds        ,--是否独生
+    whcd        ,--文化程度
+    zzmm        ,--政治面貌
+    hkszd       ,-- 户口所在地
+    gllb        ,--管理类别
+    xzqhid                            ,--  行政区划id
+    sftj        ,--是否统计
+    gxbz        ,--更新标志
+    zjhm2       ,-- 证件号码2
+    xgljgid                           ,--   新管理机构id
+    lkyy        ,--离开原因
+    ckqk        ,--持卡情况
+    bydt        ,--避孕动态
+    sydt        ,--生育动态
+    yx          ,--邮箱
+    sj          ,--手机
+    zzdh        ,--住宅电话
+    zslb        ,--住所类别
+    gzdw        ,--工作单位
+    dwdz        ,--单位地址
+    bgdh        ,--办公电话
+    blr         ,-- 办理人
+    blsj        ,--办理时间
+    xgz         ,-- 修改者
+    xgsj        ,--修改时间
+    cjsj        ,--创建时间
+    cjz         ,-- 创建者
+    bz          ,--备注
+    djr         ,-- 登记人
+    djsj        ,--登记时间
+    crsj        ,--插入时间
+    yxx         ,-- 有效性
+    yxrq        ,--有效日期
+    jdbm        ,--街道编码
+    jdmc        ,--街道名称
+    sqbm        ,--社区编码
+    sqmc        ,--社区名称
+    wgbm        ,--网格编码
+    wgmc        ,--网格名称
+    house_code                        ,--      房屋编码
+    building_code                     ,--         楼栋编码
+    lxdh        ,--联系电话
+    tzr         ,-- 同住人
+    lyb         ,-- 来源表
+    lyjg        ,--来源机构
+    yxsj        ,--   运行时间
+    byzd1       ,-- 备用字段1
+    byzd2       ,-- 备用字段2
+    byzd3       ,-- 备用字段3
+    byzd4       ,-- 备用字段4
+    byzd5       -- 备用字段5
+	from(
+select 
+a.id
+,a.zjlx  --证件类型
+,a.zjhm  --证件号码
+,a.bm  --别名
+,a.xm  --姓名
+,a.gj  --国籍
+,a.gatbz  --港澳台标志
+,if(
+    (substr(a.csny,1,2)='19' or substr(a.csny,1,2)='20') and substr(a.csny,6,2)>='01' and substr(a.csny,6,2)<='12' and substr(a.csny,9,2)>='01' and substr(a.csny,9,2)<='31'
+  ,a.csny
+   ,''
+  )  csny--出生年月
+,a.xb  --性别
+,a.mz  --民族
+,a.jg  --籍贯
+,a.zjxy  --宗教信仰
+,a.lsrq  --来深日期
+,a.hyzk  --婚姻状况
+,a.chrq  --初婚日期
+,a.swrq  --死亡日期
+,a.jkzk  --健康状况
+,a.byyx  --毕业院校
+,a.hy  --行业
+,a.zhy  --职业
+,a.zc  --职称
+,a.ysr  --月收入
+,a.sg  --身高
+,a.zy  --专业
+,a.`by`  --兵役
+,a.xx  --血型
+,a.xw  --学位
+,a.yhzgx  --与户主关系
+,a.hjlx  --户籍类型
+,a.yhj  --原户籍
+,a.hklx  --户口类型
+,a.hkxz  --户口性质
+,a.sfds  --是否独生
+,a.whcd  --文化程度
+,a.zzmm  --政治面貌
+,a.hkszd  --户口所在地
+,a.gllb  --管理类别
+,a.xzqhid  --行政区划id
+,a.sftj  --是否统计
+,a.gxbz  --更新标志
+,a.zjhm2  --证件号码2
+,a.xgljgid  --新管理机构id
+,a.lkyy  --离开原因
+,a.ckqk  --持卡情况
+,a.bydt  --避孕动态
+,a.sydt  --生育动态
+,a.yx  --邮箱
+,a.sj  --手机
+,a.zzdh  --住宅电话
+,a.zslb  --住所类别
+,a.gzdw  --工作单位
+,a.dwdz  --单位地址
+,a.bgdh  --办公电话
+,a.blr  --办理人
+,a.blsj  --办理时间
+,a.xgz  --修改者
+,a.xgsj  --修改时间
+,a.cjsj  --创建时间
+,a.cjz  --创建者
+,a.bz  --备注
+,a.djr  --登记人
+,a.djsj  --登记时间
+,a.crsj  --插入时间
+,a.yxx  --有效性
+,a.yxrq  --有效日期
+,a.jdbm 
+,a.jdmc 
+,a.sqbm 
+,a.sqmc
+,a.wgbm
+,a.wgmc
+,a.house_code
+,a.building_code
+,a.lxdh
+,a.tzr
+,a.lyb
+,a.lyjg
+,now() yxsj
+,a.syrkjzdz
+,a.fwmc
+,a.byzd1
+,a.byzd2--其他联系方式
+,a.byzd3
+,a.byzd4
+,a.byzd5
+ from(
+select 
+    a.id id ,--主键id
+	a.cardtypeid_name zjlx                   ,--证件类型
+	--a.cardtypeid  zjlx                   ,--证件类型
+	if(regexp_extract(a.cardno,'[0-9 a-z A-Z]{18}',0)<>'',regexp_extract(a.cardno,'[0-9 a-z A-Z]{18}',0)
+          ,if(regexp_extract(a.cardno,'[0-9 a-z A-Z]{15}',0)<>'',regexp_extract(a.cardno,'[0-9 a-z A-Z]{15}',0)
+          ,if(regexp_extract(a.cardno,'[0-9 a-z A-Z]{11}',0)<>'',regexp_extract(a.cardno,'[0-9 a-z A-Z]{11}',0)
+		  ,if(regexp_extract(a.cardno,'[0-9 a-z A-Z]{10}',0)<>'',regexp_extract(a.cardno,'[0-9 a-z A-Z]{10}',0)
+		  ,if(regexp_extract(a.cardno,'[0-9 a-z A-Z]{9}',0)<>'',regexp_extract(a.cardno,'[0-9 a-z A-Z]{9}',0)
+		  ,regexp_extract(a.cardno,'[0-9 a-z A-Z]{5,9}',0)))))) zjhm                   ,--证件号码
+	a.alias bm                   ,--别名
+if(length(regexp_replace(regexp_replace(name,'[\u4e00-\u9fa5]',''),'',''))=length(name),trim(name),regexp_replace(trim(regexp_replace(trim(name),'[/\[.*\]/]|[\A-Za-z]|[\0-9]|[(]|[)]|[:]|[：]|[。]|[、]|[、]|[，]|[,]|[/]|[?]|[？]|[+]|[*]|[`]|[.]|[-]|[≤]|[·]|[‘]|[]|[‘]|[∵]|[′]|[；]|[]|[＋]|[]|[｀]|[！]|[　]','')),'',''))   xm                   ,--姓名
+	a.nationality_name gj                   ,--国籍
+	--a.nationality gj                   ,--国籍
+	case when gat_remark=1 then '香港人'
+  	when gat_remark=2 then '台湾人' 
+    when  gat_remark=3 then '澳门人'
+    else null end gatbz                   ,--港澳台标志
+	case WHEN (birthday is null or birthday='') and length(a.cardno)=15 and length(regexp_extract(a.cardno,'[a-z A-Z]{3}',0))<>3 then '19'|| substr(a.cardno,7,2) ||'-'|| substr(a.cardno,9,2) ||'-'||substr(a.cardno,11,2)||' 00:00:00.0'
+when (birthday is null or birthday='') and length(a.cardno)=18 then substr(a.cardno,7,4)||'-'||substr(a.cardno,11,2)||'-'||substr(a.cardno,13,2)||' 00:00:00.0'
+else birthday end   csny                   ,--出生年月
+	sex_name xb                   ,--性别
+	--sex xb                   ,--性别
+	nationid_name mz                   ,--民族
+	--nationid mz                   ,--民族
+	nativeplace_name jg                   ,--籍贯
+	--nativeplace jg                   ,--籍贯
+	beliefid_name zjxy                   ,--宗教信仰
+	--beliefid zjxy                   ,--宗教信仰
+	intime1 lsrq                   ,--来深日期
+	marryid_name hyzk                   ,--婚姻状况
+	--marryid hyzk                   ,--婚姻状况
+	marrydate chrq                   ,--初婚日期
+	diedate swrq                   ,--死亡日期
+	health_name jkzk                   ,--健康状况
+	--health jkzk                   ,--健康状况
+	finishschool byyx                   ,--毕业院校
+	tradeid_name hy                   ,--行业
+	--tradeid hy                   ,--行业
+	jobid_name zhy                   ,--职业
+	--jobid zhy                   ,--职业
+	techtitleid_name zc                   ,--职称
+	--techtitleid zc                   ,--职称
+	salary ysr                   ,--月收入
+	height sg                   ,--身高
+	speciality zy                   ,--专业
+	escuageid_name  `by`                   ,--兵役
+	--escuageid `by`                   ,--兵役
+	bloodtypeid_name xx                   ,--血型
+	--bloodtypeid xx                   ,--血型
+	degree_name xw                   ,--学位
+	--degree xw                   ,--学位
+	leaserelationid_name yhzgx                   ,--与户主关系
+	--leaserelationid yhzgx                   ,--与户主关系
+	registerplace_name hjlx                   ,--户籍类型
+	--registerplace hjlx                   ,--户籍类型
+	refisteraddresspre yhj                   ,--原户籍
+	registerplace_name hklx                   ,--户口类型
+	--registerplace hklx                   ,--户口类型
+	registertype hkxz                   ,--户口性质
+	singlekid sfds                   ,--是否独生
+	edulevelid_name whcd                   ,--文化程度
+	--edulevelid whcd                   ,--文化程度
+	politicsid_name zzmm                   ,--政治面貌
+	--politicsid zzmm                   ,--政治面貌
+	registeraddress hkszd                   ,--户口所在地
+	managetype gllb                   ,--管理类别
+	qhareaid xzqhid                   ,--行政区划id
+	isstat sftj                   ,--是否统计
+	update_key_name gxbz                   ,--更新标志
+	--update_key gxbz                   ,--更新标志
+	cardno2 zjhm2                   ,--证件号码2
+	newareaid xgljgid                   ,--新管理机构id
+	outreason lkyy                   ,--离开原因
+	cardholders ckqk                   ,--持卡情况
+	contraceptive_name bydt                   ,--避孕动态
+	--contraceptive bydt                   ,--避孕动态
+	procreatedynamic_name sydt                   ,--生育动态
+	--procreatedynamic sydt                   ,--生育动态
+	email yx                   ,--邮箱
+	mtel sj                   ,--手机
+	tel zzdh                   ,--住宅电话
+	domiciletype_name zslb                   ,--住所类别
+	--domiciletype zslb                   ,--住所类别
+	company gzdw                   ,--工作单位
+	companyaddress dwdz                   ,--单位地址
+	companytel bgdh                   ,--办公电话
+	transactor blr                   ,--办理人
+	transacttime blsj                   ,--办理时间
+	updater xgz                   ,--修改者
+	a.updatetime xgsj                   ,--修改时间
+	createtime cjsj                   ,--创建时间
+	creator cjz                   ,--创建者
+	remarks bz                   ,--备注
+	registrar djr                   ,--登记人
+	addtime djsj                   ,--登记时间
+	inserttime crsj                   ,--插入时间
+	--if(isvalid=0,"暂离",if(isvalid=1 or isvalid is null,"有效",null)) yxx                   ,--有效性
+	if(isvalid=1 or isvalid is null,"有效","暂离") yxx                   ,--有效性
+	effectivedate yxrq                   --有效日期
+	,b.jdbm	as jdbm		--街道编码
+	,b.jdmc	as jdmc		--街道名称
+	,b.sqbm as sqbm		--社区编码 
+	,b.sqmc as sqmc			--社区名称 
+	,b.wgbm	as wgbm--网格编码
+	,b.wgmc as wgmc		--网格名称
+	,a.housecode house_code 	,--房屋编码
+	b.building_code building_code	,--楼栋编码
+    mtel lxdh,
+    replace(replace(c.tzr,case when instr(c.tzr,a.name)<=1 then a.name||' ' else ' '||a.name end,''),a.name,'') tzr,
+	'std_zfw_resident1_logback0709_2'  lyb                    ,--来源表
+	a.lyjg                   ,--来源机构
+	now() yxsj              ,     --运行时间
+    a.homeaddress as syrkjzdz,
+b.HOUSE_NAME as fwmc,
+'实有人口' as byzd1,
+d.phone  as byzd2,--其他联系方式
+d.byzd3  as byzd3,
+a.flagfield as byzd4,
+nvl(a.checkindate,a.addtime) as byzd5
+	--,cast(null as string) flagfield
+	--row_number()over(partition by a.cardno,a.flagfield order by a.updatetime desc,a.CREATETIME desc) rn 
+from (select * from std_zfw_resident1_logback0709_2 
+where dt=(select max(dt) from std_zfw_resident1_logback0709_2))a
+left join 
+(
+select * from (
+select c.*,row_number() over(partition by id order by yxsj desc) rn  
+from (select * from fwzt.dwd_buildingaddress_info_result 
+where dt=(select max(dt) from fwzt.dwd_buildingaddress_info_result)) c)where rn=1 --and house_code is not null
+) b 
+--on a.housecode = b.house_code 
+on trim(a.houseid)=trim(b.id)
+/*
+left join phone_temp_rk_0813 d 
+on d.cardno=a.cardno and d.name = a.name
+left join phone_temp_rk_0813 dd
+on dd.cardno=a.cardno and dd.name='深i您来源电话'
+--left join dm_rkk_syrkkb01_0813 b on a.zjhm=b.zjhm and a.xm=b.xm
+  */ 
+     left join phone_temp_rk_0813_mk d
+  on a.cardno=d.cardno
+left join (select
+		 HOUSE_CODE
+		,wm_concat(' ',name) tzr
+	 from(
+		select 
+			zjhm
+			,xm name
+			,HOUSE_CODE
+			,row_number() over(partition by zjhm,HOUSE_CODE order by RZSJ desc  )rn
+		from fwzt.dwd_rfgx_jzdz 
+		where dt=(select max(dt) from fwzt.dwd_rfgx_jzdz)  
+		)where rn=1 
+		group by HOUSE_CODE
+		) c
+on a.housecode=c.HOUSE_CODE
+--where a.cardno is not null and (sqmc is not null and sqbm is not null and  jdmc is not null and jdbm is not null)
+
+)a --where rn=1
+    );
+    
+    
+--TRUNCATE table dm_rkk_rkb_ls;
+insert overwrite table dm_rkk_rkb_ls partition (dt='${DayBeforeStartTime}')
+select 
+id,
+ syrkjzdz       ,-- 实有人口居住地址
+    fwmc        ,--房屋名称
+    zjlx        ,--证件类型
+    zjhm        ,--证件号码
+    bm          ,--别名
+    xm          ,--姓名
+    gj          ,--国籍
+    gatbz       ,-- 港澳台标志
+    csny        ,--出生年月
+    xb          ,--性别
+    mz          ,--民族
+    jg          ,--籍贯
+    zjxy        ,--宗教信仰
+    lsrq        ,--来深日期
+    hyzk        ,--婚姻状况
+    chrq        ,--初婚日期
+    swrq        ,--死亡日期
+    jkzk        ,--健康状况
+    byyx        ,--毕业院校
+    hy          ,--行业
+    zhy         ,-- 职业
+    zc          ,--职称
+    ysr         ,-- 月收入
+    sg          ,--身高
+    zy          ,--专业
+    `by`          ,--兵役
+    xx          ,--血型
+    xw          ,--学位
+    yhzgx       ,-- 与户主关系
+    hjlx        ,--户籍类型
+    yhj         ,-- 原户籍
+    hklx        ,--户口类型
+    hkxz        ,--户口性质
+    sfds        ,--是否独生
+    whcd        ,--文化程度
+    zzmm        ,--政治面貌
+    hkszd       ,-- 户口所在地
+    gllb        ,--管理类别
+    xzqhid                            ,--  行政区划id
+    sftj        ,--是否统计
+    gxbz        ,--更新标志
+    zjhm2       ,-- 证件号码2
+    xgljgid                           ,--   新管理机构id
+    lkyy        ,--离开原因
+    ckqk        ,--持卡情况
+    bydt        ,--避孕动态
+    sydt        ,--生育动态
+    yx          ,--邮箱
+    sj          ,--手机
+    zzdh        ,--住宅电话
+    zslb        ,--住所类别
+    gzdw        ,--工作单位
+    dwdz        ,--单位地址
+    bgdh        ,--办公电话
+    blr         ,-- 办理人
+    blsj        ,--办理时间
+    xgz         ,-- 修改者
+    xgsj        ,--修改时间
+    cjsj        ,--创建时间
+    cjz         ,-- 创建者
+    bz          ,--备注
+    djr         ,-- 登记人
+    djsj        ,--登记时间
+    crsj        ,--插入时间
+    yxx         ,-- 有效性
+    yxrq        ,--有效日期
+    jdbm        ,--街道编码
+    jdmc        ,--街道名称
+    sqbm        ,--社区编码
+    sqmc        ,--社区名称
+    wgbm        ,--网格编码
+    wgmc        ,--网格名称
+    house_code                        ,--      房屋编码
+    building_code                     ,--         楼栋编码
+    lxdh        ,--联系电话
+    tzr         ,-- 同住人
+    lyb         ,-- 来源表
+    lyjg        ,--来源机构
+    yxsj        ,--   运行时间
+    byzd1       ,-- 备用字段1
+    byzd2       ,-- 备用字段2
+    byzd3       ,-- 备用字段3
+    byzd4       ,-- 备用字段4
+    byzd5       -- 备用字段5
+from dm_rkk_rkb_zl;
+
+
+--增量运行后制作与太极平台一样的增量表dm_rkk_syrkkb_temp
+drop table if exists dm_rkk_syrkkb_temp_1;
+create  table dm_rkk_syrkkb_temp_1 as
+select 
+id,
+ syrkjzdz       ,-- 实有人口居住地址
+    fwmc        ,--房屋名称
+    zjlx        ,--证件类型
+    zjhm        ,--证件号码
+    bm          ,--别名
+    xm          ,--姓名
+    gj          ,--国籍
+    gatbz       ,-- 港澳台标志
+    csny        ,--出生年月
+    xb          ,--性别
+    mz          ,--民族
+    jg          ,--籍贯
+    zjxy        ,--宗教信仰
+    lsrq        ,--来深日期
+    hyzk        ,--婚姻状况
+    chrq        ,--初婚日期
+    swrq        ,--死亡日期
+    jkzk        ,--健康状况
+    byyx        ,--毕业院校
+    hy          ,--行业
+    zhy         ,-- 职业
+    zc          ,--职称
+    ysr         ,-- 月收入
+    sg          ,--身高
+    zy          ,--专业
+    `by`          ,--兵役
+    xx          ,--血型
+    xw          ,--学位
+    yhzgx       ,-- 与户主关系
+    hjlx        ,--户籍类型
+    yhj         ,-- 原户籍
+    hklx        ,--户口类型
+    hkxz        ,--户口性质
+    sfds        ,--是否独生
+    whcd        ,--文化程度
+    zzmm        ,--政治面貌
+    hkszd       ,-- 户口所在地
+    gllb        ,--管理类别
+    xzqhid                            ,--  行政区划id
+    sftj        ,--是否统计
+    gxbz        ,--更新标志
+    zjhm2       ,-- 证件号码2
+    xgljgid                           ,--   新管理机构id
+    lkyy        ,--离开原因
+    ckqk        ,--持卡情况
+    bydt        ,--避孕动态
+    sydt        ,--生育动态
+    yx          ,--邮箱
+    sj          ,--手机
+    zzdh        ,--住宅电话
+    zslb        ,--住所类别
+    gzdw        ,--工作单位
+    dwdz        ,--单位地址
+    bgdh        ,--办公电话
+    blr         ,-- 办理人
+    blsj        ,--办理时间
+    xgz         ,-- 修改者
+    xgsj        ,--修改时间
+    cjsj        ,--创建时间
+    cjz         ,-- 创建者
+    bz          ,--备注
+    djr         ,-- 登记人
+    djsj        ,--登记时间
+    crsj        ,--插入时间
+    yxx         ,-- 有效性
+    yxrq        ,--有效日期
+    jdbm        ,--街道编码
+    jdmc        ,--街道名称
+    sqbm        ,--社区编码
+    sqmc        ,--社区名称
+    wgbm        ,--网格编码
+    wgmc        ,--网格名称
+    house_code                        ,--      房屋编码
+    building_code                     ,--         楼栋编码
+    lxdh        ,--联系电话
+    tzr         ,-- 同住人
+    lyb         ,-- 来源表
+    lyjg        ,--来源机构
+    yxsj        ,--   运行时间
+    byzd1       ,-- 备用字段1
+    byzd2       ,-- 备用字段2
+    byzd3       ,-- 备用字段3
+    byzd4       ,-- 备用字段4
+    byzd5       -- 备用字段5
+from dm_rkk_syrkkb_temp a where not exists(
+select 1 from dm_rkk_rkb_zl b where a.id=b.id
+)
+union ALL
+(
+select 
+  id,
+ syrkjzdz       ,-- 实有人口居住地址
+    fwmc        ,--房屋名称
+    zjlx        ,--证件类型
+    zjhm        ,--证件号码
+    bm          ,--别名
+    xm          ,--姓名
+    gj          ,--国籍
+    gatbz       ,-- 港澳台标志
+    csny        ,--出生年月
+    xb          ,--性别
+    mz          ,--民族
+    jg          ,--籍贯
+    zjxy        ,--宗教信仰
+    lsrq        ,--来深日期
+    hyzk        ,--婚姻状况
+    chrq        ,--初婚日期
+    swrq        ,--死亡日期
+    jkzk        ,--健康状况
+    byyx        ,--毕业院校
+    hy          ,--行业
+    zhy         ,-- 职业
+    zc          ,--职称
+    ysr         ,-- 月收入
+    sg          ,--身高
+    zy          ,--专业
+    `by`          ,--兵役
+    xx          ,--血型
+    xw          ,--学位
+    yhzgx       ,-- 与户主关系
+    hjlx        ,--户籍类型
+    yhj         ,-- 原户籍
+    hklx        ,--户口类型
+    hkxz        ,--户口性质
+    sfds        ,--是否独生
+    whcd        ,--文化程度
+    zzmm        ,--政治面貌
+    hkszd       ,-- 户口所在地
+    gllb        ,--管理类别
+    xzqhid                            ,--  行政区划id
+    sftj        ,--是否统计
+    gxbz        ,--更新标志
+    zjhm2       ,-- 证件号码2
+    xgljgid                           ,--   新管理机构id
+    lkyy        ,--离开原因
+    ckqk        ,--持卡情况
+    bydt        ,--避孕动态
+    sydt        ,--生育动态
+    yx          ,--邮箱
+    sj          ,--手机
+    zzdh        ,--住宅电话
+    zslb        ,--住所类别
+    gzdw        ,--工作单位
+    dwdz        ,--单位地址
+    bgdh        ,--办公电话
+    blr         ,-- 办理人
+    blsj        ,--办理时间
+    xgz         ,-- 修改者
+    xgsj        ,--修改时间
+    cjsj        ,--创建时间
+    cjz         ,-- 创建者
+    bz          ,--备注
+    djr         ,-- 登记人
+    djsj        ,--登记时间
+    crsj        ,--插入时间
+    yxx         ,-- 有效性
+    yxrq        ,--有效日期
+    jdbm        ,--街道编码
+    jdmc        ,--街道名称
+    sqbm        ,--社区编码
+    sqmc        ,--社区名称
+    wgbm        ,--网格编码
+    wgmc        ,--网格名称
+    house_code                        ,--      房屋编码
+    building_code                     ,--         楼栋编码
+    lxdh        ,--联系电话
+    tzr         ,-- 同住人
+    lyb         ,-- 来源表
+    lyjg        ,--来源机构
+    yxsj        ,--   运行时间
+    byzd1       ,-- 备用字段1
+    byzd2       ,-- 备用字段2
+    byzd3       ,-- 备用字段3
+    byzd4       ,-- 备用字段4
+    byzd5       -- 备用字段5
+  from dm_rkk_rkb_zl where byzd4!='deleted'
+);
+insert overwrite table dm_rkk_syrkkb_temp
+select 
+id,
+ syrkjzdz       ,-- 实有人口居住地址
+    fwmc        ,--房屋名称
+    zjlx        ,--证件类型
+    zjhm        ,--证件号码
+    bm          ,--别名
+    xm          ,--姓名
+    gj          ,--国籍
+    gatbz       ,-- 港澳台标志
+    csny        ,--出生年月
+    xb          ,--性别
+    mz          ,--民族
+    jg          ,--籍贯
+    zjxy        ,--宗教信仰
+    lsrq        ,--来深日期
+    hyzk        ,--婚姻状况
+    chrq        ,--初婚日期
+    swrq        ,--死亡日期
+    jkzk        ,--健康状况
+    byyx        ,--毕业院校
+    hy          ,--行业
+    zhy         ,-- 职业
+    zc          ,--职称
+    ysr         ,-- 月收入
+    sg          ,--身高
+    zy          ,--专业
+    `by`          ,--兵役
+    xx          ,--血型
+    xw          ,--学位
+    yhzgx       ,-- 与户主关系
+    hjlx        ,--户籍类型
+    yhj         ,-- 原户籍
+    hklx        ,--户口类型
+    hkxz        ,--户口性质
+    sfds        ,--是否独生
+    whcd        ,--文化程度
+    zzmm        ,--政治面貌
+    hkszd       ,-- 户口所在地
+    gllb        ,--管理类别
+    xzqhid                            ,--  行政区划id
+    sftj        ,--是否统计
+    gxbz        ,--更新标志
+    zjhm2       ,-- 证件号码2
+    xgljgid                           ,--   新管理机构id
+    lkyy        ,--离开原因
+    ckqk        ,--持卡情况
+    bydt        ,--避孕动态
+    sydt        ,--生育动态
+    yx          ,--邮箱
+    sj          ,--手机
+    zzdh        ,--住宅电话
+    zslb        ,--住所类别
+    gzdw        ,--工作单位
+    dwdz        ,--单位地址
+    bgdh        ,--办公电话
+    blr         ,-- 办理人
+    blsj        ,--办理时间
+    xgz         ,-- 修改者
+    xgsj        ,--修改时间
+    cjsj        ,--创建时间
+    cjz         ,-- 创建者
+    bz          ,--备注
+    djr         ,-- 登记人
+    djsj        ,--登记时间
+    crsj        ,--插入时间
+    yxx         ,-- 有效性
+    yxrq        ,--有效日期
+    jdbm        ,--街道编码
+    jdmc        ,--街道名称
+    sqbm        ,--社区编码
+    sqmc        ,--社区名称
+    wgbm        ,--网格编码
+    wgmc        ,--网格名称
+    house_code                        ,--      房屋编码
+    building_code                     ,--         楼栋编码
+    lxdh        ,--联系电话
+    tzr         ,-- 同住人
+    lyb         ,-- 来源表
+    lyjg        ,--来源机构
+    yxsj        ,--   运行时间
+    byzd1       ,-- 备用字段1
+    byzd2       ,-- 备用字段2
+    byzd3       ,-- 备用字段3
+    byzd4       ,-- 备用字段4
+    byzd5       -- 备用字段5
+from dm_rkk_syrkkb_temp_1;
+
+
+
+--制作根据人、更新时间、创建时间去重后的表
+drop table if exists dm_rkk_syrkkb_tjt;
+create table dm_rkk_syrkkb_tjt as
+select 
+id,
+ syrkjzdz       ,-- 实有人口居住地址
+    fwmc        ,--房屋名称
+    zjlx        ,--证件类型
+    zjhm        ,--证件号码
+    bm          ,--别名
+    xm          ,--姓名
+    gj          ,--国籍
+    gatbz       ,-- 港澳台标志
+    csny        ,--出生年月
+    xb          ,--性别
+    mz          ,--民族
+    jg          ,--籍贯
+    zjxy        ,--宗教信仰
+    lsrq        ,--来深日期
+    hyzk        ,--婚姻状况
+    chrq        ,--初婚日期
+    swrq        ,--死亡日期
+    jkzk        ,--健康状况
+    byyx        ,--毕业院校
+    hy          ,--行业
+    zhy         ,-- 职业
+    zc          ,--职称
+    ysr         ,-- 月收入
+    sg          ,--身高
+    zy          ,--专业
+    `by`          ,--兵役
+    xx          ,--血型
+    xw          ,--学位
+    yhzgx       ,-- 与户主关系
+    hjlx        ,--户籍类型
+    yhj         ,-- 原户籍
+    hklx        ,--户口类型
+    hkxz        ,--户口性质
+    sfds        ,--是否独生
+    whcd        ,--文化程度
+    zzmm        ,--政治面貌
+    hkszd       ,-- 户口所在地
+    gllb        ,--管理类别
+    xzqhid                            ,--  行政区划id
+    sftj        ,--是否统计
+    gxbz        ,--更新标志
+    zjhm2       ,-- 证件号码2
+    xgljgid                           ,--   新管理机构id
+    lkyy        ,--离开原因
+    ckqk        ,--持卡情况
+    bydt        ,--避孕动态
+    sydt        ,--生育动态
+    yx          ,--邮箱
+    sj          ,--手机
+    zzdh        ,--住宅电话
+    zslb        ,--住所类别
+    gzdw        ,--工作单位
+    dwdz        ,--单位地址
+    bgdh        ,--办公电话
+    blr         ,-- 办理人
+    blsj        ,--办理时间
+    xgz         ,-- 修改者
+    xgsj        ,--修改时间
+    cjsj        ,--创建时间
+    cjz         ,-- 创建者
+    bz          ,--备注
+    djr         ,-- 登记人
+    djsj        ,--登记时间
+    crsj        ,--插入时间
+    yxx         ,-- 有效性
+    yxrq        ,--有效日期
+    jdbm        ,--街道编码
+    jdmc        ,--街道名称
+    sqbm        ,--社区编码
+    sqmc        ,--社区名称
+    wgbm        ,--网格编码
+    wgmc        ,--网格名称
+    house_code                        ,--      房屋编码
+    building_code                     ,--         楼栋编码
+    lxdh        ,--联系电话
+    tzr         ,-- 同住人
+    lyb         ,-- 来源表
+    lyjg        ,--来源机构
+    yxsj        ,--   运行时间
+    byzd1       ,-- 备用字段1
+    byzd2       ,-- 备用字段2
+    byzd3       ,-- 备用字段3
+    byzd4       ,-- 备用字段4
+    byzd5       -- 备用字段5
+from
+(select a.*,row_number()over(partition by zjhm,xm order by substr(xgsj,1,19) desc,substr(cjsj,1,19) desc) rn 
+from dm_rkk_syrkkb_temp a ) 
+where yxx='有效'  and length(zjhm) in (9,10,11,15,18) and jdmc is not null
+and rn=1;
+
+--制作标签使用的表
+drop table if exists dm_rkk_syrkkb_bq;
+create table dm_rkk_syrkkb_bq as
+select 
+    id                                             ,--'主键id',
+    syrkjzdz                                             ,--'居住房屋地址',
+    fwmc                                             ,--'房屋名称',
+    zjlx                                             ,--'证件类型',
+    zjhm  ,
+    bm                                             ,--'别名',
+    xm  ,
+    gj                                             ,--'国籍',
+    gatbz  ,
+    substr(csny,1,10)  csny ,
+    xb                                             ,--'性别',
+    mz                                             ,--'民族',
+    jg                                             ,--'籍贯',
+    zjxy                                             ,--'宗教信仰',
+    lsrq                                             ,--'来深日期',
+    hyzk                                             ,--'婚姻状况',
+    chrq                                             ,--'初婚日期',
+    swrq                                             ,--'死亡日期',
+    jkzk                                             ,--'健康状况',
+    byyx                                             ,--'毕业院校',
+    hy                                             ,--'行业',
+    zhy                                             ,--'职业',
+    zc                                             ,--'职称',
+    ysr                                             ,--'月收入',
+    sg                                             ,--'身高',
+    zy                                             ,--'专业',
+    by                                             ,--'兵役',
+    xx                                             ,--'血型',
+    xw                                             ,--'学位',
+    yhzgx                                             ,--'与户主关系',
+    hjlx                                             ,--'户籍类型',
+    yhj                                             ,--'原户籍',
+    hklx                                             ,--'户籍类型',
+    hkxz                                             ,--'户口性质',
+    sfds                                             ,--'是否独生',
+    whcd                                             ,--'文化程度',
+    zzmm                                             ,--'政治面貌',
+    hkszd                                             ,--'户口所在地',
+    gllb                                             ,--'管理类别',
+    xzqhid                                             ,--'行政区划id',
+    sftj                                             ,--'是否统计',
+    gxbz                                             ,--'更新标志',
+    zjhm2                                             ,--'证件号码2',
+    xgljgid                                             ,--'新管理机构id',
+    lkyy                                             ,--'离开原因',
+    ckqk                                             ,--'持卡情况',
+    bydt                                             ,--'避孕动态',
+    sydt                                             ,--'生育动态',
+    yx                                             ,--'邮箱',
+    sj                                             ,--'手机',
+    zzdh                                             ,--'住宅电话',
+    zslb                                             ,--'住所类别',
+    gzdw                                             ,--'工作单位',
+    dwdz                                             ,--'单位地址',
+    bgdh                                             ,--'办公电话',
+    blr                                             ,--'办理人',
+    blsj                                             ,--'办理时间',
+    xgz                                             ,--'修改者',
+    xgsj                                             ,--'修改时间',
+    cjsj                                             ,--'创建时间',
+    cjz                                             ,--'创建者',
+    bz                                             ,--'备注',
+    djr                                             ,--'登记人',
+    djsj                                             ,--'登记时间',
+    crsj                                             ,--'插入时间',
+    yxx  ,
+    yxrq                                             ,--'有效日期',
+    jdbm                                             ,--'街道编码',
+    jdmc                                             ,--'街道名称',
+    sqbm                                             ,--'社区编码',
+    sqmc                                             ,--'社区名称',
+    wgbm                                             ,--'网格编码',
+    wgmc                                             ,--'网格名称',
+    house_code                                             ,--'房屋编码',
+    building_code                                             ,--'楼栋编码',
+    lxdh                                             ,--'手机',
+    tzr  ,
+    lyb  ,
+    lyjg                                             ,--'来源机构',
+    yxsj  ,
+    byzd1  ,
+    byzd2                                             ,--'其他联系方式',
+    byzd3                                             ,--'其他联系方式来源',
+    byzd4                                             ,--'增量标记',
+    byzd5                                             ,--'入住时间',
+    rn  
+from
+(select a.*,row_number()over(partition by zjhm order by substr(xgsj,1,19) desc,substr(cjsj,1,19) desc) rn 
+from dm_rkk_syrkkb_temp a ) 
+where yxx='有效'  and length(zjhm) in (9,10,11,15,18) and jdmc is not null
+and rn=1 and zjhm is not null and zjhm<>'';
+
+
+
+
+
+
+
+
+
+
+
+
+--制作和永兴元一样字段的表
+
+insert OVERWRITE table dm_rkk_syrk_to_yxy_th partition (dt='${DayBeforeStartTime}') 
+select 
+	distinct
+ id              --唯一主键
+,name             --姓名
+,zjhm             --证件号码
+,replace(replace(birthday,' 00:00:00.0',''),' 00:00:00','') birthday  ,      --出生年月
+case when  nl<3 then '0'
+      when  nl>=3 and nl<18 then '1'
+       when nl>=18 and nl<60 then '2'
+        when nl>=60 then '3'  
+         else '4'  end nld     --年龄段
+,homeaddress      --居住房屋地址
+,fwbm             --房屋编码
+,case when yxx='有效' then 0 else 1 end yxx          --有效性   
+, sj               -- 手机
+,sex              -- 性别
+, case when flagfield='changed' then '2'
+		when flagfield='new' then '1'  
+        	when flagfield='deleted' then '3'
+            end    flagfield     --标识		
+,building_code  --楼栋编码
+,qybm --区域编码  
+,jdbm  --街道编码
+,jdmc  --街道名称
+,wgbm  --网格编码
+,wgmc  --网格名称
+,sqbm  --社区编码
+,sqmc  --社区名称
+,sjhmly sjhmly --手机号码来源
+,now() ysxj
+,substr(now(),1,19) as yxsj2
+from (
+
+select 
+		id                            ,--唯一主键
+		xm name                          ,--姓名
+		zjhm           ,--证件号码
+		csny birthday                      ,--出生年月
+		floor(months_between(to_date(current_date,'yyyy-MM-dd'),substr(csny ,1,10))/12) nl ,--年龄
+		syrkjzdz homeaddress                   ,--居住房屋地址
+		house_code      fwbm           ,--房屋编码
+		yxx    ,--有效性   
+		if(byzd2<>sj or (sj is null and byzd2 is not null),byzd2,sj)  sj           ,--手机
+		xb  sex              ,--性别
+        byzd4 flagfield ,
+  building_code  --楼栋编码
+,case when sqmc='中海怡翠' and sqbm is not null then  sqbm||replace(wgmc,'中海怡翠','0') ||'000' 
+  else  wgbm || '000' end qybm --区域编码   
+,jdbm  --街道编码
+,jdmc  --街道名称
+,wgbm  --网格编码
+,wgmc  --网格名称
+,sqbm  --社区编码
+,sqmc  --社区名称
+,if(byzd2<>sj or (sj is null and byzd2 is not null),byzd3,cast(null as string))  sjhmly --手机号码来源
+from dm_rkk_rkb_zl);

@@ -1,0 +1,256 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-23 10:54:54
+--table_name : dwd_jbxx_fmxx_temp01 (父母信息-临时表01)
+--		 	   dwd_jbxx_fmxx_temp02 (父母信息-临时表02)
+--			   dwd_jbxx_fmxx (父母信息)
+/*取数逻辑   : 
+来源01:POP_CHILDREN生育信息表，POP_CHILDREN孩子信息作为（主体）， 
+	   POP_CHILDREN现家庭母亲/父亲与亲生母亲/父亲相同，取现家庭母亲/父亲作为父母， 关系说明中为母亲、父亲（根据父母字段判断） 
+ 
+	   POP_CHILDREN生育信息表，POP_CHILDREN孩子信息作为（主体）， 
+	   POP_CHILDREN现家庭母亲/父亲与亲生母亲/父亲相同，取现家庭母亲/父亲作为父母， 关系说明中为养母、养父（根据父母字段判断） 
+来源02:SZHJRKJBXX141281户籍信息中，以“户号HH”为分组，取“与户主关系”为“户主、本人”信息，作为父母 
+		同一户号中，取“与户主关系”为“长女、次女、三子、其他女儿、四女、养女或继女、独生子、五女、其他儿子、子、次子、四子、独生女、五子、养子或继子、女、长子、三女”信息，作为子女信息（主体）； 
+		关系说明取“与户主关系”（根据“与户主关系”和子女性别判断，例：户主为女，与户主关系为“养女或继女”，则主体取该条数据，父母取户主数据，关系说明为“养母”or“养父”,根据户主性别判断） 
+		长女、次女、三子、其他女儿、四女、独生子、五女、其他儿子、子、次子、四子、独生女、五子、女、长子、三女----父亲、母亲 
+		养女或继女、养子或继子---养母、养父 
+来源03:SZHJRKJBXX141281户籍信息中，以“户号HH”为分组，取“与户主关系”为“户主、本人”信息，作为子女（主体） 
+		同一户号中，取“与户主关系”为“继母或养母、继父或养父、母亲、父亲、父母”作为父母信息； 
+		关系说明取“与户主关系” 
+        
+去重逻辑 : 以证件号码+子女证件号码 去重，优先取卫健委数据         
+           关联基本登记信息表，取在龙岗的数据
+*/
+--_********************************************************_
+/*
+step01:从户籍表中筛选属于龙岗户籍的人 person_type=1 ,将户号对应多个户主的记录筛掉
+再取 SZHJRKJBXX141281户籍信息中 zt =1 的记录
+取公民身份证号码不为空的记录
+取出关键字段整理成临时表 dwd_jbxx_fmxx_temp01
+*/
+drop table if exists dwd_jbxx_fmxx_temp01;
+create table dwd_jbxx_fmxx_temp01  as
+ select * from (
+SELECT  t2.dz 
+       ,t2.xm 
+       ,CASE WHEN t2.xbmc='男' THEN '男' 
+             WHEN t2.xbmc='女' THEN '女' ELSE null END AS xbmc 
+       ,t2.mzmc 
+       ,t2.gmsfhm 
+       ,t2.hh 
+       ,t2.yhzgxmc
+FROM 
+ /*取龙岗区户籍*/
+ (select card_no from 
+ (select card_no,person_type,row_number() over(partition by card_no order by timeflag desc,addtime desc,person_type desc ) rn
+  from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) where rn=1 and person_type=1) t1
+  inner join 
+  /*取出符合条件的记录*/
+ (select distinct dz,xm,xbmc,mzmc,gmsfhm,hh,YHZGXMC  from std_sgaj_szhjrkjbxx141281 where dt=(select max(dt) from std_sgaj_szhjrkjbxx141281) and zt=1) t2 on t1.card_no=t2.gmsfhm
+  inner join 
+  /*区一户只有一个户主的记录*/
+ ( select  hh  from std_sgaj_szhjrkjbxx141281 where  dt=(select max(dt) from std_sgaj_szhjrkjbxx141281)
+ and YHZGXMC='户主' 
+ group by hh having count(1)=1) t3 on t2.hh=t3.hh )
+ where  gmsfhm is not null;
+
+/*
+step02:将来源01的四种条件 union 在一起,
+再从临时表01中取得 来源02,来源03的两个情况
+此时根据证件号码 和 子女证件号码拼接后去重,成立成临时表 dwd_jbxx_fmxx_temp02
+*/
+drop table if exists dwd_jbxx_fmxx_temp02;
+create table dwd_jbxx_fmxx_temp02  as
+select * from (
+select 
+ zjlx
+,zjhm
+,xm
+,xb
+,fmzjlx
+,fmzjhm
+,fmxm
+,fmxb
+,gxsm
+,xxlylx
+,lyjg
+,lyb
+,row_number() over(partition by zjhm||fmzjhm order by case when lyb='std_swsjkwyh_pop_children' then 1 else 2 end asc) as  rn 
+from 
+(
+/*家庭母亲与亲生母亲相同*/
+select 
+      case when length(t1.identity_number)=18 then '中华人民共和国居民身份证' else '其他' end as zjlx
+      ,t1.identity_number as zjhm
+      ,t1.children_name as xm
+      ,case when t1.gender=1 then '男' when t1.gender=2 then '女' else null end as xb
+      ,case when length(t2.identity_number) = 18 then '中华人民共和国居民身份证' else '其他' end as fmzjlx
+      ,t2.identity_number as fmzjhm
+      ,t2.person_name as fmxm
+      ,case when t2.gender=1 then '男' when t2.gender=2 then '女' else null end as fmxb
+      ,'母亲' as gxsm
+      ,'权威' as xxlylx
+      ,t1.lyjg as lyjg
+      ,'std_swsjkwyh_pop_children' as lyb
+from 
+(select distinct current_mother_guid,identity_number,children_name,gender,lyjg from std_swsjkwyh_pop_children
+where dt=(select max(dt) from std_swsjkwyh_pop_children)
+and current_mother_guid=biological_mother_guid) t1
+left join 
+(select distinct guid,identity_type,identity_number,person_name,gender from ods_swsjkwyh_pop_person where dt=(select max(dt) from ods_swsjkwyh_pop_person)) t2
+on t1.current_mother_guid=t2.guid
+union 
+/*家庭父亲与亲生父亲相同*/
+select 
+      case when length(t1.identity_number)=18 then '中华人民共和国居民身份证' else '其他' end as zjlx
+      ,t1.identity_number as zjhm
+      ,t1.children_name as xm
+      ,case when t1.gender=1 then '男' when t1.gender=2 then '女' else null end as xb
+      ,case when length(t2.identity_number) = 18 then '中华人民共和国居民身份证' else '其他' end as fmzjlx
+      ,t2.identity_number as fmzjhm
+      ,t2.person_name as fmxm
+      ,case when t2.gender=1 then '男' when t2.gender=2 then '女' else null end as fmxb
+      ,'父亲' as gxsm
+      ,'权威' as xxlylx
+      ,t1.lyjg as lyjg
+      ,'std_swsjkwyh_pop_children' as lyb
+from 
+(select distinct current_father_guid,identity_number,children_name,gender,lyjg from std_swsjkwyh_pop_children
+where dt=(select max(dt) from std_swsjkwyh_pop_children)
+and current_father_guid=biological_father_guid) t1
+left join 
+(select distinct guid,identity_type,identity_number,person_name,gender from ods_swsjkwyh_pop_person where dt=(select max(dt) from ods_swsjkwyh_pop_person)) t2
+on t1.current_father_guid=t2.guid
+
+union 
+/*现家庭母亲与亲生母亲不同*/
+select 
+      case when length(t1.identity_number)=18 then '中华人民共和国居民身份证' else '其他' end as zjlx
+      ,t1.identity_number as zjhm
+      ,t1.children_name as xm
+      ,case when t1.gender=1 then '男' when t1.gender=2 then '女' else null end as xb
+      ,case when length(t2.identity_number) = 18 then '中华人民共和国居民身份证' else '其他' end as fmzjlx
+      ,t2.identity_number as fmzjhm
+      ,t2.person_name as fmxm
+      ,case when t2.gender=1 then '男' when t2.gender=2 then '女' else null end as fmxb
+      ,'母亲' as gxsm
+      ,'权威' as xxlylx
+      ,t1.lyjg as lyjg
+      ,'std_swsjkwyh_pop_children' as lyb
+from 
+(select distinct current_mother_guid,identity_number,children_name,gender,lyjg from std_swsjkwyh_pop_children
+where dt=(select max(dt) from std_swsjkwyh_pop_children)
+and current_mother_guid<>biological_mother_guid) t1
+left join 
+(select distinct guid,identity_type,identity_number,person_name,gender from ods_swsjkwyh_pop_person where dt=(select max(dt) from ods_swsjkwyh_pop_person)) t2
+on t1.current_mother_guid=t2.guid
+
+union 
+/*现家庭父亲与亲生父亲不同*/
+select 
+      case when length(t1.identity_number)=18 then '中华人民共和国居民身份证' else '其他' end as zjlx
+      ,t1.identity_number as zjhm
+      ,t1.children_name as xm
+      ,case when t1.gender=1 then '男' when t1.gender=2 then '女' else null end as xb
+      ,case when length(t2.identity_number) = 18 then '中华人民共和国居民身份证' else '其他' end as fmzjlx
+      ,t2.identity_number as fmzjhm
+      ,t2.person_name as fmxm
+      ,case when t2.gender=1 then '男' when t2.gender=2 then '女' else null end as fmxb
+      ,'父亲' as gxsm
+      ,'权威' as xxlylx
+      ,t1.lyjg as lyjg
+      ,'std_swsjkwyh_pop_children' as lyb
+from 
+(select distinct current_father_guid,identity_number,children_name,gender,lyjg from std_swsjkwyh_pop_children
+where dt=(select max(dt) from std_swsjkwyh_pop_children)
+and current_father_guid<>biological_father_guid) t1
+left join 
+(select distinct guid,identity_type,identity_number,person_name,gender from ods_swsjkwyh_pop_person where dt=(select max(dt) from ods_swsjkwyh_pop_person)) t2
+on t1.current_father_guid=t2.guid
+
+union
+
+/*取“与户主关系”为“长女、次女、三子、其他女儿、四女、养女或继女、独生子、五女、其他儿子、子、次子、四子、独生女、五子、养子或继子、女、长子、三女”信息，作为子女信息（主体）*/
+  select 
+  case when length(t1.gmsfhm)=18 then '中华人民共和国居民身份证' else '其他' end as zjlx
+  ,t1.gmsfhm as zjhm
+  ,t1.xm as xm
+  ,t1.xbmc as xb
+  ,case when length(t2.gmsfhm)=18 then '中华人民共和国居民身份证' else '其他' end as znzjlx
+  ,t2.gmsfhm as fmzjhm
+  ,t2.xm as fmxm
+  ,t2.xbmc as fmxb
+  ,case when t1.yhzgxmc in ('长女','次女','三子','其他女儿','四女','独生子','五女','其他儿子','子','次子','四子','独生女','五子','女','长子','三女') and t2.xbmc='女' then '母亲'
+        when t1.yhzgxmc in ('长女','次女','三子','其他女儿','四女','独生子','五女','其他儿子','子','次子','四子','独生女','五子','女','长子','三女') and t2.xbmc='男' then '父亲'
+        when t1.yhzgxmc = '养女或继女' and  t2.xbmc='女' then '养母'
+        when t1.yhzgxmc = '养女或继女' and  t2.xbmc='男' then '养父'
+        when t1.yhzgxmc = '养子或继子' and  t2.xbmc='女' then '养母'
+        when t1.yhzgxmc = '养子或继子' and  t2.xbmc='男' then '养父'
+  else null end  as gxsm
+  ,'权威' as xxlylx
+  ,'市公安局' as lyjg
+  ,'std_sgaj_szhjrkjbxx141281' as lyb
+  from 
+ (select * from dwd_jbxx_fmxx_temp01 where yhzgxmc in ('长女','次女','三子','其他女儿','四女','养女或继女','独生子','五女','其他儿子','子','次子','四子','独生女','五子','养子或继子','女','长子','三女')) t1
+ left join 
+ (select * from dwd_jbxx_fmxx_temp01 where yhzgxmc='户主' or yhzgxmc='本人') t2 
+ on t1.hh=t2.hh
+
+ union 
+ /*取“与户主关系”为“户主、本人”信息，作为子女（主体）*/
+  select 
+  case when length(t1.gmsfhm)=18 then '中华人民共和国居民身份证' else '其他' end as zjlx
+  ,t1.gmsfhm as zjhm
+  ,t1.xm as xm
+  ,t1.xbmc as xb
+  ,case when length(t2.gmsfhm)=18 then '中华人民共和国居民身份证' else '其他' end as znzjlx
+  ,t2.gmsfhm as fmzjhm
+  ,t2.xm as fmxm
+  ,t2.xbmc as fmxb
+  ,t2.yhzgxmc as gxsm
+  ,'权威' as xxlylx
+  ,'市公安局' as lyjg
+  ,'std_sgaj_szhjrkjbxx141281' as lyb
+  from 
+ (select * from dwd_jbxx_fmxx_temp01 where yhzgxmc='户主' or yhzgxmc='本人') t1
+ left join 
+ (select * from dwd_jbxx_fmxx_temp01 where yhzgxmc in ('继母或养母','继父或养父','母亲','父亲','父母')) t2 
+ on t1.hh=t2.hh
+) ) where rn =1 ;
+
+/*step03:
+从临时表02 中取出对应字段 插入目标表中 dwd_jbxx_fmxx
+表t 取所有龙岗区户籍
+inner join 
+表t1 取对应字段信息
+*/
+
+
+insert overwrite table dwd_jbxx_fmxx partition (dt='${DayBeforeStartTime}')
+select 
+uuid() as uuid
+,t1.zjlx
+,t1.zjhm
+,t1.xm
+,t1.xb
+,t1.fmzjlx
+,t1.fmzjhm
+,t1.fmxm
+,t1.fmxb
+,t1.gxsm
+,t1.xxlylx
+,t1.lyjg
+,t1.lyb
+,CURRENT_TIMESTAMP as yxsj
+ from 
+ /*表 t 取龙岗区户籍*/
+ (select card_no from 
+ (select card_no,person_type,row_number() over(partition by card_no order by timeflag desc,addtime desc,person_type desc ) rn
+ from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) where rn=1 and person_type=1) t
+ inner join 
+ /*表 t1 获取表数据信息*/
+ dwd_jbxx_fmxx_temp02 t1
+ on t.card_no=t1.zjhm;
+

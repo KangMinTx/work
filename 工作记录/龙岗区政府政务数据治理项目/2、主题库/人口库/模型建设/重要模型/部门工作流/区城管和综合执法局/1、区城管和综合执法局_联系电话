@@ -1,0 +1,51 @@
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/27 15:48:09
+--#模型说明： 
+--#加工方式： 多源数据融合
+--#目标表  ： std_cg_lxdh(城管_联系电话)
+--#源表    ： std_qcg_t_green_person(龙岗绿化人员清单)、std_qcg_t_hw_person(龙岗环卫人员清单)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_cg_lxdh partition (dt = '${DayBeforeStartTime}')
+select      
+	 t.zjlx, -- 证件类型
+	 t.zjhm, -- 证件号码
+	 t.xm, -- 姓名
+	 t.lxdh, -- 联系电话
+	 t.djsj, -- 登记时间
+	 t.lyb, -- 来源表
+	 t.lyjg -- 来源机构
+from 
+	(
+	select      
+		tt.zjlx, -- 证件类型
+		tt.zjhm, -- 证件号码
+		tt.xm, -- 姓名
+		tt.lxdh, -- 联系电话
+		tt.djsj, -- 登记时间
+		tt.lyb, -- 来源表
+		tt.lyjg, -- 来源机构
+		row_number() over (partition by coalesce(tt.zjhm,''),coalesce(tt.lxdh,'') order by tt.djsj desc ) as rn
+	from 
+		(
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			c_idcard as zjhm, -- 身份证号
+			c_person_name as xm, -- 人员名称
+			c_draw_num as lxdh, -- 联系电话
+			timeflag as djsj, -- 更新时间
+			"std_qcg_t_green_person" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_qcg_t_green_person a join (select max(dt) maxdt from std_qcg_t_green_person ) b on a.dt=b.maxdt
+		union all
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			c_idcard as zjhm, -- 身份证号
+			c_person_name as xm, -- 人员名称
+			c_draw_num as lxdh, -- 联系电话
+			timeflag as djsj, -- 更新时间
+			"std_qcg_t_hw_person" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_qcg_t_hw_person where timeflag<>'2019-12-24 08:25:26'
+ ) tt ) t where t.rn=1;

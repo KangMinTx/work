@@ -1,0 +1,94 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-17 17:01:19.84
+--所属主题:社会活动_医疗卫生_查环查孕
+--内容描述:社会抚养费征收1张表,加工至dwd_shhd_chcy(社会抚养费征收)
+--加载策略:全量
+
+--65行 去掉to_date(),to_date会去掉时间
+--晴风 2021-03-16 
+--_********************************************************_
+--truncate table dwd_shhd_chcy;
+--更改表结构ywdjrq为string类型
+
+insert overwrite table dwd_shhd_chcy partition (dt='${DayBeforeStartTime}')
+select
+	a.guid uuid		--主键
+	,b.zjlx		--证件类型
+	,b.zjhm		--证件号码
+	,b.xm			--姓名
+	,b.xb			--性别
+	,b.mz			--民族
+	,a.chh			--查环号
+	,a.jcff		--检查方法
+	,a.chjg		--查环结果
+	,a.cyjg		--查孕结果
+	,a.sfjsbmjc	--是否计生部门检查
+	,a.fwjg		--服务机构
+	,a.jcdd		--检查地点
+	,a.jcsj		--检查时间
+	,a.yy			--医院
+	,a.ys			--医生
+	,a.ywdjrq		--业务登记日期
+	,a.ywdjd		--业务登记地
+	,a.ywdjr		--业务登记人
+	,'ods_swsjkwyh_pop_person,ods_szswsjkwyh_pop_ring_pregnancy' lyb			--来源表
+	,'深圳市卫生健康委员会' lyjg			--来源机构
+	,current_timestamp yxsj		--运行时间
+ from
+			(
+			select
+				chh			--查环号
+				,jcff		--检查方法
+				,chjg		--查环结果
+				,cyjg		--查孕结果
+				,sfjsbmjc	--是否计生部门检查
+				,fwjg		--服务机构
+				,jcdd		--检查地点
+				,jcsj		--检查时间
+				,yy			--医院
+				,ys			--医生
+				,ywdjrq		--业务登记日期
+				,ywdjd		--业务登记地
+				,ywdjr		--业务登记人
+				,guid
+			from
+				(
+				select 
+					person_guid guid
+					,ring_check_number chh
+					,check_method jcff
+					,ring_check_result chjg
+					,pregnancy_check_result cyjg
+					,department_check sfjsbmjc
+					,surgery_organization fwjg
+					,check_location jcdd
+					--,to_date(check_date) jcsj
+                    ,check_date jcsj
+					,surgery_hospital yy
+					,doctor_name ys
+					,create_time ywdjrq
+					,last_update_division ywdjd
+					,create_user ywdjr
+					,row_number() over(partition by person_guid,guid order by timeflag desc) rn
+				from ods_szswsjkwyh_pop_ring_pregnancy
+				where dt=(select max(dt) from ods_szswsjkwyh_pop_ring_pregnancy)
+				) 
+			where rn=1
+			)a
+			left join
+			(
+			select
+				distinct
+				guid
+				,identity_type zjlx
+				,identity_number zjhm
+				,person_name xm
+				,gender xb
+				,ethnic_group mz
+			from ods_swsjkwyh_pop_person
+			where dt=(select max(dt) from ods_swsjkwyh_pop_person)
+			) b
+			on trim(a.guid)=trim(b.guid)
+ 

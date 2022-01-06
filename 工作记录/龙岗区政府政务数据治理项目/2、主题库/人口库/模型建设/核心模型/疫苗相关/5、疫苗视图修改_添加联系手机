@@ -1,0 +1,46 @@
+--SparkSQL
+--_********************************************************_
+--author: lizheng
+--create time: 2021-12-14 10:25:27
+--_********************************************************_
+INSERT OVERWRITE table DM_RKK_YQFMYMBQB_TO_YXY_1
+SELECT
+    MAX(B.SZZXM) SZZXM,--受种者姓名
+    MAX(B.SFZ)  SFZ,  --身份证
+    MAX(B.YM_MC)  YM_MC,--疫苗名称
+	MAX(B.ZZC)  ZC ,--针次
+    MAX(YM_DM)  YM_DM,--疫苗代码
+    MAX(CASE WHEN ZZC=1 THEN B.YMJZRQ END)   DYZJZSJ,--第一针接种时间
+    MAX(CASE WHEN ZZC=2 THEN B.YMJZRQ END)  DEZJZSJ,--第二针接种时间
+    MAX(CASE WHEN ZZC=3 THEN B.YMJZRQ END)  DSZJZSJ,--第三针接种时间
+    MAX(CASE WHEN ZZC=1 THEN B.YM_SCCJDM END)  CJYDM,--厂家一代码
+    MAX(CASE WHEN ZZC=2 THEN B.YM_SCCJDM END)  CJEDM,--厂家二代码
+    MAX(CASE WHEN ZZC=3 THEN B.YM_SCCJDM END)  CJSDM,--厂家三代码
+    MAX(CASE WHEN ZZC=1 THEN C.YM_SCCJMC END)  CJYMC,--厂家一名称
+    MAX(CASE WHEN ZZC=2 THEN C.YM_SCCJMC END)  CJEMC,--厂家二名称
+    MAX(CASE WHEN ZZC=3 THEN C.YM_SCCJMC END)  CJSMC,--厂家三名称
+    MAX(D.JDMC)  JDMC,--街道名称
+    MAX(D.JDBM)  JDBM,----街道代码
+    MAX(D.JZDWMC)  JZDWMC,--接种单位名称
+	MAX(D.SZSXTDWBM)  SZSXTDWBM,--接种单位编码
+	MAX(B.SFYWC) SFYWC ,--是否完成接种
+    MAX(B.lxsjs) lxsj ,--联系手机
+    substr(now(),1,19) YXSJ,
+    substr(now(),1,19) YXSJ2
+	
+FROM (select *,first_value(case when LENGTH(lxsj)=11 then lxsj when  LENGTH(lxdh)=11  then lxdh end ) over(partition by SFZ
+order by case when LENGTH(lxsj)=11 then lxsj when  LENGTH(lxdh)=11  then lxdh end nulls last) lxsjs from ymjz_new_cbk_ql) B
+LEFT JOIN DM_YM_SCCJ C
+  ON B.YM_SCCJDM=C.YM_SCCJDM
+  LEFT JOIN LGQJZDWBM_SM D
+  ON B.YMJZDD=D.SZSXTDWBM
+GROUP BY SFZ;
+
+------------------------------------------------------------------------
+DROP TABLE IF EXISTS DM_RKK_YQFMYMBQB_TO_YXY_ZL_1;
+CREATE TABLE DM_RKK_YQFMYMBQB_TO_YXY_ZL_1 AS
+SELECT * FROM DM_RKK_YQFMYMBQB_TO_YXY_1 A WHERE EXISTS (SELECT 1 FROM ymjz_new_cbk_XZ_TO_OR B WHERE A.SFZ=B.SFZ);
+
+--DROP TABLE IF EXISTS DM_RKK_YQFMYMBQB_TO_YXY_ls;
+--create table DM_RKK_YQFMYMBQB_TO_YXY_ls like DM_RKK_YQFMYMBQB_TO_YXY_ZL;
+INSERT into DM_RKK_YQFMYMBQB_TO_YXY_ls_1 select * from DM_RKK_YQFMYMBQB_TO_YXY_1  _ZL_1;

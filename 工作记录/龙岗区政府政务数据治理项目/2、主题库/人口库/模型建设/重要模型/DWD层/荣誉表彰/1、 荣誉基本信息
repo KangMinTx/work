@@ -1,0 +1,52 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-20 12:56:03
+--_********************************************************_
+insert overwrite table dwd_zzry_ryjbxx_cs partition (dt='${DayBeforeStartTime}') 
+(
+select
+DISTINCT
+zjlx zjlx                    ,--证件类型
+zjhm zjhm                    ,--证件号码
+xm xm                    ,--姓名
+NULL zswh                    ,--荣誉证书文号 
+NULL bfnd                    ,--荣誉颁发年度 
+NULL rymc                    ,--荣誉名称
+rych rych                    ,--荣誉称号
+null yrjb                    ,--荣誉级别
+null yrnr                    ,--荣誉内容
+null yxqks                    ,--荣誉证书有效期自 
+null yxjz                    ,--荣誉证书有效期至 
+sydw bfjg                    ,--荣誉颁发机构 
+NULL dxszdw                    ,--对象所在单位
+NULL rybz                    ,--荣誉备注
+"t_busi_hbj_grhbryxx" lyb                    ,--来源表
+"区发展改革局" lyjg                    ,--来源机构
+now() yxsj                    --运行时间
+from std_qfzggj_t_busi_hbj_grhbryxx
+where dt=(select max(dt) from std_qfzggj_t_busi_hbj_grhbryxx)
+
+union all
+select
+DISTINCT
+NULL zjlx                    ,--证件类型
+NULL zjhm                    ,--证件号码
+hjr xm                    ,--姓名
+NULL zswh                    ,--荣誉证书文号 
+NULL bfnd                    ,--荣誉颁发年度 
+jxlb rymc                    ,--荣誉名称
+NULL rych                    ,--荣誉称号
+NULL yrjb                    ,--荣誉级别
+NULL yrnr                    ,--荣誉内容
+NULL yxqks                    ,--荣誉证书有效期自 
+NULL yxjz                    ,--荣誉证书有效期至 
+NULL bfjg                    ,--荣誉颁发机构 
+szdw dxszdw                    ,--对象所在单位
+NULL rybz                    ,--荣誉备注
+"qwxcbgdlgrwmd" lyb                    ,--来源表
+"区委宣传部" lyjg                    ,--来源机构
+now() yxsj                    --运行时间
+from std_qwxcb_qwxcbgdlgrwmd 
+where dt=(select max(dt) from std_qwxcb_qwxcbgdlgrwmd)
+)

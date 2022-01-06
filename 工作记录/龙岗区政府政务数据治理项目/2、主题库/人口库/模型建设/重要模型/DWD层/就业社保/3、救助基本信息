@@ -1,0 +1,94 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-15 11:01:19.84
+--所属主题:社会活动_救助基本信息
+--内容描述:救助基本信息1张表,加工至dwd_shhd_jzjbxx(救助基本信息)
+--加载策略:全量
+
+--修改救助时间格式
+--晴风 2021-03-16
+--_********************************************************_
+--truncate table dwd_shhd_jzjbxx;
+
+insert overwrite table dwd_shhd_jzjbxx partition (dt='${DayBeforeStartTime}')
+select
+	 zjlx	--证件类型
+	,zjhm	--证件号码
+	,xm		--姓名
+	,xb		--性别
+	,mz		--民族
+	,hjlx   --户籍类型
+	,knlx   --困难类型
+	,ffje   --发放金额
+	,jzlx   --救助类型
+	--,if(length(jzsj)=8,from_unixtime(unix_timestamp(cast( jzsj as string),'yyyyMMdd'),'yyyy-MM-dd'),from_unixtime(unix_timestamp(cast( jzsj as string),'yyyyMM'),'yyyy-MM')||'-01') jzsj   --救助时间
+	,jzsj
+    ,jdxx   --街道信息
+	,lyb			--来源表
+	,'区民政局' lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+ from (
+	select
+		distinct
+		'中华人民共和国居民身份证' zjlx	--证件类型
+		,a.sfzhm zjhm	--证件号码
+		,a.xm xm		--姓名
+		,b.sex_name xb		--性别
+		,b.nationid_name mz		--民族
+		,c.person_type_name hjlx   --户籍类型
+		,'低保户救助' knlx   --困难类型
+		,ffje ffje   --发放金额
+		,null jzlx   --救助类型
+		,to_date(substr(nd,1,4)||'-'||replace(yf,'月','')||'-01') as jzsj   --救助时间
+		,null jdxx   --街道信息
+		,'std_qmzj_qmzjdbzjffb,std_zfw_resident1,std_qgaj_ppu_zfw_fact_detail_info_hjbd' lyb			--来源表
+	from (select distinct sfzhm,xm,sjsjcssj,ffje,u_insert_time,nd,yf  from std_qmzj_qmzjdbzjffb where dt=(select max(dt) from  std_qmzj_qmzjdbzjffb)) a
+	left join (select distinct nationid_name,cardno,sex_name from std_zfw_resident1 where dt=(select max(dt) from std_zfw_resident1)) b
+	on trim(a.sfzhm)=trim(b.cardno)
+	left join (select distinct card_no,person_type_name from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) c
+	on trim(a.sfzhm)=trim(c.card_no)
+union 
+	select
+		distinct
+		'中华人民共和国居民身份证' zjlx	--证件类型
+		,a.sfzhm zjhm	--证件号码
+		,a.xm xm		--姓名
+		,b.sex_name xb		--性别
+		,b.nationid mz		--民族
+		,c.person_type_name hjlx   --户籍类型
+		,a.knlx knlx   --困难类型
+		,a.spje ffje   --发放金额
+		,a.bz jzlx   --救助类型
+		,case when length(sjsjcssj)=8 then to_date(u_insert_time)
+     	 when length(sjsjcssj)=6 then substr(sjsjcssj,1,4)||'-'||substr(sjsjcssj,5,2)||'-01' end jzsj   --救助时间
+		,a.jd jdxx   --街道信息
+		,'std_qmzj_qmzjlsjzxx,std_zfw_resident1,std_qgaj_ppu_zfw_fact_detail_info_hjbd' lyb			--来源表
+	from (select distinct sfzhm,xm,sjsjcssj,jd,knlx,spje,bz,u_insert_time  from std_qmzj_qmzjlsjzxx where dt=(select max(dt) from  std_qmzj_qmzjlsjzxx)) a
+	left join (select distinct nationid,cardno,sex_name from std_zfw_resident1 where dt=(select max(dt) from std_zfw_resident1)) b
+	on trim(a.sfzhm)=trim(b.cardno)
+	left join (select distinct card_no,person_type_name from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) c
+	on trim(a.sfzhm)=trim(c.card_no)
+union
+	select
+		distinct
+		'中华人民共和国居民身份证' zjlx	--证件类型
+		,a.sfzhm zjhm	--证件号码
+		,a.xm xm		--姓名
+		,b.sex_name xb		--性别
+		,b.nationid_name mz		--民族
+		,c.person_type_name hjlx   --户籍类型
+		,'低收入居民养育帮扶' knlx   --困难类型
+		,a.jey ffje   --发放金额
+		,null jzlx   --救助类型
+		,case when length(sjsjcssj)=8 then to_date(u_insert_time)
+     	 when length(sjsjcssj)=6 then substr(sjsjcssj,1,4)||'-'||substr(sjsjcssj,5,2)||'-01' end jzsj   --救助时间
+		,a.jd jdxx   --街道信息
+		,'std_qmzj_qmzjdsrjmyybfjgf,std_zfw_resident1,std_qgaj_ppu_zfw_fact_detail_info_hjbd' lyb			--来源表
+	from (select distinct sfzhm,xm,sjsjcssj,jey,jd,u_insert_time from std_qmzj_qmzjdsrjmyybfjgf where dt=(select max(dt) from  std_qmzj_qmzjdsrjmyybfjgf)) a
+	left join (select distinct nationid_name,cardno,sex_name from std_zfw_resident1 where dt=(select max(dt) from std_zfw_resident1)) b
+	on trim(a.sfzhm)=trim(b.cardno)
+	left join (select distinct card_no,person_type_name from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) c
+	on trim(a.sfzhm)=trim(c.card_no)
+ )
+ 

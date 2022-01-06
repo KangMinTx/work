@@ -1,0 +1,147 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-18 18:01:19.84
+--所属主题:社会活动_就业社保_工作经历信息
+--内容描述:工作经历信息1张表,加工至dwd_shhd_gzjlxx(工作经历信息)
+--加载策略:全量
+--_********************************************************_
+--truncate table dwd_shhd_gzjlxx;
+
+with temp_table as(
+select
+	shbxh
+	,yjny
+    ,sbdwbh
+	,row_number() over(partition by shbxh,sbdwbh order by yjny asc  nulls last) rn
+from
+	(select
+		shbxh
+		,yjny
+		,sbdwbh
+	from std_srlzyhshbzj_grmycbjfqknzn109788
+	where dt=(select max(dt) from std_srlzyhshbzj_grmycbjfqknzn109788)
+	group by shbxh
+		,yjny
+		,sbdwbh
+union
+	select
+		shbxh
+		,yjny
+		,sbdwbh
+	from std_srlzyhshbzj_grmycbjfqknzn103856
+	where dt=(select max(dt) from std_srlzyhshbzj_grmycbjfqknzn103856)
+	group by shbxh
+		,yjny
+		,sbdwbh
+union
+	select
+		shbxh
+		,yjny
+		,sbdwbh
+	from std_srlzyhshbzj_grmycbjfqknzn101171
+	where dt=(select max(dt) from std_srlzyhshbzj_grmycbjfqknzn101171)
+	group by shbxh
+		,yjny
+     	,sbdwbh
+		)
+)
+
+insert overwrite table dwd_shhd_gzjlxx partition (dt='${DayBeforeStartTime}')
+select
+	uuid() uuid	--主键
+	,zjlx		--证件类型
+	,zjhm		--证件号码
+	,xm			--姓名
+	,xb			--性别
+	,csrq		--出生日期
+	,mz			--民族
+	,zzmm		--政治面貌
+	,jg			--籍贯
+	,hkxz		--户口性质
+	,tyshxydm	--统一社会信用代码
+	,gsmc		--公司名称
+	,rzrq		--入职日期
+	,lzrq		--离职日期
+	,lyb		--来源表
+	,lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+ from (
+	select
+		distinct
+		a.zjlx		--证件类型
+		,a.zjhm		--证件号码
+		,a.xm			--姓名
+		,a.xb			--性别
+		,a.csrq		--出生日期
+		,a.mz			--民族
+		,a.zzmm		--政治面貌
+		,a.jg			--籍贯
+		,c.person_type_name hkxz		--户口性质
+		,b.tyshxydm	--统一社会信用代码
+		,a.gsmc		--公司名称
+		,substr(d.yjny,1,4)||'-'||substr(d.yjny,5,2) as rzrq		--入职日期
+		,(case when ((datediff(CURRENT_DATE,to_date(e.mdzrq,'yyyymmdd')))/120) >= 0 then e.mdzrq else null end) lzrq		--离职日期
+		,'std_srlzyhshbzj_sbgrxx110041,std_qgaj_ppu_zfw_fact_detail_info_hjbd,std_srlzyhshbzj_grmycbjfqknzn101171,std_srlzyhshbzj_grmycbjfqknzn103856,std_srlzyhshbzj_grmycbjfqknzn109788' lyb			--来源表
+		,'市人力资源和社会保障局' lyjg		--来源机构
+	from 	
+		(select 
+			distinct 
+			id_code_name zjlx		--证件类型
+			,id_no zjhm		--证件号码
+			,name xm			--姓名
+			,sex_code_name xb			--性别
+			,if(length(birthday)=8,substr(birthday,1,4) || '-' || substr(birthday,5,2) || '-' || substr(birthday,7,2),'') csrq		--出生日期
+			,people_code_name mz			--民族
+			,politic_status_code zzmm		--政治面貌
+			,ancestor_place_code_name jg			--籍贯
+			,unit_name gsmc		--公司名称  
+			,unit_org_code zzjgdm
+			,si_no
+			,unit_sno
+		from std_srlzyhshbzj_sbgrxx110041 a where a.dt=(select max(dt) from  std_srlzyhshbzj_sbgrxx110041) 
+		)a 
+	left join 
+		(select 
+			tyshxydm
+			,zzjgdm
+		from lgfrk.dwd_jbxx_frjcxx 
+		where dt=(select max(dt) from lgfrk.dwd_jbxx_frjcxx) and zzjgdm is not null
+		group by tyshxydm
+				 ,zzjgdm
+		)b
+	on trim(a.zzjgdm)=trim(b.zzjgdm)
+	left join (
+		select 
+			distinct 
+			card_no
+			,person_type_name
+			,name 
+		from std_qgaj_ppu_zfw_fact_detail_info_hjbd 
+		where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)
+		) c
+	on trim(a.zjhm)=trim(c.card_no) and trim(a.xm)=trim(c.name)
+	left join (
+		select 
+			distinct 
+			shbxh   --社会保险号
+			,yjny	--应缴年月
+			,rn
+			,sbdwbh
+		from temp_table
+      where rn=1 
+		) d
+	on trim(a.si_no)=trim(d.shbxh) and trim(a.unit_sno)=trim(d.sbdwbh)
+	left join (
+		select 
+			distinct 
+			shbxh   --社会保险号
+			,max(yjny) mdzrq
+			,sbdwbh
+		from temp_table 
+		group by shbxh
+				,sbdwbh
+		) e
+	on trim(a.si_no)=trim(e.shbxh) and trim(a.unit_sno)=trim(e.sbdwbh)
+ )
+-- where hkxz like '%且龙岗%'

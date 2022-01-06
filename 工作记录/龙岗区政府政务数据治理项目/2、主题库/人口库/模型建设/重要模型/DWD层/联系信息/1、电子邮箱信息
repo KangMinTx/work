@@ -1,0 +1,238 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-22 16:20:14
+--_********************************************************_
+
+--修改union all表字段顺序一致
+--晴风 2021-03-23
+
+--修改 去重条件有问题
+--tzm 2021-08-11
+
+with
+table1
+as(
+select
+*
+from(
+select
+LXRXM  xm                   ,--联系人姓名
+LXRZJLX_name zjlx                   ,--联系人证件类型
+LXRSFZJHM zjhm                   ,--联系人身份证件号码
+LXRYX yx                   ,--联系人邮箱
+SBSJ sjlyxj                   ,--申办时间
+"std_sfzhggwyh_fgw_sb_10_0917111905" lyb                     ,--来源表名称
+b1.lyjg lyjg                        ,--数据来源
+row_number() over(partition by LXRSFZJHM ORDER BY SBSJ desc) rn
+from (select * from std_sfzhggwyh_fgw_sb_10_0917111905 where dt=(select max(dt) from std_sfzhggwyh_fgw_sb_10_0917111905) and LXRYX is not null)b1
+)where rn=1
+
+
+union all
+
+select
+*
+from
+(
+select
+LXRXM  xm                   ,--联系人姓名
+LXRZJLX_name zjlx                   ,--联系人证件类型
+LXRSFZJHM zjhm                   ,--联系人身份证件号码
+LXRYX yx                   ,--联系人邮箱
+SBSJ sjlyxj                   ,--申办时间
+"std_scsglj_cgjsb_10_0912102428" lyb                     ,--来源表名称
+b2.lyjg lyjg                        ,--数据来源
+row_number() over(partition by LXRSFZJHM ORDER BY SBSJ desc) rn
+from (select * from std_scsglj_cgjsb_10_0912102428 where dt=(select max(dt) from std_scsglj_cgjsb_10_0912102428) and LXRYX is not null)b2
+)where rn=1
+
+
+union all
+
+select
+* 
+from 
+(
+select
+LXRXM  xm                   ,--联系人姓名
+LXRZJLX_name zjlx                   ,--联系人证件类型
+LXRSFZJHM zjhm                   ,--联系人身份证件号码
+LXRYX yx                   ,--联系人邮箱
+SBSJ sjlyxj                   ,--申办时间
+"std_sjtyswyh_jwsb_10_0918093606" lyb                     ,--来源表名称
+b3.lyjg lyjg                        ,--数据来源
+row_number() over(partition by LXRSFZJHM ORDER BY SBSJ desc) rn
+from (select * from std_sjtyswyh_jwsb_10_0918093606 where dt=(select max(dt) from std_sjtyswyh_jwsb_10_0918093606) and LXRYX is not null)b3
+)where rn=1
+
+
+union all
+
+select 
+* 
+from
+(
+select
+LXRXM  xm                   ,--联系人姓名
+LXRZJLX_name zjlx                   ,--联系人证件类型
+LXRSFZJHM zjhm                   ,--联系人身份证件号码
+LXRYX yx                   ,--联系人邮箱
+SBSJ sjlyxj                   ,--申办时间
+"std_sghhgtzywyh_ghgtw_sb_10_0911102426" lyb                     ,--来源表名称
+b4.lyjg lyjg                        ,--数据来源
+row_number() over(partition by LXRSFZJHM ORDER BY SBSJ desc) rn
+from (select * from std_sghhgtzywyh_ghgtw_sb_10_0911102426 where dt=(select max(dt) from std_sghhgtzywyh_ghgtw_sb_10_0911102426) and LXRYX is not null)b4
+)where rn=1
+
+union all
+
+
+select
+*
+
+from
+(
+select
+LXRXM  xm                   ,--联系人姓名
+LXRZJLX zjlx                   ,--联系人证件类型
+LXRSFZJHM zjhm                   ,--联系人身份证件号码
+LXRYX yx                   ,--联系人邮箱
+SBSJ sjlyxj                   ,--申办时间
+"std_smzj_mzj_sb_10_0918161457" lyb                     ,--来源表名称
+b5.lyjg lyjg                        ,--数据来源
+row_number() over(partition by LXRSFZJHM ORDER BY SBSJ desc) rn
+from (select * from std_smzj_mzj_sb_10_0918161457 where dt=(select max(dt) from std_smzj_mzj_sb_10_0918161457) and LXRYX is not null)b5
+)where rn=1
+
+union all
+
+select
+* 
+from
+(
+select
+LXRXM  xm                   ,--联系人姓名
+LXRZJLX_name zjlx                   ,--联系人证件类型
+LXRSFZJHM zjhm                   ,--联系人身份证件号码
+LXRYX yx                   ,--联系人邮箱
+SBSJ sjlyxj                   ,--申办时间
+"std_srlzyhshbzj_rsj_sb_10_1021110036" lyb                     ,--来源表名称
+b6.lyjg lyjg                        ,--数据来源
+row_number() over(partition by LXRSFZJHM ORDER BY SBSJ desc) rn
+from (select * from std_srlzyhshbzj_rsj_sb_10_1021110036 where dt=(select max(dt) from std_srlzyhshbzj_rsj_sb_10_1021110036) and LXRYX is not null)b6
+)where rn=1
+
+
+union all 
+
+select
+*
+from
+(
+select
+LXRXM  xm                   ,--联系人姓名
+LXRZJLX_name zjlx                   ,--联系人证件类型
+LXRSFZJHM zjhm                   ,--联系人身份证件号码
+LXRYX yx                   ,--联系人邮箱
+SBSJ sjlyxj                   ,--申办时间
+"std_szfhjsj_zjjsb_10_0918153741" lyb                     ,--来源表名称
+b7.lyjg lyjg                        ,--数据来源
+row_number() over(partition by LXRSFZJHM ORDER BY SBSJ desc) rn
+from (select * from std_szfhjsj_zjjsb_10_0918153741 where dt=(select max(dt) from std_szfhjsj_zjjsb_10_0918153741) and LXRYX is not null)b7
+)where rn=1
+
+
+union all
+
+select 
+*
+from
+(
+select
+LXRXM  xm                   ,--联系人姓名
+LXRZJLX_name zjlx                   ,--联系人证件类型
+LXRSFZJHM zjhm                   ,--联系人身份证件号码
+LXRYX yx                   ,--联系人邮箱
+SBSJ sjlyxj                   ,--申办时间
+"std_sgaj_sgajsb_10_0911160855" lyb                     ,--来源表名称
+b8.lyjg lyjg                        ,--数据来源
+row_number() over(partition by LXRSFZJHM ORDER BY SBSJ desc) rn
+from (select * from std_sgaj_sgajsb_10_0911160855 where dt=(select max(dt) from std_sgaj_sgajsb_10_0911160855) and LXRYX is not null)b8
+)where rn=1
+
+
+union all
+
+select
+*
+from
+(
+select
+NAME xm                    ,--姓名
+CARDTYPEID_name zjlx                    ,--证件类型
+CARDNO zjhm                  ,--证件号码
+EMAIL  yx                   ,--邮箱
+ADDTIME sjlyxj                    ,--登记时间
+"std_qzfw_zfw_resident1" lyb                     ,--来源表名称
+b9.lyjg lyjg                        ,--数据来源
+row_number() over(partition by CARDNO ORDER BY ADDTIME desc) rn
+from (select * from std_qzfw_zfw_resident1 where dt=(select max(dt) from std_qzfw_zfw_resident1) and EMAIL is not null)b9
+)where rn=1
+
+
+union all
+
+select
+* 
+from
+(
+select
+NAME xm                  ,--姓名
+case when length(idcard)=18 then '中华人民共和国居民身份证'
+else '其他' end  zjlx                 ,--证件类型
+IDCARD zjhm                  ,--身份证
+EMAIL  yx                  ,--邮箱
+MTIME sjlyxj                  ,--修改时间
+"std_qxa_t_staffs" lyb                     ,--来源表名称
+b10.lyjg lyjg                        ,--数据来源
+row_number() over(partition by IDCARD ORDER BY MTIME desc) rn
+from (select * from std_qxawb_t_staffs where dt=(select max(dt) from std_qxawb_t_staffs) and EMAIL is not null)b10
+)where rn=1
+
+/*
+union all
+select
+*
+from
+(
+select
+EMAIL yx                  ,--邮箱
+NAME  xm                 ,--姓名
+IDENTITY zjhm                  ,--身份证号码
+'1' zjlx                 ,--证件类型
+"std_qxawb_ut_user" lyb                     ,--来源表名称
+create_date sjlyxj                        ,--创建时间
+b11.lyjg lyjg                        ,--数据来源
+row_number() over(partition by IDENTITY,create_date ORDER BY create_date desc) rn
+from (select * from std_qxawb_ut_user where dt=(select max(dt) from std_qxawb_ut_user) and EMAIL is not null)b11
+)where rn=1
+*/
+)
+
+insert overwrite table dwd_jbxx_dzyxxx partition (dt='${DayBeforeStartTime}')
+select 
+uuid() UUID
+,b12.zjlx zjlx
+,b12.zjhm zjhm
+,b12.xm xm
+,b13.sex_name xb
+,b12.yx yx
+,row_number() over(partition by b12.zjhm ORDER BY b12.sjlyxj desc) kxpx
+,b12.sjlyxj sjlyxj
+,b12.lyjg lyjg
+,b12.lyb lyb
+,now() yxsj
+from table1 b12
+left join (select * from std_qzfw_zfw_resident1 where dt=(select max(dt) from std_qzfw_zfw_resident1)) b13
+on b12.zjlx=b13.cardtypeid_name and b12.zjhm=b13.cardno;

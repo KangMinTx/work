@@ -1,0 +1,104 @@
+--SparkSQL
+--_********************************************************_
+--author: lly
+--create time: 2020-11-22 15:22:40
+--0319 He 补充 std_qjyj_qjyjgxzzjsxxb 表中 zjlx,xb,mz,xw,xl,zzmm 字段清洗
+--		  补充 std_qjyj_qjyjjyjsxx 表中 zjlx,xb,mz,xw,xl,zzmm 字段清洗
+--_********************************************************_
+
+
+--select * from std_qjyj_qjyjgxzzjsxxb;
+--select * from std_qjyj_qjyjjyjsxx where sjsjcssj<>'19000101';
+
+insert overwrite table dwd_shhd_zxxjsxx partition (dt='${DayBeforeStartTime}')
+SELECT zjlx
+,zjhm  --证件号码
+,xm   --姓名
+,xb_dm  --性别代码
+,xb   --性别
+,gj_dm  --国家代码
+,gj  --国家
+,mz_dm  --民族代码
+,mz  --民族
+,xw_dm  --学位代码
+,xw --学位
+,xl_dm  --学历代码
+,xl  --学历
+,zc  --职称
+,zbqk  --在编情况
+,hjdm  --户籍(代码)
+,jzglb  --教职工类别
+,jstz --教师特征
+,jspxqk  --接受培训情况
+,jspxsj  --接受培训时间
+,ms  --模式
+,xxlylx   --信息来源类型
+,lyjg  --来源机构名称 
+,lyb  --来源表名称
+,yxrq  --运行时间
+from 
+(
+select 
+t.*,
+row_number() over(partition by t.zjhm,t.xm ORDER BY t.jspxsj) rn
+from 
+(SELECT zjlx_name as zjlx  --证件类型
+,sfzhm AS zjhm  --证件号码
+,xm   --姓名
+,xb AS xb_dm  --性别代码
+,xb_name as xb   --性别
+,null AS gj_dm  --国家代码
+,null AS gj  --国家
+,mz AS mz_dm  --民族代码
+,mz_name as mz  --民族
+,xw AS xw_dm  --学位代码
+,xw_name as xw --学位
+,xl AS xl_dm  --学历代码
+,xl_name as xl  --学历
+,zc  --职称
+,zbqk  --在编情况
+,hjdm  --户籍(代码)
+,jzglb  --教职工类别
+,jstz --教师特征
+,jspxqk  --接受培训情况
+,jspxsj  --接受培训时间
+,ms  --模式
+,'权威' AS xxlylx   --信息来源类型
+,lyjg  --来源机构名称 
+,'std_qjyj_qjyjgxzzjsxxb'  as lyb  --来源表名称
+,CURRENT_TIMESTAMP AS yxrq  --运行时间
+FROM std_qjyj_qjyjgxzzjsxxb t1 
+WHERE t1.dt=( 
+SELECT  MAX(dt) from std_qjyj_qjyjgxzzjsxxb)
+UNION 
+SELECT zjlx as zjlx  --证件类型
+,sfzhm AS zjhm  --证件号码
+,xm   --姓名
+,xb AS xb_dm  --性别代码
+,xb as xb  --性别
+,null AS gj_dm  --国家代码
+,null AS gj  --国家
+,mz AS mz_dm  --民族代码
+,mz as mz  --民族
+,xw AS xw_dm  --学位代码
+,xw as xw --学位
+,xl AS xl_dm  --学历代码
+,xl as xl  --学历
+,zc  --职称
+,zbqk  --在编情况
+,hjdm  --户籍(代码)
+,jzglb  --教职工类别
+,jstz --教师特征
+,jspxqk  --接受培训情况
+,jspxsj  --接受培训时间
+,ms  --模式
+,'权威' AS xxlylx   --信息来源类型
+,lyjg  --来源机构名称 
+,'std_qjyj_qjyjjyjsxx' as lyb  --来源表名称
+,CURRENT_TIMESTAMP AS yxrq  --运行时间
+FROM std_qjyj_qjyjjyjsxx t2
+WHERE t2.dt=( 
+SELECT  MAX(dt) from std_qjyj_qjyjjyjsxx) and
+sjsjcssj<>'19000101') AS t)
+WHERE rn=1
+

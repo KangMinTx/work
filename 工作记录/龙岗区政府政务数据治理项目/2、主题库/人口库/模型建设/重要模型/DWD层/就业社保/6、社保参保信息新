@@ -1,0 +1,55 @@
+--SparkSQL
+--_********************************************************_
+--author: machuang
+--create time: 2021-07-20 16:40:46
+--_********************************************************_
+ insert overwrite table dwd_shhd_sbcb_new partition (dt='${DayBeforeStartTime}')
+ SELECT  
+ 		zjlb --证件类别 
+       ,zjhm --证件号码
+       ,zjhm_old	--清洗前证件号码
+       ,xm --姓名 
+       ,shbzhm --社会保障号码 
+       ,IC_FLAG --养老参保状态 
+       ,LC_FLAG --工伤参保状态 
+       ,KC_FLAG --医疗参保状态 
+       ,JC_FLAG --失业参保状态 
+       ,MC_FLAG --生育参保状态 
+       ,szdwdm --所在单位编号 
+       ,szdwmc --所在单位名称 
+       ,dqcbzt --当前参保状态
+       ,xxlylx	--信息来源类型
+       ,lyb --来源表 
+       ,lyjg --来源机构 
+       ,yxrq --运行时间
+FROM 
+(
+	SELECT  b2.id_code                                                      AS zjlb --证件类别 
+	       ,b2.id_no                                                        AS zjhm --证件号码
+           ,id_no_old                                                       AS zjhm_old --清洗前证件号码
+	       ,b2.name                                                         AS xm --姓名 
+	       ,b2.si_no                                                        AS shbzhm --社会保障号码 
+	       ,b2.ic_flag                                                      AS IC_FLAG --养老参保状态 
+	       ,b2.lc_flag                                                      AS LC_FLAG --工伤参保状态 
+	       ,b2.kc_flag                                                      AS KC_FLAG --医疗参保状态 
+	       ,b2.jc_flag                                                      AS JC_FLAG --失业参保状态 
+	       ,b2.mc_flag                                                      AS MC_FLAG --生育参保状态 
+	       ,b2.unit_sno                                                     AS szdwbh --所在单位编号 
+	       ,b2.si_unit_name                                                 AS szdwmc --所在单位名称 
+	       ,b2.dqcbzt                                                       AS dqcbzt --当前参保状态
+           ,'权威'                                                          AS xxlylx	--信息来源类型
+	       ,'lgfrk.std_srlzyhshbzj_sbgrxx128925'                            AS lyb --来源表 
+	       ,b2.lyjg                                                         AS lyjg --来源机构 
+	       ,CURRENT_TIMESTAMP                                              AS yxrq --运行时间 
+	       ,row_number() over(partition by id_no,b2.unit_sno  ORDER BY b2.timeflag desc) AS rn
+	FROM(select distinct t2.UNIT_SNO  as UNIT_SNO
+from 
+(select distinct zjhm from dwd_jbxx_jbdjxx where dt=(select max(dt) from dwd_jbxx_jbdjxx) and zjhm is not null) t1
+inner join 
+(select distinct id_no,si_no,unit_sno from lgfrk.std_srlzyhshbzj_sbgrxx128925 where dt=(select max(dt) from lgfrk.std_srlzyhshbzj_sbgrxx128925) and id_no is not null) t2
+on t1.zjhm=t2.id_no) b1
+left join 
+(select * from lgfrk.std_srlzyhshbzj_sbgrxx128925 where dt=(select max(dt) from lgfrk.std_srlzyhshbzj_sbgrxx128925) and id_no is not null) b2
+on b1.unit_sno=b2.unit_sno
+)
+WHERE rn=1 

@@ -1,0 +1,91 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-18 15:01:19.84
+--所属主题:涉事涉法_行政监管_行政处罚信息
+--内容描述:行政处罚信息1张表,加工至dwd_sssf_xzcfxx(行政处罚信息)
+--加载策略:全量
+--_********************************************************_
+--truncate table dwd_sssf_xzcfxx;
+
+insert overwrite table dwd_sssf_xzcfxx partition (dt='${DayBeforeStartTime}')
+select
+	uuid() uuid			--主键
+	,cfdxzjlb		--证件类型
+	,cfdxzjhm		--证件号码
+	,cfjdswh		--处罚决定书文号
+	,cfdxxm			--处罚对象姓名
+	,xzcfzl			--行政处罚种类
+	,xzcfsy			--行政处罚事由
+	,xzcfyj			--行政处罚依据
+	,xzcfrq			--行政处罚日期
+	,xzcfje			--行政处罚金额
+	,xzcfzxqk		--行政处罚执行结果
+	,xzcfjg			--行政处罚机构
+	,lyb			--来源表
+	,lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+ from (
+	select
+		distinct
+		administrative_cp_ce_type cfdxzjlb		--证件类型
+		,administrative_cp_ui_code cfdxzjhm		--证件号码
+		,punish_document_code cfjdswh		--处罚决定书文号
+		,supervise_object cfdxxm			--处罚对象姓名
+		,punish_type xzcfzl			--行政处罚种类
+		,illegal_fact xzcfsy			--行政处罚事由
+		,punish_accord xzcfyj			--行政处罚依据
+		,set_date xzcfrq			--行政处罚日期
+		,coalesce(cases_closed_fine,fine) xzcfje			--行政处罚金额
+		,coalesce(cases_closed_execution_result,penalty_result) xzcfzxqk		--行政处罚执行结果
+		,implement_institution xzcfjg			--行政处罚机构
+		,'std_qcghzhzfj_qcghzhzfjxzcfxwxx' lyb			--来源表
+		,'区城管和综合执法局' lyjg		--来源机构
+	from std_qcghzhzfj_qcghzhzfjxzcfxwxx a
+where a.dt=(select max(dt) from  std_qcghzhzfj_qcghzhzfjxzcfxwxx) 
+and trim(a.administrative_cp_na)='01'
+and  trim(a.administrative_cp_ui_code) in (select distinct zjhm from dwd_jbxx_jbdjxx b where b.dt=(select max(dt) from dwd_jbxx_jbdjxx))
+	
+union 
+	select
+		distinct
+		'1' cfdxzjlb		--证件类型
+		,sfzh cfdxzjhm		--证件号码
+		,cfwsbh cfjdswh		--处罚决定书文号
+		,qymc cfdxxm			--处罚对象姓名
+		,cfzl xzcfzl			--行政处罚种类
+		,wfwgxw xzcfsy			--行政处罚事由
+		,cfyj xzcfyj			--行政处罚依据
+		,sbsszb xzcfrq			--行政处罚日期
+		,null xzcfje			--行政处罚金额
+		,cfjg xzcfzxqk		--行政处罚执行结果
+		,dw xzcfjg			--行政处罚机构
+		,'std_sjtyswyh_sszt_cfqk105130' lyb			--来源表
+		,'市交通运输委员会' lyjg		--来源机构
+	from std_sjtyswyh_sszt_cfqk105130 a
+where a.dt=(select max(dt) from  std_sjtyswyh_sszt_cfqk105130) 
+and trim(a.sfzh) <>'无' and trim(a.zzjgdm)='无' and length(trim(a.qymc))<5
+and  trim(a.sfzh) in (select distinct zjhm from dwd_jbxx_jbdjxx b where b.dt=(select max(dt) from dwd_jbxx_jbdjxx))
+union
+	select
+		distinct
+		'1' cfdxzjlb		--证件类型
+		,sfzh cfdxzjhm		--证件号码
+		,cfwsbh cfjdswh		--处罚决定书文号
+		,qymc cfdxxm			--处罚对象姓名
+		,cfzl xzcfzl			--行政处罚种类
+		,wfwgxw xzcfsy			--行政处罚事由
+		,cfyj xzcfyj			--行政处罚依据
+		,sbsszb xzcfrq			--行政处罚日期
+		,null xzcfje			--行政处罚金额
+		,cfjg xzcfzxqk		--行政处罚执行结果
+		,dw xzcfjg			--行政处罚机构
+		,'std_sghhgtzywyh_sszt_cfqk102760' lyb			--来源表
+		,'市规划和国土资源委员会' lyjg		--来源机构
+	from std_sghhgtzywyh_sszt_cfqk102760 a
+where a.dt=(select max(dt) from  std_sghhgtzywyh_sszt_cfqk102760) 
+and length(trim(a.sfzh))>=15 and trim(a.fddbrxm)='无'
+and length(trim(a.qymc))<5
+and trim(a.sfzh) in (select distinct zjhm from dwd_jbxx_jbdjxx b where b.dt=(select max(dt) from dwd_jbxx_jbdjxx))
+ )
+ 

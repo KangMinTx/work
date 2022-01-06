@@ -1,0 +1,38 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-19 15:02:22
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS std_zfw_fwwgsqxx (
+    sqbm string COMMENT '社区编码',
+    sqmc string COMMENT '社区名称',
+    wgbm string COMMENT '网格编码',
+    wgmc string COMMENT '网格名称',
+    wgid string COMMENT '网格ID',
+    ldbm string COMMENT '楼栋编码'
+)
+COMMENT '房屋网格社区信息'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+insert overwrite table std_zfw_fwwgsqxx partition (dt='${DayBeforeStartTime}')
+select      
+	a.sqcode as sqbm, -- 社区编码
+	a.sqmc as sqmc, -- 社区名称
+	a.code as wgbm, -- 网格编码
+	a.wgname as wgmc, -- 网格名称
+	a.misid as wgid, -- 网格ID
+    b.code as  ldbm -- 楼栋编码
+from
+   (select 
+      DISTINCT
+		teamid, -- 
+        code --  楼栋编码
+	from ods_qzf_zfw_building1 t1 join (select max(dt) maxdt from ods_qzf_zfw_building1) t2 on t1.dt=t2.maxdt )	b join 
+ (select 
+       DISTINCT
+		sqcode, -- gis社区编码
+		sqmc, -- 社区名称
+		code, -- gis网格编码
+		wgname, -- 网格名称
+		misid -- mis网格id
+  from std_qzf_zfw_wg_misgis t1  join (select max(dt) maxdt from std_qzf_zfw_wg_misgis) t2 on t1.dt=t2.maxdt) a on a.misid=b.teamid	
+;

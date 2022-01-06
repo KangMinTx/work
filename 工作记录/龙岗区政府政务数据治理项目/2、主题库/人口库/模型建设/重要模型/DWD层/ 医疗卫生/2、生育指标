@@ -1,0 +1,129 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-17 19:42:25
+--0317 He 修改 qhrq,yhdj_zsyrq,znjhcsrq,ycq,syhtqsrq,fzrq,sprq 格式为 YYYY-MM-DD 
+--0323 He 补充 zjlx,xb,mz 字典翻译（由于源表 ods_swsjkwyh_pop_person 数据量较大，无法平台清洗）
+--_********************************************************_
+insert overwrite table dwd_shhd_syzb partition (dt='${DayBeforeStartTime}')
+select
+UUID
+,zjlx
+,zjhm
+,xm
+,xb
+,mz
+,qhrq
+,sqrdh
+,sqsbh
+,sqhc
+,yhdj_zsyrq
+,znjhcsrq
+,ycq
+,syhtbm
+,syhtqsrq
+,fzrq
+,bmyj
+,sqzsyly
+,djyj_shjg
+,sprq
+,lyb
+,lyjg
+,yxsj
+FROM
+(
+select
+uuid() UUID                   ,--主键
+case 
+when b2.identity_type='1' then '中华人民共和国居民身份证' 
+when b2.identity_type='2' then '港澳台身份证' 
+when b2.identity_type='3' then '居住证'
+when b2.identity_type='4' then '其他' 
+when b2.identity_type='5' then '其他' 
+when b2.identity_type='6' then '护照'
+else '其他' end zjlx                   ,--证件类型
+b2.identity_number zjhm                   ,--证件号码
+b2.person_name xm                   ,--姓名
+case when b2.gender='1' then '男' when b2.gender='2' then '女'
+when b2.gender='0' then '未知的性别' end  xb                   ,--性别
+case 
+when b2.ethnic_group='01' then '汉族' 
+when b2.ethnic_group='02' then '蒙古族' 
+when b2.ethnic_group='03' then '回族' 
+when b2.ethnic_group='04' then '藏族' 
+when b2.ethnic_group='05' then '维吾尔族' 
+when b2.ethnic_group='06' then '苗族' 
+when b2.ethnic_group='07' then '彝族' 
+when b2.ethnic_group='08' then '壮族' 
+when b2.ethnic_group='09' then '布依族' 
+when b2.ethnic_group='10' then '朝鲜族' 
+when b2.ethnic_group='11' then '满族' 
+when b2.ethnic_group='12' then '侗族' 
+when b2.ethnic_group='13' then '瑶族' 
+when b2.ethnic_group='14' then '白族' 
+when b2.ethnic_group='15' then '土家族' 
+when b2.ethnic_group='16' then '哈尼族' 
+when b2.ethnic_group='17' then '哈萨克族' 
+when b2.ethnic_group='18' then '傣族' 
+when b2.ethnic_group='19' then '黎族' 
+when b2.ethnic_group='20' then '傈僳族' 
+when b2.ethnic_group='21' then '佤族' 
+when b2.ethnic_group='22' then '畲族' 
+when b2.ethnic_group='23' then '高山族' 
+when b2.ethnic_group='24' then '拉祜族' 
+when b2.ethnic_group='25' then '水族' 
+when b2.ethnic_group='26' then '东乡族' 
+when b2.ethnic_group='27' then '纳西族' 
+when b2.ethnic_group='28' then '景颇族' 
+when b2.ethnic_group='29' then '柯尔克孜族' 
+when b2.ethnic_group='30' then '土族' 
+when b2.ethnic_group='31' then '达斡尔族' 
+when b2.ethnic_group='32' then '仫佬族' 
+when b2.ethnic_group='33' then '羌族' 
+when b2.ethnic_group='34' then '布朗族' 
+when b2.ethnic_group='35' then '撒拉族' 
+when b2.ethnic_group='36' then '毛难族' 
+when b2.ethnic_group='37' then '仡佬族' 
+when b2.ethnic_group='38' then '锡伯族' 
+when b2.ethnic_group='39' then '阿昌族' 
+when b2.ethnic_group='40' then '普米族' 
+when b2.ethnic_group='41' then '塔吉克族' 
+when b2.ethnic_group='42' then '怒族' 
+when b2.ethnic_group='44' then '俄罗斯族' 
+when b2.ethnic_group='45' then '鄂温克族' 
+when b2.ethnic_group='46' then '德昂族' 
+when b2.ethnic_group='48' then '裕固族' 
+when b2.ethnic_group='49' then '京族' 
+when b2.ethnic_group='50' then '塔塔尔族' 
+when b2.ethnic_group='51' then '独龙族' 
+when b2.ethnic_group='52' then '鄂伦春族' 
+when b2.ethnic_group='53' then '赫哲族' 
+when b2.ethnic_group='54' then '门巴族' 
+when b2.ethnic_group='56' then '基诺族' 
+when b2.ethnic_group='97' then '' 
+when b2.ethnic_group='98' then '外国血统中国籍人士' end mz                   ,--民族
+to_date(b1.remove_ring_date) qhrq                   ,--取环日期
+b1.apply_phone sqrdh                   ,--申请人电话
+b1.application_number sqsbh                   ,--申请书编号
+b1.apply_number sqhc                   ,--申请孩次
+to_date(b1.apply_date) yhdj_zsyrq                   ,--一孩登记/再生育日期
+to_date(b1.planning_birth_date) znjhcsrq                   ,--子女计划出生日期
+to_date(b1.expected_date) ycq                   ,--预产期
+b1.fertility_contract_number syhtbm                   ,--生育合同编码
+to_date(b1.fertility_contract_award_date) syhtqsrq                   ,--生育合同签署日期
+to_date(b1.issue_certificate_date) fzrq                   ,--发证日期
+b1.department_opinion bmyj                   ,--部门意见
+b1.apply_reason sqzsyly                   ,--申请再生育理由
+b1.audit_result djyj_shjg                   ,--登记意见/审核结果
+to_date(b1.audit_date) sprq                   ,--审批日期
+"std_qwjj_pop_fertility_index std_swsjkwyh_pop_person" lyb                   ,--来源表
+b1.lyjg lyjg                   ,--来源机构
+now() yxsj                   ,--运行时间
+Row_Number() OVER (partition by b2.identity_number,b1.application_number ORDER BY b1.planning_birth_date desc) rank
+from (select * from std_qwjj_POP_FERTILITY_INDEX where dt=(select max(dt) from std_qwjj_POP_FERTILITY_INDEX)) b1
+left join (select * from ods_swsjkwyh_pop_person where dt=(select max(dt) from ods_swsjkwyh_pop_person)) b2
+on b1.person_guid=b2.GUID
+inner join (select * from dwd_jbxx_jbdjxx where dt=(select max(dt) from dwd_jbxx_jbdjxx)) b3
+on b2.identity_number=b3.zjhm
+  )
+WHERE rank=1

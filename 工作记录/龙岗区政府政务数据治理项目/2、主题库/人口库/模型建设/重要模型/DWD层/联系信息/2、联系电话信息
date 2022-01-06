@@ -1,0 +1,872 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-25 10:01:19.84
+--所属主题:基本信息_联系信息_联系电话信息
+--内容描述:联系电话信息33张表,加工至dwd_jbxx_lxdhxx(联系电话信息)
+--加载策略:全量
+--0323 He 修改证件类型取值，记录缺失字典信息
+--_********************************************************_
+--truncate table dwd_jbxx_lxdhxx;
+with temp_table as(
+select
+	uuid() uuid		--主键
+	,zjlx		--证件类型
+	,zjhm		--证件号码
+	,xm			--姓名
+	--,null xb			--性别
+	,lxdh		--联系电话
+	--,kxpx		--可信排序
+	,sfqwrz		--是否权威认证
+	,sjlyxj		--数据来源时间
+	,lyjg		--来源机构名称
+	,lyb		--来源表名称
+from
+(
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				(case when trim(identity_type)='1' then '中华人民共和国居民身份证' 
+				when trim(identity_type)='2' then '港澳台居民身份证' 
+				when trim(identity_type)='3' then '居住证' 
+				when trim(identity_type)= '4' then '暂住证' 
+				when trim(identity_type)='5' then '边防通行证' 
+				when trim(identity_type)='6' then '护照'
+				end)  zjlx		--证件类型
+				,identity_number zjhm		--证件号码
+				,person_name xm			--姓名
+				,contact_number lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(last_update_time,1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'ods_swsjkwyh_pop_person'	 lyb	--来源表名称
+				,row_number() over(partition by trim(identity_number),trim(contact_number) order by last_update_time desc) rn
+			from ods_swsjkwyh_pop_person
+			where dt=(select max(dt) from ods_swsjkwyh_pop_person)
+			) 
+		where rn=1 and length(lxdh) >2
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				b.identity_type zjlx		--证件类型
+				,b.identity_number zjhm		--证件号码
+				,b.person_name xm			--姓名
+				,a.apply_phone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(a.last_update_time,a.create_time),1,19) sjlyxj		--数据来源时间/*YYYY-MM-DD hh24:mi:ss*/
+				,a.lyjg		--来源机构名称
+				,'std_qwjj_pop_fertility_index'	 lyb	--来源表名称
+				,row_number() over(partition by trim(b.identity_number),trim(a.apply_phone) order by last_update_time,create_time desc) rn
+			from ( 
+					select
+						apply_phone,
+						person_guid,
+						last_update_time,
+						create_time,
+						lyjg
+					from std_qwjj_pop_fertility_index a 
+					where a.dt=(select max(dt) from std_qwjj_pop_fertility_index) 
+					)a
+			left join(
+					select
+              			distinct
+						(case when trim(identity_type)='1' then '中华人民共和国居民身份证' 
+				when trim(identity_type)='2' then '港澳台居民身份证' 
+				when trim(identity_type)='3' then '居住证' 
+				when trim(identity_type)= '4' then '暂住证' 
+				when trim(identity_type)='5' then '边防通行证' 
+				when trim(identity_type)='6' then '护照'
+				end) identity_type,
+						person_name,
+              			identity_number,
+						guid
+					from ods_swsjkwyh_pop_person
+					where dt=(select max(dt) from ods_swsjkwyh_pop_person)
+				)b
+				on trim(a.person_guid)=trim(b.guid)
+			) 
+		where rn=1 and length(lxdh) >2 and zjlx is not null
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				lxrzjlx_name zjlx		--证件类型
+				,lxrsfzjhm zjhm		--证件号码
+				,lxrxm xm			--姓名
+				,lxrsj lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(sbsj,1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_szwfwglbgs_zwb_sb_v20117857'	 lyb	--来源表名称
+				,row_number() over(partition by trim(lxrsfzjhm),trim(lxrsj) order by sbsj desc) rn
+			from std_szwfwglbgs_zwb_sb_v20117857
+			where dt=(select max(dt) from std_szwfwglbgs_zwb_sb_v20117857)
+			) 
+		where rn=1 and length(lxdh) >2
+		
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				cardtypeid_name zjlx		--证件类型
+				,cardno zjhm		--证件号码
+				,name xm			--姓名
+				,mtel lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(updatetimes,createtime),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_czwglb_gatjzryxxdjb_10_1010194601'	 lyb	--来源表名称
+				,row_number() over(partition by trim(cardno),trim(mtel) order by createtime desc) rn
+			from std_czwglb_gatjzryxxdjb_10_1010194601
+			where dt=(select max(dt) from std_czwglb_gatjzryxxdjb_10_1010194601) and islogout=0
+			) 
+		where rn=1 and length(lxdh) >2
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				id_code_name zjlx		--证件类型
+				,id_no zjhm		--证件号码
+				,name xm			--姓名
+				,mobile_phone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(timeflag,1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_srlzyhshbzj_sbgrxx110041'	 lyb	--来源表名称
+				,row_number() over(partition by trim(id_no),trim(mobile_phone) order by timeflag desc) rn
+			from std_srlzyhshbzj_sbgrxx110041
+			where dt=(select max(dt) from std_srlzyhshbzj_sbgrxx110041) 
+			) 
+		where rn=1 and length(lxdh) >2
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(leaseclientidcard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end	as zjlx		--证件类型
+				,leaseclientidcard zjhm		--证件号码
+				,leaseclientname  xm			--姓名
+				,leaseclientphone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(modifytime,inputtime),1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_szfhjsj_fwzlxx107038'	 lyb	--来源表名称
+				,row_number() over(partition by trim(leaseclientidcard),trim(leaseclientphone) order by modifytime,inputtime desc) rn
+			from std_szfhjsj_fwzlxx107038
+			where dt=(select max(dt) from std_szfhjsj_fwzlxx107038)  and leaseclientidcard is not null and leaseclientphone is not null and leaseclientname is not null
+			) 
+		where rn=1 
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(leaseholderclientidcard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end	as zjlx		--证件类型
+				,leaseholderclientidcard zjhm		--证件号码
+				,leaseholderclientname  xm			--姓名
+				,leaseholderclientphone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(modifytime,inputtime),1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_szfhjsj_fwzlxx107038'	 lyb	--来源表名称
+				,row_number() over(partition by trim(leaseholderclientidcard),trim(leaseholderclientphone) order by timeflag desc) rn
+			from std_szfhjsj_fwzlxx107038
+			where dt=(select max(dt) from std_szfhjsj_fwzlxx107038)  and leaseholderclientidcard is not null and leaseholderclientname is not null and leaseholderclientphone is not null
+			) 
+		where rn=1 
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(cardno)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,cardno zjhm		--证件号码
+				,name  xm			--姓名
+				,coalesce(mobile,phone) lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(modifydate,credate),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qwzfw_zfw_cent_person1'	 lyb	--来源表名称
+				,row_number() over(partition by trim(cardno),trim(coalesce(mobile,phone)) order by modifydate,credate desc) rn
+			from std_qwzfw_zfw_cent_person1
+			where dt=(select max(dt) from std_qwzfw_zfw_cent_person1)  and cardno is not null and name is not null 
+			) 
+		where rn=1 and length(zjhm) >1 and length(lxdh) >2
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				cardtypeid_name zjlx		--证件类型
+				,cardno zjhm		--证件号码
+				,name  xm			--姓名
+				,coalesce(mtel,tel) lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(updatetime,addtime),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qzfw_zfw_resident1'	 lyb	--来源表名称
+				,row_number() over(partition by trim(cardno),trim(coalesce(mtel,tel)) order by updatetime,addtime desc) rn
+			from std_qzfw_zfw_resident1
+			where dt=(select max(dt) from std_qzfw_zfw_resident1)  and cardno is not null and name is not null  and cast(islogout as int)=0 
+			) 
+		where rn=1 and length(lxdh) >2
+	
+
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				zjlx_name zjlx		--证件类型
+				,zjhm zjhm		--证件号码
+				,xm  xm			--姓名
+				,coalesce(sjh,gddh) lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(updatetime,createtime),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qxfj_visit_users'	 lyb	--来源表名称
+				,row_number() over(partition by trim(zjhm),trim(coalesce(sjh,gddh)) order by updatetime,createtime desc) rn
+			from std_qxfj_visit_users
+			where dt=(select max(dt) from std_qxfj_visit_users)  and zjhm is not null and xm is not null   
+			) 
+		where rn=1 and length(lxdh) >2
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(zjhm)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,zjhm zjhm		--证件号码
+				,xm  xm			--姓名
+				,dh lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(u_insert_time,1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qmzj_qmzjshwzjzrytk'	 lyb	--来源表名称
+				,row_number() over(partition by trim(zjhm),trim(dh) order by u_insert_time desc) rn
+			from std_qmzj_qmzjshwzjzrytk
+			where dt=(select max(dt) from std_qmzj_qmzjshwzjzrytk)  and zjhm is not null and xm is not null   
+			) 
+		where rn=1 and length(lxdh) >2
+		
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(idcard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,idcard zjhm		--证件号码
+				,pername  xm			--姓名
+				,perphone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(lastmodificationtime,creationtime),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qzfjsj_ricent_enterprisep1'	 lyb	--来源表名称
+				,row_number() over(partition by trim(idcard),trim(perphone) order by coalesce(lastmodificationtime,creationtime) desc) rn
+			from std_qzfjsj_ricent_enterprisep1
+			where dt=(select max(dt) from std_qzfjsj_ricent_enterprisep1)  and idcard is not null and pername is not null   
+			) 
+		where rn=1 and length(lxdh) >2
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(idcard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,idcard zjhm		--证件号码
+				,pername  xm			--姓名
+				,perphone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(lastmodificationtime,creationtime),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qzfjsj_jjg_enterprise_enterprise1'	 lyb	--来源表名称
+				,row_number() over(partition by trim(idcard),trim(perphone) order by coalesce(lastmodificationtime,creationtime) desc) rn
+			from std_qzfjsj_jjg_enterprise_enterprise1
+			where dt=(select max(dt) from std_qzfjsj_jjg_enterprise_enterprise1)  and idcard is not null and pername is not null   
+			) 
+		where rn=1 and length(lxdh) >2
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(identitycard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,identitycard zjhm		--证件号码
+				,name  xm			--姓名
+				,phonenumber lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(lastmodificationtime,creationtime),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qzfjsj_jjg_enterprise_member'	 lyb	--来源表名称
+				,row_number() over(partition by identitycard,phonenumber order by coalesce(lastmodificationtime,creationtime) desc) rn
+			from std_qzfjsj_jjg_enterprise_member
+			where dt=(select max(dt) from std_qzfjsj_jjg_enterprise_member)  and length(identitycard)>2  
+			) 
+		where rn=1
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(cerf_num)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,cerf_num zjhm		--证件号码
+				,name  xm			--姓名
+				,phone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(ncreated,1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qzfjsj_vw_worker_info'	 lyb	--来源表名称
+				,row_number() over(partition by cerf_num,phone order by ncreated desc) rn
+			from std_qzfjsj_vw_worker_info
+			where dt=(select max(dt) from std_qzfjsj_vw_worker_info)  and length(cerf_num)>2  
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				idcardtypenum_name zjlx		--证件类型
+				,idcard zjhm		--证件号码
+				,pername  xm			--姓名
+				,perphone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(modifytime,createtime),1,19)||' 00:00:00' sjlyxj		--数据来源时间 YYYY-MM-DD
+				,lyjg		--来源机构名称
+				,'std_qzfjsj_uf_persdetail_tempo'	 lyb	--来源表名称
+				,row_number() over(partition by idcard,perphone order by coalesce(modifytime,createtime) desc) rn
+			from std_qzfjsj_uf_persdetail_tempo
+			where dt=(select max(dt) from std_qzfjsj_uf_persdetail_tempo)  and length(idcard)>2  
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(sfzh)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,sfzh zjhm		--证件号码
+				,xm  xm			--姓名
+				,lxdh lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(modedatacreatetime,1,19) sjlyxj		--数据来源时间 null
+				,lyjg		--来源机构名称
+				,'std_qzfjsj_uf_person_library'	 lyb	--来源表名称
+				,row_number() over(partition by sfzh,lxdh order by modedatacreatetime desc) rn
+			from std_qzfjsj_uf_person_library
+			where dt=(select max(dt) from std_qzfjsj_uf_person_library)  and length(sfzh)>2  
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(idcard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,idcard zjhm		--证件号码
+				,name  xm			--姓名
+				,tel lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(modify_time,check_date),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qwsjkj_t_check_person_info'	 lyb	--来源表名称
+				,row_number() over(partition by idcard,tel order by coalesce(modify_time,check_date) desc) rn
+			from std_qwsjkj_t_check_person_info
+			where dt=(select max(dt) from std_qwsjkj_t_check_person_info)  and length(idcard)>2  
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(idcard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,idcard zjhm		--证件号码
+				,name  xm			--姓名
+				,tel lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(modify_time,visitor_date),1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qwsjkj_t_visit_person_info'	 lyb	--来源表名称
+				,row_number() over(partition by idcard,tel order by coalesce(modify_time,visitor_date) desc) rn
+			from std_qwsjkj_t_visit_person_info
+			where dt=(select max(dt) from std_qwsjkj_t_visit_person_info)  and length(idcard)>2  
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(idcard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,idcard zjhm		--证件号码
+				,name  xm			--姓名
+				,coalesce(mobile,hometel) lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(timeflag,1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qyjglj_ajj_insexecuter'	 lyb	--来源表名称
+				,row_number() over(partition by idcard,coalesce(mobile,hometel) order by timeflag desc) rn
+			from std_qyjglj_ajj_insexecuter
+			where dt=(select max(dt) from std_qyjglj_ajj_insexecuter)  and length(idcard)>2  
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				cardtypeid_name zjlx		--证件类型
+				,cardno zjhm		--证件号码
+				,name  xm			--姓名
+				,mtel lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(updatetime,addtime),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_gafj_spmj_tenementinfo'	 lyb	--来源表名称
+				,row_number() over(partition by cardno,mtel order by coalesce(updatetime,addtime) desc) rn
+			from std_gafj_spmj_tenementinfo
+			where dt=(select max(dt) from std_gafj_spmj_tenementinfo)  and length(cardno)>2   and cast(islogout as int) <>1
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(r_cardno)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,r_cardno zjhm		--证件号码
+				,r_name  xm			--姓名
+				,r_mtel lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(updatetime,createtime),1,19) sjlyxj		--数据来源时间 /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_lggafj_spmj_tenementinfobase'	 lyb	--来源表名称
+				,row_number() over(partition by r_cardno,r_mtel order by coalesce(updatetime,createtime) desc) rn
+			from std_lggafj_spmj_tenementinfobase
+			where dt=(select max(dt) from std_lggafj_spmj_tenementinfobase)  and length(r_cardno)>2   and cast(delflag as int)=0
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(id_number)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,id_number zjhm		--证件号码
+				,passenger  xm			--姓名
+				,phone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(update_time,create_time),1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qjtysj_dkl_slw_passenger'	 lyb	--来源表名称
+				,row_number() over(partition by id_number,phone order by coalesce(update_time,create_time) desc) rn
+			from std_qjtysj_dkl_slw_passenger
+			where dt=(select max(dt) from std_qjtysj_dkl_slw_passenger)  and length(id_number)>2   
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(idcard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,idcard zjhm		--证件号码
+				,name  xm			--姓名
+				,coalesce(phone,mobile) lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(mtime,ctime),1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qxawb_t_staffs'	 lyb	--来源表名称
+				,row_number() over(partition by idcard,coalesce(phone,mobile) order by coalesce(mtime,ctime) desc) rn
+			from std_qxawb_t_staffs
+			where dt=(select max(dt) from std_qxawb_t_staffs)  and length(idcard)>2   
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(identity)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,identity zjhm		--证件号码
+				,name  xm			--姓名
+				,phone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(timeflag,1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qxa_t_person'	 lyb	--来源表名称
+				,row_number() over(partition by identity,phone order by timeflag desc) rn
+			from std_qxa_t_person
+			where dt=(select max(dt) from std_qxa_t_person)  and length(identity)>2   
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	/*
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				null zjlx		--证件类型
+				,identity zjhm		--证件号码
+				,name  xm			--姓名
+				,phone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,to_date(timeflag) sjlyxj		--数据来源时间
+				,lyjg		--来源机构名称
+				,'std_qxawb_ut_user'	 lyb	--来源表名称
+				,row_number() over(partition by identity,phone order by timeflag desc) rn
+			from std_qxawb_ut_user
+			where dt=(select max(dt) from std_qxawb_ut_user)  and length(identity)>2   
+			) 
+		where rn=1 and length(trim(zjhm))>7
+	*/
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(manageno)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,manageno zjhm		--证件号码
+				,managename  xm			--姓名
+				,managephone lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(checktime,1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qxawb_small_place_view'	 lyb	--来源表名称
+				,row_number() over(partition by manageno,managephone order by coalesce(nextchecktime,checktime) desc) rn
+			from std_qxawb_small_place_view
+			where dt=(select max(dt) from std_qxawb_small_place_view)  and length(manageno)>2 and cast(deleted as int)=0
+			) 
+		where rn=1 and length(lxdh)>2
+	
+	
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				zjlx zjlx		--证件类型
+				,zjhm zjhm		--证件号码
+				,yhxm  xm			--姓名
+				,lxdh lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(coalesce(gxsj,khsj),1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_srqjtgfyxgs_rqyhxxqyhf100441'	 lyb	--来源表名称
+				,row_number() over(partition by zjhm,lxdh order by coalesce(gxsj,khsj) desc) rn
+			from std_srqjtgfyxgs_rqyhxxqyhf100441
+			where dt=(select max(dt) from std_srqjtgfyxgs_rqyhxxqyhf100441)  and length(zjhm)>2 
+			) 
+		where rn=1 and length(lxdh)>2
+		
+	union
+		select
+			zjlx		--证件类型
+			,zjhm		--证件号码
+			,xm			--姓名
+			,lxdh		--联系电话
+			,sfqwrz		--是否权威认证
+			,sjlyxj		--数据来源时间
+			,lyjg		--来源机构名称
+			,lyb		--来源表名称
+		from (
+			select
+				case when length(c_idcard)=18 then '中华人民共和国居民身份证'	
+				else '其他' end zjlx		--证件类型
+				,c_idcard zjhm		--证件号码
+				,c_person_name  xm			--姓名
+				,c_draw_num lxdh		--联系电话
+				,null sfqwrz		--是否权威认证
+				,substr(timeflag,1,19) sjlyxj		--数据来源时间  /*YYYY-MM-DD hh24:mi:ss*/
+				,lyjg		--来源机构名称
+				,'std_qcgj_t_hw_person'	 lyb	--来源表名称
+				,row_number() over(partition by c_draw_num,c_idcard order by timeflag desc) rn
+			from std_qcgj_t_hw_person
+			where dt=(select max(dt) from std_qcgj_t_hw_person)  and length(c_idcard)>2 
+			) 
+		where rn=1 and length(lxdh)>2
+	)
+		
+
+)
+
+insert overwrite table dwd_jbxx_lxdhxx partition (dt='${DayBeforeStartTime}')
+select
+	uuid		--主键
+	,zjlx		--证件类型
+	,zjhm		--证件号码
+	,xm			--姓名
+	,xb			--性别
+	,lxdh		--联系电话
+	,kxpx		--可信排序
+	,sfqwrz		--是否权威认证
+	,sjlyxj		--数据来源时间
+	,lyjg		--来源机构名称
+	,lyb		--来源表名称
+	,yxsj		--运行时间
+from
+(
+	select
+		uuid() uuid		--主键
+		,a.zjlx	zjlx	--证件类型
+		,a.zjhm	zjhm	--证件号码
+		,a.xm	xm		--姓名
+		,b.xb	xb		--性别
+		,a.lxdh	lxdh	--联系电话
+		,row_number() over(partition by trim(a.zjhm),trim(a.lxdh) order by a.sjlyxj desc) kxpx		--可信排序
+		,a.sfqwrz sfqwrz		--是否权威认证
+		,a.sjlyxj sjlyxj		--数据来源时间
+		,a.lyjg	lyjg	--来源机构名称
+		,a.lyb	lyb	--来源表名称
+		,current_timestamp yxsj		--运行时间
+	from temp_table a
+	inner join (select distinct zjhm, xb from dwd_jbxx_jbdjxx where dt=(select max(dt) from dwd_jbxx_jbdjxx))b
+	on trim(a.zjhm)=trim(b.zjhm)
+	)
+where kxpx <=5 and length(zjhm)>2 and length(lxdh)>2

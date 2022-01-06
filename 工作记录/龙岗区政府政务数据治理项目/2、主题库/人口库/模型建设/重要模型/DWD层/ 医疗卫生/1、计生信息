@@ -1,0 +1,91 @@
+ --SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-20 16:07:28
+--table_name : dwd_shhd_jsxx(计生信息)
+--use_tables : std_swsjkwyh_pop_children(深圳市卫生健康委员会_生育信息)
+-- 			   ods_swsjkwyh_pop_person(深圳市卫生健康委员会_人口基本信息)
+--             std_zfw_resident1(政法委基础信息)
+--取数逻辑 :   1、POP_PERSON中以证件号码关联龙岗区政法委“ZFW_RESIDENT1“表，获取龙岗区人口范围清单（人员标识ID、证件号码、证件类型、姓名、性别），作为临时表。
+--			  2、POP_CHILDREN表中根据父亲ID和母亲ID拆成两张表，再通过ID关联 临时表 获取证件号码、证件类型等其他字段
+--去重逻辑: 根据身份证号,通过 timeflag 倒序 取最新数据
+--插入语句在下方:👇
+--_********************************************************_
+
+--修改先关联再筛选为先先筛选后关联 最后的 WHERE t1.rn=1 改为 在t1内where
+--晴风 2021-03-19
+
+with table_temp AS (
+SELECT  *
+FROM 
+(
+	SELECT  t1.guid 
+	       ,t1.identity_number                                                     AS zjhm 
+	       ,t1.identity_type                                                       AS zjlx 
+	       ,t1.person_name                                                         AS xm 
+	       ,t1.gender                                                              AS xb 
+	       ,row_number() over(partition by identity_number ORDER BY t1.timeflag desc) AS rn
+	FROM ods_swsjkwyh_pop_person t1
+	INNER JOIN 
+	(
+		SELECT  *
+		FROM ods_qzfw_zfw_resident1
+		WHERE dt=( 
+		SELECT  MAX(dt)
+		FROM ods_qzfw_zfw_resident1) 
+	) t2
+	ON t1.identity_number=t2.cardno 
+  where t1.dt=(select max(dt) from ods_swsjkwyh_pop_person)
+)
+WHERE rn=1 )  
+ insert overwrite table dwd_shhd_jsxx partition (dt='${DayBeforeStartTime}')
+
+SELECT  
+	    "中华人民共和国居民身份证" as zjlb
+	   ,t2.zjhm 
+       ,t2.xm 
+       ,t2.xb 
+       ,t1.syzc 
+       ,t1.swyy 
+       ,t1.znswrq 
+       ,t1.jszjhm 
+       ,t1.jszjffrq 
+       ,t1.syzfzdbm 
+       ,substr(t1.dszngrzlqr,1,10) 
+       ,'std_swsjkwyh_pop_children' AS lyb 
+       ,t1.lyjg 
+       ,current_timestamp           AS yxrq
+FROM 
+(
+  select * from (
+    	SELECT  b1.current_mother_guid                                                        AS guid 
+	       ,b1.fertility_policy                                                           AS syzc --生育政策 
+	       ,b1.children_death_reason                                                      AS swyy --子女死亡原因编码 
+	       ,b1.children_death_date                                                        AS znswrq --子女死亡日期 
+	       ,b1.adopt_number                                                               AS jszjhm --收养证件号码 
+	       ,b1.adopt_date                                                                 AS jszjffrq --收养证件发放日期 
+	       ,b1.fertility_certification_number                                             AS syzfzdbm --生育证发证地编码 
+	       ,b1.glorious_permit_issue_date                                                     AS dszngrzlqr --独生子女父母光荣证领证日期 
+	       ,row_number() over(partition by b1.current_mother_guid ORDER BY b1.timeflag desc) AS rn 
+	       ,b1.lyjg
+	FROM std_swsjkwyh_pop_children b1
+  	where b1.dt=(select max(dt) from std_swsjkwyh_pop_children)
+	UNION ALL
+	SELECT  b2.current_father_guid                                                        AS guid 
+	       ,b2.fertility_policy                                                           AS syzc --生育政策 
+	       ,b2.children_death_reason                                                      AS swyy --子女死亡原因编码 
+	       ,b2.children_death_date                                                        AS znswrq --子女死亡日期 
+	       ,b2.adopt_number                                                               AS jszjhm --收养证件号码 
+	       ,b2.adopt_date                                                                 AS jszjffrq --收养证件发放日期 
+	       ,b2.fertility_certification_number                                             AS syzfzdbm --生育证发证地编码 
+	       ,b2.glorious_permit_issue_date                                                     AS dszngrzlqr --独生子女父母光荣证领证日期 
+	       ,row_number() over(partition by b2.current_father_guid ORDER BY b2.timeflag desc) AS rn 
+	       ,b2.lyjg
+	FROM std_swsjkwyh_pop_children b2
+    where b2.dt=(select max(dt) from std_swsjkwyh_pop_children)
+  ) where rn=1 --下面的where改放到这里
+
+) t1
+LEFT JOIN table_temp t2
+ON t1.guid = t2.guid
+--WHERE t1.rn=1  

@@ -1,0 +1,147 @@
+--Spark SQL
+--_********************************************************_
+--author: lgrkk
+--create time: 2020-07-30 14:07:38
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS std_czg_gatjzryxxdjb (
+    zjlx string COMMENT '证件类型',
+    zjhm string COMMENT '证件号码',
+    xm string COMMENT '姓名',
+    xb string COMMENT '性别',
+    xbdm string COMMENT '性别代码',
+    jzsy string COMMENT '居住事由',
+    jzfs string COMMENT '居住方式',
+    zxbj string COMMENT '注销标记(0,未注销1.已注销)',
+    zslb string COMMENT '住所类别',
+    yhzgxdm string COMMENT '与户主关系代码',
+    yhzgx string COMMENT '与户主关系',
+    hzzjhm string COMMENT '户主证件号码',
+    csny string COMMENT '出生年月',
+    rzrq string COMMENT '入住日期',
+    rksjly string COMMENT '人口数据来源',
+    lxdh string COMMENT '联系电话',
+    lkyy string COMMENT '离开原因',
+    lkrq string COMMENT '离开日期',
+    lsrq string COMMENT '来深日期',
+    jzdz string COMMENT '居住地址',
+    zxsj string COMMENT '注销时间',
+    zxr string COMMENT '注销人',
+    zp string COMMENT '照片',
+    zshzxm string COMMENT '在深户主姓名',
+    zbssjyqk string COMMENT '在本市受教育情况',
+    hyzk string COMMENT '婚姻状况',
+    fwdwdz string COMMENT '服务单位地址',
+    fwdw string COMMENT '服务单位',
+    fwbm string COMMENT '房屋编码',
+    fwid string COMMENT '房屋ID',
+    fh string COMMENT '房号',
+    dq string COMMENT '地区',
+    dwlxdh string COMMENT '单位联系电话',
+    bz string COMMENT '备注',
+    cjsj string COMMENT '采集时间',
+    gxsj string COMMENT '更新时间',
+    xy string COMMENT '行业',
+    lyjg string COMMENT '来源机构',
+    lyb string COMMENT '来源表',
+    yxsj timestamp COMMENT '运行时间'
+)
+COMMENT '港澳台居住人员信息登记表'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/29 14:34:50
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_czg_gatjzryxxdjb(港澳台居住人员信息登记表)
+--#源表    ： std_czg_gatjzryxxdjb_10_1010194601(港澳台居住人员信息登记表)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_czg_gatjzryxxdjb partition (dt='${DayBeforeStartTime}')
+select      
+	  case when cardno rlike '^\d{6}(18|19|20)?\d{2}(0[1-9]|1[012])(0[1-9]|[12]\d|3[01])\d{3}(\d|[xX])$' then "中华人民共和国居民身份证"
+		   when cardno rlike '^\d{8}|^[a-zA-Z0-9]{10}|^\d{18}$' then "台湾同胞来往内地通行证" 
+		   when  cardno rlike '^([A-Z]\d{6,10}(\(\w{1}\))?)$'  then "港澳居民来往内地通行证" 
+            WHEN  cardtypeid like "%身份证"  and cardno not rlike '^\d{6}(18|19|20)?\d{2}(0[1-9]|1[012])(0[1-9]|[12]\d|3[01])\d{3}(\d|[xX])$'  then "港澳台身份证"
+             else cardtypeid end as cardtypeid , -- 证件类型
+	t.cardno as zjhm, -- 证件号码
+    if(t.name rlike '^[\u4E00-\u9FA5]+$',regexp_replace(NVL(t.name,''),'[\\s]+|[\\u3000]+|[\,]',''),t.name)as  zwxm, -- 中文姓名
+	t.sex as xb, -- 性别
+	t.xbdm as xbdm, -- 性别代码
+	t.leasereasonid as jzsy, -- 居住事由
+	t.bidefashion as jzfs, -- 居住方式
+	if(t.islogout="未注销",0,1) as zxbj, -- 注销标记(0,未注销1.已注销)
+	t.domiciletype as zslb, -- 住所类别
+	t.yhzgxdm as yhzgxdm, -- 与户主关系代码
+	t.issuingorgan as yhzgx, -- 与户主关系
+	t.beliefid as hzzjhm, -- 户主证件号码
+	t.birthday as csny, -- 出生年月
+	t.checkindate as rzrq, -- 入住日期
+	t.residenttype as rksjly, -- 人口数据来源
+	t.mtel as lxdh, -- 联系电话
+	t.outreason as lkyy, -- 离开原因
+	t.leavedate as lkrq, -- 离开日期
+	t.intime1 as lsrq, -- 来深日期
+	t.homeaddress as jzdz, -- 居住地址
+	t.logouttime as zxsj, -- 注销时间
+	t.logoutor as zxr, -- 注销人
+	t.photo as zp, -- 照片
+	t.bloodtypeid as zshzxm, -- 在深户主姓名
+	t.salary as zbssjyqk, -- 在本市受教育情况
+	t.marryid as hyzk, -- 婚姻状况
+	t.companyaddress as fwdwdz, -- 服务单位地址
+	t.company as fwdw, -- 服务单位
+	t.housecode as fwbm, -- 房屋编码
+	t.houseid as fwid, -- 房屋ID
+	t.rommno as fh, -- 房号
+	t.district as dq, -- 地区
+	t.companytel as dwlxdh, -- 单位联系电话
+	t.remarks as bz, -- 备注
+    t.addtime as cjsj, --采集时间
+	t.updatetimes as gxsj, -- 更新时间
+	t.tradeid as xy, -- 行业
+	t.lyjg as lyjg, -- 来源机构
+	"std_czg_gatjzryxxdjb_10_1010194601" as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj -- 运行时间
+from
+(select 
+      cardtypeid, -- 证件类型
+      cardno, -- 证件号码
+      name, -- 姓名
+      sex, -- 性别
+      xbdm, -- 性别代码
+      leasereasonid, -- 居住事由
+      bidefashion, -- 居住方式
+      islogout, -- 注销标记(0,未注销1.已注销)
+      domiciletype, -- 住所类别
+      yhzgxdm, -- 与户主关系代码
+      issuingorgan, -- 与户主关系
+      beliefid, -- 户主证件号码
+      birthday, -- 出生年月
+      checkindate, -- 入住日期
+      residenttype, -- 人口数据来源
+      mtel, -- 联系电话
+      outreason, -- 离开原因
+      leavedate, -- 离开日期
+      intime1, -- 来深日期
+      homeaddress, -- 居住地址
+      logouttime, -- 注销时间
+      logoutor, -- 注销人
+      photo, -- 照片
+      bloodtypeid, -- 在深户主姓名
+      salary, -- 在本市受教育情况
+      marryid, -- 婚姻状况
+      companyaddress, -- 服务单位地址
+      company, -- 服务单位
+      housecode, -- 房屋编码
+      houseid, -- 房屋ID
+      rommno, -- 房号
+      district, -- 地区
+      companytel, -- 单位联系电话
+      remarks, -- 备注
+      addtime,--采集时间
+      updatetimes, -- 更新时间
+      tradeid, -- 行业
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(cardno,'') order by updatetimes desc) as rn 
+from std_czg_gatjzryxxdjb_10_1010194601  a join  (select max(dt) maxdt from std_czg_gatjzryxxdjb_10_1010194601) b on a.dt=b.maxdt)t
+where t.rn <= 1 and left(housecode,6)="440307";

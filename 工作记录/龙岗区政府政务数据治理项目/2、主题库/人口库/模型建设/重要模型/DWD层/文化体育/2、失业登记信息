@@ -1,0 +1,48 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-17 19:43:12
+--_********************************************************_
+--修改时间：2021-03-23
+--修改内容：增加判断证件类型逻辑
+insert overwrite table dwd_shhd_sydjxx partition (dt='${DayBeforeStartTime}')
+SELECT
+UUID
+,zjlx
+,zjhm
+,xm
+,xb
+,mz
+,csrq
+,sydjbh
+,syz
+,syzzt
+,syyy
+,lyjg
+,lyb
+,yxsj
+FROM
+(
+select
+uuid() UUID                   ,--主键
+if(length(b1.aac147)=18,"中华人民共和国居民身份证","其它") zjlx                   ,--证件类型
+b1.aac147 zjhm                   ,--证件号码
+b1.aac003 xm                   ,--姓名
+b2.xb xb                   ,--性别
+b2.mz mz                   ,--民族
+case when length(aac147)=15 then '19'||substr(aac147,7,2)||'-'||substr(aac147,9,2)||'-'||substr(aac147,11,2)
+when aac147='E1390342190219003P'  then null
+when length(aac147)=18 then substr(aac147,1,4)||'-'||substr(aac147,5,2)||'-'||substr(aac147,7,2)
+else null end csrq                   ,--出生日期
+b1.cde005 sydjbh                   ,--失业登记编号
+b1.cac001 syz                   ,--失业证
+b1.cdc010 syzzt                   ,--失业证状态
+b1.ajc093 syyy                   ,--失业原因
+b1.lyjg lyjg                   ,--来源机构名称
+"std_srlzyhshbzj_sydjxx106966 dwd_jbxx_jbdjxx" lyb                   ,--来源表名称
+now() yxsj                   ,--运行时间
+Row_Number() OVER (partition by b1.aac147,b1.cde005 ORDER BY b1.cde005 desc) rank
+from (select * from std_srlzyhshbzj_sydjxx106966 where dt=(select max(dt) from std_srlzyhshbzj_sydjxx106966)) b1
+inner join (select * from dwd_jbxx_jbdjxx where dt=(select max(dt) from dwd_jbxx_jbdjxx)) b2
+on b1.aac147=b2.zjhm
+)where rank=1

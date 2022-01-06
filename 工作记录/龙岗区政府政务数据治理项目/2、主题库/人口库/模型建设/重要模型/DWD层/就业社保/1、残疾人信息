@@ -1,0 +1,181 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-11-19 16:40:19.84
+--所属主题:社会救助_残疾人信息
+--内容描述:社会救助_残疾人信息std层6张表,加工至dwd_shhd_cjrxx(残疾人信息)
+
+
+--加载策略:全量
+--_********************************************************_
+--yxsj 放外层,不参与去重
+--晴风 2021-03-22
+
+--添加数据创建时间字段GLDM_CREATE_TIME
+--李政 2021-09-15
+
+--根据创建时间去重
+--李政
+
+
+--truncate table dwd_shhd_cjrxx;
+--ALTER TABLE dwd_shhd_cjrxx DROP PARTITION( dt='${DayBeforeStartTime}');
+insert overwrite table dwd_shhd_cjrxx partition (dt='${DayBeforeStartTime}')
+select 
+	disabled_no		--残疾证号
+	,zjlx			--证件类型
+	,zjhm			--证件号码
+	,name			--姓名
+	,xb				--性别
+	,csrq			--出生日期
+	,disabled_code	--残疾类别代码
+	,disabled_name	--残疾类别（肢体、精神等）
+	,disabled_level	--残疾等级代码
+	,cjxq			--残疾详情
+	,GLDM_CREATE_TIME --数据创建时间
+	,lyb			--来源表
+	,lyjg			--来源机构
+	,yxsj			--运行时间
+	,disabledlevel_name	--残疾等级（一级、二级等）
+from(
+select
+	disabled_no		--残疾证号
+	,zjlx			--证件类型
+	,zjhm			--证件号码
+	,name			--姓名
+	,xb				--性别
+	,csrq			--出生日期
+	,disabled_code	--残疾类别代码
+	,disabled_name	--残疾类别（肢体、精神等）
+	,disabled_level	--残疾等级代码
+	,cjxq			--残疾详情
+	,GLDM_CREATE_TIME --数据创建时间
+	,lyb			--来源表
+	,lyjg			--来源机构
+	,yxsj			--运行时间
+	,disabledlevel_name	--残疾等级（一级、二级等）
+	,row_number() over(partition by zjhm order by GLDM_CREATE_TIME desc) rn
+from 	
+(	
+	select
+	disabled_no		--残疾证号
+	,zjlx			--证件类型
+	,zjhm			--证件号码
+	,name			--姓名
+	,xb				--性别
+	,csrq			--出生日期
+	,disabled_code	--残疾类别代码
+	,disabled_name	--残疾类别（肢体、精神等）
+	,disabled_level	--残疾等级代码
+	,cjxq			--残疾详情
+	,GLDM_CREATE_TIME --数据创建时间
+	,lyb			--来源表
+	,lyjg			--来源机构
+	,current_timestamp yxsj			--运行时间
+	,disabledlevel_name	--残疾等级（一级、二级等）
+		from
+(
+          select
+              distinct
+              cjzh disabled_no		--残疾证号
+              ,'中华人民共和国居民身份证' zjlx			--证件类型
+              ,substr(cjzh,1,18) zjhm			--证件号码
+              ,xm name			--姓名
+              ,xb_name xb				--性别
+              ,substr(cjzh,7,8) csrq			--出生日期
+              ,null disabled_code	--残疾类别代码
+              ,cjlb disabled_name	--残疾类别（肢体、精神等）
+              ,null disabled_level	--残疾等级代码
+              ,cjxq			--残疾详情
+			  ,sjsjcssj GLDM_CREATE_TIME --数据创建时间
+              ,'std_qcl_qclzhrmghgcjrzxbzsqhz' lyb			--来源表
+              ,'区残联' lyjg			--来源机构
+              -- ,current_timestamp yxsj			--运行时间
+              ,cjdj disabledlevel_name	--残疾等级（一级、二级等）
+          from std_qcl_qclzhrmghgcjrzxbzsqhz a
+          where a.dt=(select max(dt) from std_qcl_qclzhrmghgcjrzxbzsqhz)  
+      union 
+          select
+              distinct
+              cjzh disabled_no		--残疾证号
+              ,'中华人民共和国居民身份证' zjlx			--证件类型
+              ,substr(cjzh,1,18) zjhm			--证件号码
+              ,xm name			--姓名
+              ,xb_name xb				--性别
+              ,substr(cjzh,7,8) csrq			--出生日期
+              ,null disabled_code	--残疾类别代码
+              ,cjlb disabled_name	--残疾类别（肢体、精神等）
+              ,null disabled_level	--残疾等级代码
+              ,cjxq			--残疾详情
+			  ,sjsjcssj  GLDM_CREATE_TIME --数据创建时间
+              ,'std_qcl_qclzhrmghgcjrzhlhz' lyb			--来源表
+              ,'区残联' lyjg			--来源机构
+              -- ,current_timestamp yxsj			--运行时间
+              ,cjdj disabledlevel_name	--残疾等级（一级、二级等）
+          from std_qcl_qclzhrmghgcjrzhlhz a
+          where a.dt=(select max(dt) from std_qcl_qclzhrmghgcjrzhlhz)  
+      union
+          select
+              distinct
+              cjzh disabled_no		--残疾证号
+              ,'中华人民共和国居民身份证' zjlx			--证件类型
+              ,substr(cjzh,1,18) zjhm			--证件号码
+              ,xm name			--姓名
+              ,xb_name xb				--性别
+              ,substr(cjzh,7,8) csrq			--出生日期
+              ,null disabled_code	--残疾类别代码
+              ,cjlb disabled_name	--残疾类别（肢体、精神等）
+              ,null disabled_level	--残疾等级代码
+              ,cjxq			--残疾详情
+			  ,sjsjcssj GLDM_CREATE_TIME --数据创建时间
+              ,'std_qcl_qclzhrmghgcjrzbbhz' lyb			--来源表
+              ,'区残联' lyjg			--来源机构
+              -- ,current_timestamp yxsj			--运行时间
+              ,cjdj disabledlevel_name	--残疾等级（一级、二级等）
+          from std_qcl_qclzhrmghgcjrzbbhz a
+          where a.dt=(select max(dt) from std_qcl_qclzhrmghgcjrzbbhz)
+      union
+          select
+              distinct
+              cjzh disabled_no		--残疾证号
+              ,'中华人民共和国居民身份证' zjlx			--证件类型
+              ,substr(cjzh,1,18) zjhm			--证件号码
+              ,xm name			--姓名
+              ,xb_name xb				--性别
+              ,substr(cjzh,7,8) csrq			--出生日期
+              ,null disabled_code	--残疾类别代码
+              ,cjlb disabled_name	--残疾类别（肢体、精神等）
+              ,null disabled_level	--残疾等级代码
+              ,cjxq			--残疾详情
+			  ,sjsjcssj GLDM_CREATE_TIME --数据创建时间
+              ,'std_qcl_qclzhrmghgcjrzlbdjbghz' lyb			--来源表
+              ,'区残联' lyjg			--来源机构
+              -- ,current_timestamp yxsj			--运行时间
+              ,cjdj disabledlevel_name	--残疾等级（一级、二级等）
+          from std_qcl_qclzhrmghgcjrzlbdjbghz a
+          where a.dt=(select max(dt) from std_qcl_qclzhrmghgcjrzlbdjbghz)
+	)a 
+	where  not exists (
+      select 1 from (
+        select distinct cjzh disabled_no from std_qcl_qclzhrmghgcjrzqchz where dt=(select max(dt) from std_qcl_qclzhrmghgcjrzqchz)
+        union 
+        select distinct cjzh disabled_no from std_qcl_qclzhrmghgcjrzzxhz where dt=(select max(dt) from std_qcl_qclzhrmghgcjrzzxhz)
+      )b where a.disabled_no=b.disabled_no 					
+    )
+)a where a.disabled_no not in (select distinct substr(cjzh,1,20) disabled_no from std_qcl_qclzhrmghgcjrzbbhz where dt=(select max(dt) from std_qcl_qclzhrmghgcjrzbbhz))
+  group by disabled_no		--残疾证号
+	,zjlx			--证件类型
+	,zjhm			--证件号码
+	,name			--姓名
+	,xb				--性别
+	,csrq			--出生日期
+	,disabled_code	--残疾类别代码
+	,disabled_name	--残疾类别（肢体、精神等）
+	,disabled_level	--残疾等级代码
+	,cjxq			--残疾详情
+	,GLDM_CREATE_TIME --数据创建时间
+	,lyb			--来源表
+	,lyjg			--来源机构
+	,yxsj			--运行时间
+	,disabledlevel_name	--残疾等级（一级、二级等）
+	)where rn=1;

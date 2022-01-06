@@ -1,0 +1,111 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-16 15:01:19.84
+--所属主题:涉事涉法_行政监管_社会抚养费征收
+--内容描述:社会抚养费征收1张表,加工至dwd_sssf_shfyfzs(社会抚养费征收)
+--加载策略:全量
+--_********************************************************_
+--truncate table dwd_sssf_shfyfzs;
+
+insert overwrite table dwd_sssf_shfyfzs partition (dt='${DayBeforeStartTime}')
+select
+	 a.uuid	--主键
+	,a.zjlx			--证件类型
+	,a.zjhm			--证件号码
+	,a.xm				--姓名
+	,a.xb				--性别
+	,a.csrq			--出生日期
+	,a.gj				--国籍
+	,a.mz				--民族
+	,a.hkxz			--户口性质
+	,a.sfds			--是否独生
+	,a.zjzh			--征决字号
+	,a.zsly			--征收理由
+	,a.wfsyrq			--违法生育日期
+	,a.jdsrq			--决定书日期
+	,a.yjzje			--应缴总金额
+	,a.qjye			--欠缴余额
+	,a.zsjg			--征收机关
+	,a.sfjq			--是否缴清
+	,a.sfsqfyqzzx		--是否申请法院强制执行
+	,a.ajh			--案卷号
+	,a.zxfg			--执行法官
+	,a.sftsbj			--是否特殊办结
+	,a.tsbjyy			--特殊办结原因
+	,a.ywdjrq			--业务登记日期
+	,a.lxdh			--联系电话
+	,'ods_swsjkwyh_pop_person,std_swsjkwyh_pop_penalty' lyb			--来源表
+	,'区卫健局' lyjg			--来源机构
+	,current_timestamp yxsj		--运行时间
+ from (
+	select
+		a.guid uuid	--主键
+		,a.zjlx	zjlx		--证件类型
+		,a.zjhm	zjhm		--证件号码
+		,a.xm	xm			--姓名
+		,a.xb	xb			--性别
+		,a.csrq	csrq		--出生日期
+		,a.gj	gj			--国籍
+		,a.mz	mz			--民族
+		,a.hkxz	hkxz		--户口性质
+		,a.sfds	sfds		--是否独生
+		,b.zjzh	zjzh		--征决字号
+		,b.zsly	zsly		--征收理由
+		,b.wfsyrq wfsyrq	--违法生育日期
+		,b.jdsrq jdsrq		--决定书日期
+		,b.yjzje yjzje		--应缴总金额
+		,b.qjye	qjye		--欠缴余额
+		,b.zsjg	zsjg		--征收机关
+		,b.sfjq	sfjq		--是否缴清
+		,b.sfsqfyqzzx sfsqfyqzzx		--是否申请法院强制执行
+		,b.ajh	ajh			--案卷号
+		,b.zxfg	zxfg		--执行法官
+		,b.sftsbj sftsbj	--是否特殊办结
+		,b.tsbjyy tsbjyy	--特殊办结原因
+		,b.ywdjrq ywdjrq	--业务登记日期
+		,a.lxdh	lxdh		--联系电话
+	from 
+			(
+			select
+				distinct
+				guid
+				,identity_type zjlx
+				,identity_number zjhm
+				,person_name xm
+				,gender xb
+				,to_date(birthday) csrq
+				,nationality gj
+				,ethnic_group mz
+				,household_type hkxz
+				,only_child sfds
+				,contact_number lxdh
+			from ods_swsjkwyh_pop_person
+			where dt=(select max(dt) from ods_swsjkwyh_pop_person)
+			)a
+			left join
+			(
+			select 
+				distinct
+				person_guid guid
+				,levies_number zjzh
+				,levies_reason zsly
+				,fertility_date wfsyrq
+				,decision_date jdsrq
+				,total_amount yjzje
+				,balance_outstanding qjye
+				,levies_institution zsjg
+				,paid_up sfjq
+				,court_enforcement sfsqfyqzzx
+				,archives_number ajh
+				,executive_judge_name zxfg
+				,special_finish sftsbj
+				,special_finish_reason tsbjyy
+				,create_time ywdjrq
+			from std_swsjkwyh_pop_penalty
+			where dt=(select max(dt) from std_swsjkwyh_pop_penalty)
+			) b
+			on trim(a.guid)=trim(b.guid)
+		)a
+	where  exists (select distinct zjhm from dwd_jbxx_jbdjxx c where c.dt=(select max(dt) from dwd_jbxx_jbdjxx) and a.zjhm=c.zjhm)
+ 

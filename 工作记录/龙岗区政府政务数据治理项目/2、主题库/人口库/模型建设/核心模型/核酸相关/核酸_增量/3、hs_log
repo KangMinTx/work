@@ -1,0 +1,35 @@
+--SparkSQL
+--_********************************************************_
+--author: chenbaokang
+--create time: 2021-10-29 17:11:27
+--所到用的表：
+/*
+1、dm_yq_hsjcjg_incre_zlsj_to_or --'用于全量表的增量插入'
+2、dm_rkk_syrkfyqk_incre_hsxg_zler --'用于提供两个月表的数据插入'
+3、dm_rkk_syrkfyqk_incre_hsxg --'用于全量表的增量插入_关联实有人口'
+4、dm_rkk_syrkfyqk_hsxg_zler -- '用于提供两个月表的数据插入_关联实有人口'
+5、dm_yq_hsjcjg_incre_lsqlb --'核酸结果表_全量'
+6、dm_rkk_syrkfyqk_lsql_bqb --'核酸结果表_与实有人口关联_全量'
+*/
+--描述：记录全流程中，所向外提供出去表的数据，并及时跟踪其数数据变化
+--_********************************************************_
+INSERT into dm_rkk_log
+select 
+'防疫情况_核酸_增量_测试' as RKK_ddid,
+work_step1 as work_step,
+TABLE_name1 as TABLE_name,
+tab_conuts1 as tab_conuts,
+substr(now(),1,19) as yxsj,
+'hs' as v_des
+from (
+select '用于全量表的增量插入' as work_step1 ,'dm_yq_hsjcjg_incre_zlsj_to_or' as TABLE_name1, count(1) as tab_conuts1 from dm_yq_hsjcjg_incre_zlsj_to_or
+union all 
+select '用于提供两个月表的数据插入' as work_step2 ,'dm_rkk_syrkfyqk_incre_hsxg_zler' as TABLE_name2, count(1) as tab_conuts2 from dm_rkk_syrkfyqk_incre_hsxg_zler
+union all 
+select '用于全量表的增量插入_关联实有人口' as work_step3 ,'dm_rkk_syrkfyqk_incre_hsxg' as TABLE_name3, count(1) as tab_conuts3 from dm_rkk_syrkfyqk_incre_hsxg
+union all 
+select '用于提供两个月表的数据插入_关联实有人口' as work_step4 ,'dm_rkk_syrkfyqk_hsxg_zler' as TABLE_name4, count(1) as tab_conuts4 from dm_rkk_syrkfyqk_hsxg_zler
+union all 
+select '核酸结果表_全量' as work_step5 ,'dm_yq_hsjcjg_incre_lsqlb' as TABLE_name5, count(1) as tab_conuts5 from dm_yq_hsjcjg_incre_lsqlb
+union all 
+select '核酸结果表_与实有人口关联_全量' as work_step6 ,'dm_rkk_syrkfyqk_lsql_bqb' as TABLE_name6, count(1) as tab_conuts6 from dm_rkk_syrkfyqk_lsql_bqb ) A

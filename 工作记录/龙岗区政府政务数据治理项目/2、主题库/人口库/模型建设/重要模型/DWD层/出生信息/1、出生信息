@@ -1,0 +1,96 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-19 09:24:37
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS dwd_cs_csxx (
+    csyxzmbh STRING COMMENT '出生医学证明编号',
+    xsexm STRING COMMENT '新生儿姓名',
+    xsexbdm STRING COMMENT '新生儿性别代码',
+    xsexb STRING COMMENT '新生儿性别',
+    sfzjlx STRING COMMENT '身份证件类型',
+    sfzjhm STRING COMMENT '身份证件号码',
+    fqxm STRING COMMENT '父亲姓名',
+    fqsfzjlx STRING COMMENT '父亲身份证件类型',
+    fqsfzjhm STRING COMMENT '父亲身份证件号码',
+    fqgj STRING COMMENT '父亲国籍',
+    fqgjdm STRING COMMENT '父亲国籍代码',
+    fqmz STRING COMMENT '父亲民族',
+    fqmzdm STRING COMMENT '父亲民族代码',
+    mqxm STRING COMMENT '母亲姓名',
+    mqsfzjlx STRING COMMENT '母亲身份证件类型',
+    mqsfzjhm STRING COMMENT '母亲身份证件号码',
+    mqgj STRING COMMENT '母亲国籍',
+    mqgjdm STRING COMMENT '母亲国籍代码',
+    mqmz STRING COMMENT '母亲民族',
+    mqmzdm STRING COMMENT '母亲民族代码',
+    csyxzmqfrq STRING COMMENT '出生医学证明签发日期',
+    csyxzmqfjg STRING COMMENT '出生医学证明签发机构',
+    csdxzqh STRING COMMENT '出生地行政区划',
+    csyz STRING COMMENT '出生孕周',
+    csrq STRING COMMENT '出生日期',
+    cstz STRING COMMENT '出生体重',
+    cssc STRING COMMENT '出生身长',
+    csjkzk STRING COMMENT '出生健康状况',
+    csdd STRING COMMENT '出生地点',
+    fmfs STRING COMMENT '分娩方式',
+    cstc STRING COMMENT '出生胎次',
+    sfgwrs STRING COMMENT '是否高危妊娠',
+    ycfjkzk STRING COMMENT '孕产妇健康状况',
+    sfycsqx STRING COMMENT '是否有出生缺陷',
+    lyb STRING COMMENT '来源表',
+    lyjg STRING COMMENT '来源机构',
+    yxsj TIMESTAMP COMMENT '运行时间'
+)
+COMMENT '出生信息'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/27 21:43:46
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： dwd_cs_csxx(出生信息)
+--#源表    ： std_wj_cszmxx(出生证明信息)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table dwd_cs_csxx partition (dt='${DayBeforeStartTime}')
+select      
+	csyxzmbh as csyxzmbh, -- 出生医学证明编号
+    xsexm as xsexm, -- 新生儿姓名
+	xbdm as xsexbdm, -- 新生儿性别代码
+	xb as xsexb, -- 新生儿性别
+	'' as sfzjlx, -- 身份证件类型
+	'' as sfzjhm, -- 身份证件号码
+    fqxm  as fqxm, -- 父亲姓名
+	fqsfzjlx as fqsfzjlx, -- 父亲身份证件类型
+	fqsfzjhm as fqsfzjhm, -- 父亲身份证件号码
+	fqgj as fqgj, -- 父亲国籍
+	fqgjdm as fqgjdm, -- 父亲国籍代码
+	fqmz as fqmz, -- 父亲民族
+	fqmzdm as fqmzdm, -- 父亲民族代码
+    mqxm as mqxm,  -- 母亲姓名
+	mqsfzjlx as mqsfzjlx, -- 母亲身份证件类型
+	mqsfzjhm as mqsfzjhm, -- 母亲身份证件号码
+	mqgj as mqgj, -- 母亲国籍
+	mqgjdm as mqgjdm, -- 母亲国籍代码
+	mqmz as mqmz, -- 母亲民族
+	mqmzdm as mqmzdm, -- 母亲民族代码
+	csyxzmqfrq as csyxzmqfrq, -- 出生医学证明签发日期
+	csyxzmqfjg as csyxzmqfjg, -- 出生医学证明签发机构
+	csdxzqh as csdxzqh, -- 出生地行政区划
+	csyz as csyz, -- 出生孕周   
+	csrq as csrq, -- 出生日期
+	cstz as cstz, -- 出生体重
+	cssc as cssc, -- 出生身长
+	xsejkzk as csjkzk, -- 出生健康状况
+	csd as csdd, -- 出生地点
+	'' as fmfs, -- 分娩方式
+	'' as cstc, -- 出生胎次
+	'' as sfgwrs, -- 是否高危妊娠
+	'' as ycfjkzk, -- 孕产妇健康状况
+	'' as sfycsqx, -- 是否有出生缺陷
+	"std_wj_cszmxx" as lyb, -- 来源表
+	lyjg as lyjg, -- 来源机构
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj -- 运行时间
+from std_wjw_cszmxx  a join (select max(dt) maxdt from std_wjw_cszmxx) b on a.dt=b.maxdt ;	

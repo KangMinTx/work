@@ -1,0 +1,45 @@
+--SparkSQL
+--_********************************************************_
+--author: 追风
+--create time: 2020-11-22 10:07:44
+--table_name:dwd_sssf_sxbzxr
+--use_tables:std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd (区发展改革局-失信被执行人名单)
+--取数逻辑:直接从std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd 单表获取数据；
+--去重逻辑:无
+--_********************************************************_
+
+
+
+insert overwrite table dwd_sssf_sxbzxr partition (dt='${DayBeforeStartTime}')
+SELECT  
+f000 as key    --uuid
+,ID    --信息唯一标识
+,CARDNUM    --身份证号码／组织机构代码
+,CARDTYPE_name as CARDTYPE   --证件类型
+,INAME as NAME    --被执行人姓名
+,case sex_name 
+   when '男' then '1'
+   when '女' then '2'
+   else sex_name end as SEX_NAME_DM    --性别代码
+,SEX_NAME    --性别
+,CARDNUMBER    --证件号码
+,CASE_CODE    --案号
+,GIST_CID    --执行依据文号
+,DUTY    --法律生效文书确定的义务
+,GIST_UNIT    --作出执行依据单位
+,PERFORMANCE    --被执行人的履行情况
+,DISREPUT_TYPE_NAME    --失信被执行人具体情形
+,substr(PUBLISH_DATE,1,4) || '-' || substr(PUBLISH_DATE,5,2) || '-' || substr(PUBLISH_DATE,7,2)   --发布时间
+,REG_DATE    --立案时间
+,PERFORMED_PART    --已履行部分
+,UNPERFORM_PART    --未履行部分
+,COURT_NAME    --执行法院
+,AREA_ID    --地域ID
+,AREA_NAME    --地域名称
+,'std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd'  as lyb  --来源表
+,'区发展改革局'  as lyjg    --来源机构
+,CURRENT_TIMESTAMP  as yxrq    --运行时间
+from std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd 
+where dt=(select max(dt) from std_qfzggj_dm_lhjc_hhmd_zgfy_sxbzxrmd)
+
+

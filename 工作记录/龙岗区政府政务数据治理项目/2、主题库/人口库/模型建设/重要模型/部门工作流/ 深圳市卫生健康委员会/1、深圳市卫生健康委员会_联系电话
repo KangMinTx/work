@@ -1,0 +1,27 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-19 15:13:33
+--_********************************************************_
+insert overwrite table std_wj_lxdh partition (dt='${DayBeforeStartTime}')
+select      
+	t.identity_type as zjlx, -- 证件类型
+	t.identity_number as zjhm, -- 证件号码
+	t.person_name as xm, -- 姓名
+	t.contact_number as lxdh, -- 联系电话
+	t.create_time as djsj, -- 登记时间
+	"std_swj_pop_person" as lyb, -- 来源表
+	t.lyjg as lyjg -- 来源机构
+from
+(select 
+      identity_type, -- 证件类型
+      identity_number, -- 证件号码
+      person_name, -- 姓名
+      contact_number, -- 联系电话
+      create_time, -- 建卡日期
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(identity_number,''),coalesce(contact_number,'') order by create_time desc) as rn 
+from std_swj_pop_person  a  join (select max(dt) maxdt from std_swj_pop_person ) b on a.dt=b.maxdt
+where  contact_number REGEXP '^((13[0-9])|(14[0-9])|16[0-9]|(15([0-9]))|(17[0-9])|(18[0-9])|(19[0-9]))\\d{8}$' or
+contact_number REGEXP '^(0\\d{2}-\\d{8}(-\\d{1,4})?)|(0\\d{3}-\\d{7,8}(-\\d{1,4})?)$'  )t
+where t.rn <= 1;	

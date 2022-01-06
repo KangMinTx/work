@@ -1,0 +1,21 @@
+CREATE OR REPLACE PROCEDURE LQGSM.P_hs_ym_rk_log AS
+BEGIN
+   
+   INSERT into  hs_ym_rk_log 
+    SELECT '疫苗_今天9点'AS 目的表,to_char(sysdate,'yyyy-mm-dd') AS 运行日期, COUNT(DISTINCT SFZ) AS 总数
+    FROM DM_RKK_YQFMYMBQB WHERE TO_CHAR(YXSJ2,'yyyy-mm-dd') =to_char(sysdate,'yyyy-mm-dd')
+	union all 
+	SELECT '疫苗_昨天'AS 目的表,to_char(sysdate-1,'yyyy-mm-dd') AS 运行日期, COUNT(DISTINCT SFZ) AS 总数
+    FROM DM_RKK_YQFMYMBQB WHERE TO_CHAR(YXSJ2,'yyyy-mm-dd') =to_char(sysdate-1,'yyyy-mm-dd')
+    union all 
+    SELECT '疫苗_全量'AS 目的表,to_char(sysdate,'yyyy-mm-dd') AS 运行日期, COUNT(DISTINCT SFZ) AS 总数
+    FROM DM_RKK_YQFMYMBQB
+	union all 
+	SELECT '核酸结果表'AS 目的表,to_char(sysdate,'yyyy-mm-dd') AS 运行日期, COUNT(1) AS 总数
+    FROM DM_YQ_HSJCJG 
+    union all 
+	 SELECT '核酸结果表_全量'AS 目的表,to_char(sysdate,'yyyy-mm-dd') AS 运行日期, COUNT(1) AS 总数
+    FROM DM_RKK_YQFK_HS
+	union ALL
+	select '永兴元人口表'AS 目的表,to_char(sysdate,'yyyy-mm-dd') AS 运行日期,count(1)AS 总数 FROM DM_RKK_SYRK_TO_YXY;
+END;

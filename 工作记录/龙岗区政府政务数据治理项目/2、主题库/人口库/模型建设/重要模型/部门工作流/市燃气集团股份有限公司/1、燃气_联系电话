@@ -1,0 +1,29 @@
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/27 15:09:45
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_rq_lxdh(燃气_联系电话)
+--#源表    ： std_srq_rqyhxxqyhf100441(燃气用户信息_区域划分)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_rq_lxdh partition (dt = '${DayBeforeStartTime}')
+select      
+	t.zjlx, -- 证件类型
+	t.ZJHM as zjhm, -- 证件号码
+	t.YHXM as xm, -- 姓名
+	t.LXDH as lxdh, -- 联系电话
+	t.GXSJ as djsj, -- 登记时间
+	"std_qjy_qjyjjyrcxxcj" as lyb, -- 来源表
+	t.lyjg as lyjg -- 来源机构
+from
+(select
+      zjlx, -- 证件类型
+      ZJHM, -- 证件号码
+      YHXM, -- 用户姓名
+      LXDH, -- 联系电话
+      GXSJ, -- 更新时间
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(ZJHM,''),coalesce(LXDH,'') order by GXSJ desc) as rn 
+from std_srq_rqyhxxqyhf100441 a join  (select max(dt) maxdt from std_srq_rqyhxxqyhf100441) b on   a.dt=b.maxdt )t
+where t.rn <= 1;	

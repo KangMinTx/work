@@ -1,0 +1,52 @@
+--SparkSQL
+--_********************************************************_
+--作者: TZM
+--创建时间: 2020-12-14 16:01:19.84
+--所属主题:信访人信息
+--内容描述:信访人信息1张表,加工至dwd_sssf_xfrxx(信访人信息)
+--加载策略:全量
+--_********************************************************_
+--truncate table dwd_sssf_xfrxx;
+
+insert overwrite table dwd_sssf_xfrxx partition (dt='${DayBeforeStartTime}')
+select
+	 uuid() uuid		--主键
+	,zjlx	--证件类型
+	,zjhm	--证件号码
+	,xfbh	--信访编号
+	,xm		--姓名
+	,xb		--性别
+	,mz		--民族
+	,zzmm	--政治面貌
+	,nl		--年龄
+	,gddh	--固定电话
+	,sjh	--手机号
+	,dzyj	--电子邮件
+	,txdz	--通讯地址
+	,yzbm	--邮政编码
+	,xfjid  --信访件ID外键
+	,'std_qxfj_visit_users' lyb			--来源表
+	,'区信访局' lyjg		--来源机构
+	,current_timestamp yxsj		--运行时间
+ from (
+	select
+		distinct
+		zjlx_name zjlx	--证件类型
+		,zjhm	--证件号码
+		,xfjbh xfbh	--信访编号
+		,xm		--姓名
+		,xb_name xb		--性别
+		,mz_name mz		--民族
+		,politics_name zzmm	--政治面貌
+		,cast(age as int) nl		--年龄
+		,gddh	--固定电话
+		,sjh	--手机号
+		,dzyj	--电子邮件
+		,txdz	--通讯地址
+		,yzbm	--邮政编码
+		,visit_id xfjid  --信访件ID外键
+	from std_qxfj_visit_users
+	where dt=(select max(dt) from std_qxfj_visit_users)
+ 
+ )
+ 

@@ -1,0 +1,63 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-20 15:07:49
+--table_name : dwd_shhd_sbcb
+--use_tables : std_srlzyhshbzj_sbgrxx110041 (市人力资源和社会保障局_个人基本信息)
+-- 			   std_qzfw_zfw_resident1 (政法委-龙岗人口数据)
+--取数逻辑	  :	SBGRXX110041中以证件号码关联龙岗区政法委“ZFW_RESIDENT1“表，获取龙岗区人口范围清单
+--去重逻辑	  : 根据身份证号 ,以 timeflag 倒序 取最新
+--0201逻辑修改：使用 基本登记信息表 通过 身份证（zjhm） 内链接 std_srlzyhshbzj_sbgrxx110041 (市人力资源和社会保障局_个人基本信息) 的 身份证号码（p_code） 获取 单位编号，
+--				再使用单位编号 左关联 std_srlzyhshbzj_sbgrxx110041 (市人力资源和社会保障局_个人基本信息) 获取其他社保信息
+--_********************************************************_
+ 
+ insert overwrite table dwd_shhd_sbcb partition (dt='${DayBeforeStartTime}')
+ SELECT  
+ 		zjlb --证件类别 
+       ,zjhm --证件号码 
+       ,xm --姓名 
+       ,shbzhm --社会保障号码 
+       ,IC_FLAG --养老参保状态 
+       ,LC_FLAG --工伤参保状态 
+       ,KC_FLAG --医疗参保状态 
+       ,JC_FLAG --失业参保状态 
+       ,MC_FLAG --生育参保状态 
+       ,szdwdm --所在单位编号 
+       ,szdwmc --所在单位编号 
+       ,dwbh --单位编号 
+       ,dwmc --单位名称 
+       ,cbzt --参保状态 
+       ,lyb --来源表 
+       ,lyjg --来源机构 
+       ,yxrq --运行时间
+FROM 
+(
+	SELECT  b2.id_code_name                                                      AS zjlb --证件类别 
+	       ,b2.p_code                                                        AS zjhm --证件号码 
+	       ,b2.name                                                         AS xm --姓名 
+	       ,b2.si_no                                                        AS shbzhm --社会保障号码 
+	       ,b2.ic_flag_name                                                      AS IC_FLAG --养老参保状态 
+	       ,b2.lc_flag_name                                                      AS LC_FLAG --工伤参保状态 
+	       ,b2.kc_flag_name                                                      AS KC_FLAG --医疗参保状态 
+	       ,b2.jc_flag_name                                                      AS JC_FLAG --失业参保状态 
+	       ,b2.mc_flag_name                                                      AS MC_FLAG --生育参保状态 
+	       ,b2.unit_org_code                                                AS szdwdm --所在单位编号 
+	       ,b2.unit_name                                                    AS szdwmc --所在单位编号 
+	       ,b2.unit_sno                                                     AS dwbh --单位编号 
+	       ,b2.si_unit_name                                                 AS dwmc --单位名称 
+	       ,b2.si_flag_name                                                      AS cbzt --参保状态 
+	       ,'std_srlzyhshbzj_sbgrxx110041'                                  AS lyb --来源表 
+	       ,b2.lyjg                                                         AS lyjg --来源机构 
+	       ,CURRENT_TIMESTAMP                                               AS yxrq --运行时间 
+	       ,row_number() over(partition by p_code,b2.unit_sno  ORDER BY b2.timeflag desc) AS rn
+	FROM(select distinct t2.UNIT_SNO  as UNIT_SNO
+from 
+(select distinct zjhm from dwd_jbxx_jbdjxx where dt=(select max(dt) from dwd_jbxx_jbdjxx) and zjhm is not null) t1
+inner join 
+(select distinct p_code,si_no,unit_sno from std_srlzyhshbzj_sbgrxx110041 where dt=(select max(dt) from std_srlzyhshbzj_sbgrxx110041) and p_code is not null) t2
+on t1.zjhm=t2.p_code) b1
+left join 
+(select * from std_srlzyhshbzj_sbgrxx110041 where dt=(select max(dt) from std_srlzyhshbzj_sbgrxx110041) and p_code is not null) b2
+on b1.UNIT_SNO=b2.UNIT_SNO
+)
+WHERE rn=1 

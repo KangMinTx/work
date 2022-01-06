@@ -1,0 +1,143 @@
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/28 15:13:49
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_wj_jhsyzm(计划生育证明)
+--#源表    ： std_swj_szsjhsyzm_11_0829170526(深圳市计划生育证明)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_wjw_jhsyzm partition (dt='${DayBeforeStartTime}')
+select      
+	 t.zmlsh, -- 证明流水号
+	 t.jszh, -- 计生证号
+	 "", -- 证件类型
+	 t.zjhm, -- 证件号码
+     if(t.xm rlike '^[\u4E00-\u9FA5]+$',regexp_replace(NVL(t.xm,''),'[\\s]+|[\\u3000]+|[\,]',''),t.xm) as xm, -- 姓名
+	 t.jsqk, -- 计生情况
+	 t.zns, -- 子女数
+	 t.znqk, -- 子女情况
+	 t.wfjhsyzc, -- 违反计划生育政策
+	 t.jsclrq, -- 接受处理日期
+	 t.blyt, -- 办理用途
+	 t.jbr, -- 经办人
+	 t.lxdh, -- 联系电话
+	 t.jbdw, -- 经办单位
+	 t.blrq, -- 办理日期
+	 t.zt, -- 状态
+	 t.zfrq, -- 作废日期
+	 t.zfyy, -- 作废原因
+	 t.zfr, -- 作废人
+	 t.zmtt, -- 证明抬头
+	 t.qtxysmqk, -- 其他需要说明情况
+	 t.lyb, -- 来源表
+	 t.lyjg, -- 来源机构
+	 from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') -- 运行时间
+from 
+	(
+	select      
+		tt.zmlsh, -- 证明流水号
+		tt.jszh, -- 计生证号
+		tt.zjhm, -- 证件号码
+		tt.xm, -- 姓名
+		tt.jsqk, -- 计生情况
+		tt.zns, -- 子女数
+		tt.znqk, -- 子女情况
+		tt.wfjhsyzc, -- 违反计划生育政策
+		tt.jsclrq, -- 接受处理日期
+		tt.blyt, -- 办理用途
+		tt.jbr, -- 经办人
+		tt.lxdh, -- 联系电话
+		tt.jbdw, -- 经办单位
+		tt.blrq, -- 办理日期
+		tt.zt, -- 状态
+		tt.zfrq, -- 作废日期
+		tt.zfyy, -- 作废原因
+		tt.zfr, -- 作废人
+		tt.zmtt, -- 证明抬头
+		tt.qtxysmqk, -- 其他需要说明情况
+		tt.lyb, -- 来源表
+		tt.lyjg, -- 来源机构
+		tt.yxsj, -- 运行时间
+		row_number() over (partition by coalesce(tt.zjhm,'') order by tt.blrq desc ) as rn
+	from 
+		(
+		select 
+			cert_seq as zmlsh, -- 证明流水号	
+			jszh as jszh, -- 计生证号
+			bblrcode as zjhm, -- 被办理人身份证
+			bblr as xm, -- 被办理人
+			jsqk as jsqk, -- 计生情况
+			zns as zns, -- 子女数
+			znqk as znqk, -- 子女情况
+			wfjhsyzc as wfjhsyzc, -- 违反计划生育政策
+			jsclrq as jsclrq, -- 接受处理日期
+			blyt as blyt, -- 办理用途
+			jbr as jbr, -- 经办人
+			jbrdh as lxdh, -- 联系电话
+			jbdw as jbdw, -- 经办单位
+			blrq as blrq, -- 办理日期
+			status as zt, -- 状态
+			zfrq as zfrq, -- 作废日期
+			zfyy as zfyy, -- 作废原因
+			zfr as zfr, -- 作废人
+			zmtt as zmtt, -- 证明抬头
+			qtsmqk as qtxysmqk, -- 其他需要说明情况
+			"std_swj_szsjhsyzm_11_0829170526" as lyb, -- 
+			lyjg as lyjg, -- 来源机构
+			'' as yxsj -- 
+		from std_swj_szsjhsyzm_11_0829170526 a JOIN (select max(dt) maxdt from std_swj_szsjhsyzm_11_0829170526) b on a.dt=b.maxdt
+		union all
+		select 
+			cert_seq as zmlsh, -- 证明流水号	
+			jszh as jszh, -- 计生证号
+			wcode as zjhm, -- 女方证件号码
+			bblr as xm, -- 被办理人
+			jsqk as jsqk, -- 计生情况
+			zns as zns, -- 子女数
+			znqk as znqk, -- 子女情况
+			wfjhsyzc as wfjhsyzc, -- 违反计划生育政策
+			jsclrq as jsclrq, -- 接受处理日期
+			blyt as blyt, -- 办理用途
+			jbr as jbr, -- 经办人
+			jbrdh as lxdh, -- 联系电话
+			jbdw as jbdw, -- 经办单位
+			blrq as blrq, -- 办理日期
+			status as zt, -- 状态
+			zfrq as zfrq, -- 作废日期
+			zfyy as zfyy, -- 作废原因
+			zfr as zfr, -- 作废人
+			zmtt as zmtt, -- 证明抬头
+			qtsmqk as qtxysmqk, -- 其他需要说明情况
+			"std_swj_szsjhsyzm_11_0829170526" as lyb, -- 
+			lyjg as lyjg, -- 来源机构
+			'' as yxsj -- 
+		from std_swj_szsjhsyzm_11_0829170526  a JOIN (select max(dt) maxdt from std_swj_szsjhsyzm_11_0829170526) b on a.dt=b.maxdt
+		union all
+		select 
+			cert_seq as zmlsh, -- 证明流水号	
+			jszh as jszh, -- 计生证号
+			mcode as zjhm, -- 男方证件号码
+			bblr as xm, -- 被办理人
+			jsqk as jsqk, -- 计生情况
+			zns as zns, -- 子女数
+			znqk as znqk, -- 子女情况
+			wfjhsyzc as wfjhsyzc, -- 违反计划生育政策
+			jsclrq as jsclrq, -- 接受处理日期
+			blyt as blyt, -- 办理用途
+			jbr as jbr, -- 经办人
+			jbrdh as lxdh, -- 联系电话
+			jbdw as jbdw, -- 经办单位
+			blrq as blrq, -- 办理日期
+			status as zt, -- 状态
+			zfrq as zfrq, -- 作废日期
+			zfyy as zfyy, -- 作废原因
+			zfr as zfr, -- 作废人
+			zmtt as zmtt, -- 证明抬头
+			qtsmqk as qtxysmqk, -- 其他需要说明情况
+			"std_swj_szsjhsyzm_11_0829170526"as lyb, -- 
+			lyjg as lyjg, -- 来源机构
+			'' as yxsj -- 
+		from std_swj_szsjhsyzm_11_0829170526 
+ ) tt ) t where t.rn=1;
+ 

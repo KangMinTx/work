@@ -1,0 +1,28 @@
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/27 15:09:45
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_zg_lxdh(租管_联系电话)
+--#源表    ： std_czg_cjxtsjxxcjb104035(采集系统_事件信息采集表)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_zg_lxdh partition (dt='${dt}')
+select      
+	"中华人民共和国居民身份证" as zjlx, -- 证件类型
+	t.pda_cardno as zjhm, -- 证件号码
+	t.pda_user as xm, -- 姓名
+	t.pda_phone as lxdh, -- 联系电话
+	t.updatetimes as djsj, -- 登记时间
+	"std_czg_cjxtsjxxcjb104040" as lyb, -- 来源表
+	t.lyjg as lyjg -- 来源机构
+from
+(select 
+      pda_cardno, -- 采集员证件号码
+      pda_user, -- 采集员
+      pda_phone, -- 采集员电话
+      updatetimes, -- 修改时间
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(pda_cardno,''),coalesce(pda_phone,'') order by updatetimes desc) as rn 
+from std_czg_cjxtsjxxcjb104035 a join 	(select max(dt) maxdt from std_czg_cjxtsjxxcjb104035 ) b on a.dt=b.maxdt)t
+where t.rn <= 1;	

@@ -1,0 +1,352 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-20 12:05:14
+--table_name : dwd_shhd_byjyxx (毕业就业信息)
+--use_tables : std_qfzggj_t_busi_jsj_admtecpri	区发展改革局_建筑企业行政技术负责人信息
+--			   std_qjyj_qjyjjyrcxxcj	区教育局_教育人才信息采集
+--			   std_qjyj_qjyjlgqgbxxxcqk	区教育局_龙岗区公办学校校长情况
+--			   std_qjyj_qjyjjyjsxx	区教育局_教育教师信息
+--			   std_qrlzyj_qrlzyjgxyjbysjybt	区人力资源局_高校应届毕业生就业补贴
+--			   std_qrlzyj_qrlzyjlxwjybyslsxshbt	区人力资源局_离校未就业毕业生临时性生活补贴
+--			   std_qrlzyj_qrlzyjlgqzzrcyjxx	区人力资源局_龙岗区在职人才引进信息
+--			   std_qzfjsj_uf_bzf_rencxx	区住房建设局_个人信息
+--			   std_qyjglj_ajj_resexpert	区应急管理局_专家
+--取数逻辑:取出对应字段信息
+--去重逻辑:根据身份证号 取 更新时间最大的那条
+--_********************************************************_
+insert overwrite table dwd_shhd_byjyxx partition (dt='${DayBeforeStartTime}') 
+select 
+zjlb           ,--证件类别
+zjhm           ,--证件号码
+xm           ,--姓名
+bdzbh           ,--报到证编号
+xxbzm           ,--学校标识码
+xxmc           ,--学校名称
+xz           ,--学制
+sxzy           ,--所学专业
+rxny           ,--入学年月
+jybz           ,--就业标志（0未就业；1已就业；-1未知）
+xlmc           ,--学历名称
+xlzsh           ,--学历证书号
+byrq           ,--毕业日期
+bylx           ,--毕业类型
+byzhm           ,--毕业证号码
+dxbyscc           ,--大学毕业生层次
+ksh           ,--考生号
+xxlylx           ,--信息来源类型
+lyb           ,--来源表
+lyjg           ,--来源机构
+yxsj           --运行时间
+from(
+select 
+zjlb           ,--证件类别
+zjhm           ,--证件号码
+xm           ,--姓名
+bdzbh           ,--报到证编号
+xxbzm           ,--学校标识码
+xxmc           ,--学校名称
+xz           ,--学制
+sxzy           ,--所学专业
+rxny           ,--入学年月
+jybz           ,--就业标志（0未就业；1已就业；-1未知）
+xlmc           ,--学历名称
+xlzsh           ,--学历证书号
+byrq           ,--毕业日期
+bylx           ,--毕业类型
+byzhm           ,--毕业证号码
+dxbyscc           ,--大学毕业生层次
+ksh           ,--考生号
+xxlylx           ,--信息来源类型
+lyb           ,--来源表
+lyjg           ,--来源机构
+yxsj           ,--运行时间
+row_number() over(partition by concat_ws('',zjhm,xm,bdzbh,xxmc,xlmc) order by concat_ws('',zjhm,xm,bdzbh,xxmc,xlmc) desc) rn
+from(
+
+/*
+来源01
+std_qfzggj_t_busi_jsj_admtecpri 区发展改革局_建筑企业行政技术负责人信息 
+当前源表没数据*/
+SELECT  '身份证'                             AS zjlb --证件类别 
+       ,upper(idcn)                              AS zjhm --证件号码 
+       ,upper(name)                              AS xm --姓名 
+       ,null                              AS bdzbh --报到证编号 
+       ,null                              AS xxbzm --学校标识码 
+       ,upper(graschool)                         AS xxmc --学校名称 
+       ,null                              AS xz --学制 
+       ,specialty                         AS sxzy --所学专业 
+       ,null                              AS rxny --入学年月 
+       ,"已就业"                               AS jybz --就业标志（0未就业；1已就业；-1未知） 
+       ,null                              AS xlmc --学历名称 
+       ,null                              AS xlzsh --学历证书号 
+       ,null                              AS byrq --毕业日期 
+       ,null                              AS bylx --毕业类型 
+       ,null                              AS byzhm --毕业证号码 
+       ,null                              AS dxbyscc --大学毕业生层次 
+       ,null                              AS ksh --考生号 
+       ,'权威'                              AS xxlylx --信息来源类型 
+       ,'std_qfzggj_t_busi_jsj_admtecpri' AS lyb --来源表 
+       ,lyjg                              AS lyjg --来源机构 
+       ,current_timestamp                 AS yxsj --运行时间
+FROM 
+(select *,row_number() over(partition by upper(idcn) order by udate desc) rn from std_qfzggj_t_busi_jsj_admtecpri
+WHERE dt=(SELECT MAX(dt) FROM std_qfzggj_t_busi_jsj_admtecpri) 
+) where rn=1
+
+union ALL
+/*
+来源02
+std_qjyj_qjyjjyrcxxcj
+区教育局_教育人才信息采集
+*/
+SELECT  '身份证'                   AS zjlb --证件类别 
+       ,upper(sfzh)                    AS zjhm --证件号码 
+       ,upper(xm)                      AS xm --姓名 
+       ,null                    AS bdzbh --报到证编号 
+       ,null                    AS xxbzm --学校标识码 
+       ,upper(byyx)                    AS xxmc --学校名称 
+       ,null                    AS xz --学制 
+       ,sxzy                    AS sxzy --所学专业 
+       ,null                    AS rxny --入学年月 
+       ,"已就业"                     AS jybz --就业标志（0未就业；1已就业；-1未知） 
+       ,upper(xl)                      AS xlmc --学历名称 
+       ,null                    AS xlzsh --学历证书号 
+       ,null                    AS byrq --毕业日期 
+       ,null                    AS bylx --毕业类型 
+       ,null                    AS byzhm --毕业证号码 
+       ,null                    AS dxbyscc --大学毕业生层次 
+       ,null                    AS ksh --考生号 
+       ,'权威'                    AS xxlylx --信息来源类型 
+       ,'std_qjyj_qjyjjyrcxxcj' AS lyb --来源表 
+       ,lyjg                    AS lyjg --来源机构 
+       ,current_timestamp       AS yxsj --运行时间
+FROM (select *,row_number() over(partition by upper(sfzh) order by u_insert_time desc) rn from std_qjyj_qjyjjyrcxxcj 
+where dt=(select max(dt) from std_qjyj_qjyjjyrcxxcj))
+where rn=1
+
+union all
+/*
+来源03
+std_qjyj_qjyjlgqgbxxxcqk	
+区教育局_龙岗区公办学校校长情况
+*/
+SELECT  '身份证'                      AS zjlb --证件类别 
+       ,null                       AS zjhm --证件号码 
+       ,upper(xm)                         AS xm --姓名 
+       ,null                       AS bdzbh --报到证编号 
+       ,null                       AS xxbzm --学校标识码 
+       ,upper(xx)                         AS xxmc --学校名称 
+       ,xz                         AS xz --学制 
+       ,null                       AS sxzy --所学专业 
+       ,null                       AS rxny --入学年月 
+       ,"已就业"                        AS jybz --就业标志（0未就业；1已就业；-1未知） 
+       ,upper(xl)                         AS xlmc --学历名称 
+       ,null                       AS xlzsh --学历证书号 
+       ,null                       AS byrq --毕业日期 
+       ,null                       AS bylx --毕业类型 
+       ,null                       AS byzhm --毕业证号码 
+       ,null                       AS dxbyscc --大学毕业生层次 
+       ,null                       AS ksh --考生号 
+       ,'权威'                       AS xxlylx --信息来源类型 
+       ,'std_qjyj_qjyjlgqgbxxxcqk' AS lyb --来源表 
+       ,lyjg                       AS lyjg --来源机构 
+       ,current_timestamp          AS yxsj --运行时间
+FROM (select * from std_qjyj_qjyjlgqgbxxxcqk 
+where dt=(select max(dt) from std_qjyj_qjyjlgqgbxxxcqk))
+
+union all
+/*
+来源04
+std_qjyj_qjyjjyjsxx
+区教育局_教育教师信息
+*/
+SELECT  '身份证'                 AS zjlb --证件类别 
+       ,upper(sfzhm)                 AS zjhm --证件号码 
+       ,upper(xm)                    AS xm --姓名 
+       ,null                  AS bdzbh --报到证编号 
+       ,null                  AS xxbzm --学校标识码 
+       ,null                  AS xxmc --学校名称 
+       ,null                  AS xz --学制 
+       ,null                  AS sxzy --所学专业 
+       ,null                  AS rxny --入学年月 
+       ,"已就业"                   AS jybz --就业标志（0未就业；1已就业；-1未知） 
+       ,upper(xl)                    AS xlmc --学历名称 
+       ,null                  AS xlzsh --学历证书号 
+       ,null                  AS byrq --毕业日期 
+       ,null                  AS bylx --毕业类型 
+       ,null                  AS byzhm --毕业证号码 
+       ,null                  AS dxbyscc --大学毕业生层次 
+       ,null                  AS ksh --考生号 
+       ,'权威'                  AS xxlylx --信息来源类型 
+       ,'std_qjyj_qjyjjyjsxx' AS lyb --来源表 
+       ,lyjg                  AS lyjg --来源机构 
+       ,current_timestamp     AS yxsj --运行时间
+FROM (select *,row_number() over(partition by upper(sfzhm) order by u_insert_time desc) rn from std_qjyj_qjyjjyjsxx
+where dt=(select max(dt) from std_qjyj_qjyjjyjsxx))
+where rn=1
+
+union all
+/*
+来源05
+std_qrlzyj_qrlzyjgxyjbysjybt
+区人力资源局_高校应届毕业生就业补贴
+*/
+SELECT  '身份证'                          AS zjlb --证件类别 
+       ,upper(sfzh)                           AS zjhm --证件号码 
+       ,upper(dwmc)                           AS xm --姓名 
+       ,null                           AS bdzbh --报到证编号 
+       ,null                           AS xxbzm --学校标识码 
+       ,null                           AS xxmc --学校名称 
+       ,null                           AS xz --学制 
+       ,null                           AS sxzy --所学专业 
+       ,null                           AS rxny --入学年月 
+       ,"已就业"                           AS jybz --就业标志（0未就业；1已就业；-1未知） 
+       ,null                           AS xlmc --学历名称 
+       ,null                           AS xlzsh --学历证书号 
+       ,null                           AS byrq --毕业日期 
+       ,null                           AS bylx --毕业类型 
+       ,null                           AS byzhm --毕业证号码 
+       ,null                           AS dxbyscc --大学毕业生层次 
+       ,null                           AS ksh --考生号 
+       ,'补充'                           AS xxlylx --信息来源类型 
+       ,'std_qrlzyj_qrlzyjgxyjbysjybt' AS lyb --来源表 
+       ,lyjg                           AS lyjg --来源机构 
+       ,current_timestamp              AS yxsj --运行时间
+FROM (select *,row_number() over(partition by upper(sfzh)  order by u_insert_time) rn from std_qrlzyj_qrlzyjgxyjbysjybt
+where dt=(select max(dt) from std_qrlzyj_qrlzyjgxyjbysjybt))
+where rn=1
+
+union 
+/*
+来源06
+std_qrlzyj_qrlzyjlxwjybyslsxshbt
+区人力资源局_离校未就业毕业生临时性生活补贴
+*/
+select 
+'身份证' as zjlb --证件类别
+,upper(sfzh) as zjhm --证件号码
+,null as xm --姓名
+,null as bdzbh --报到证编号
+,null as xxbzm --学校标识码
+,null as xxmc --学校名称
+,null as xz --学制
+,null as sxzy --所学专业
+,null as rxny --入学年月
+,"未就业" as jybz --就业标志（0未就业；1已就业；-1未知）
+,null as xlmc --学历名称
+,null as xlzsh --学历证书号
+,null as byrq --毕业日期
+,null as bylx --毕业类型
+,null as byzhm --毕业证号码
+,null as dxbyscc --大学毕业生层次
+,null as ksh --考生号
+,'补充' as xxlylx --信息来源类型
+,'std_qrlzyj_qrlzyjlxwjybyslsxshbt' as lyb --来源表
+,lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from (select *,row_number() over(partition by upper(sfzh) order by u_insert_time desc) rn from std_qrlzyj_qrlzyjlxwjybyslsxshbt
+where dt=(select max(dt) from std_qrlzyj_qrlzyjlxwjybyslsxshbt))
+where rn=1
+
+union ALL
+/*
+来源07
+std_qrlzyj_qrlzyjlgqzzrcyjxx
+区人力资源局_龙岗区在职人才引进信息
+*/
+select 
+'身份证' as zjlb --证件类别
+,upper(sfzhm) as zjhm --证件号码
+,upper(name) as xm --姓名
+,null as bdzbh --报到证编号
+,null as xxbzm --学校标识码
+,upper(byyx) as xxmc --学校名称
+,major as xz --学制
+,null as sxzy --所学专业
+,null as rxny --入学年月
+,"已就业"  as jybz --就业标志（0未就业；1已就业；-1未知）
+,upper(xllb) as xlmc --学历名称
+,null as xlzsh --学历证书号
+,null as byrq --毕业日期
+,null as bylx --毕业类型
+,null as byzhm --毕业证号码
+,null as dxbyscc --大学毕业生层次
+,null as ksh --考生号
+,'补充' as xxlylx --信息来源类型
+,'std_qrlzyj_qrlzyjlgqzzrcyjxx' as lyb --来源表
+,lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from (select *,row_number() over(partition by upper(sfzhm) order by u_insert_time desc ) rn from std_qrlzyj_qrlzyjlgqzzrcyjxx
+where dt=(select max(dt) from std_qrlzyj_qrlzyjlgqzzrcyjxx))
+where rn=1
+
+
+union all
+
+select 
+/*
+来源08
+std_qzfjsj_uf_bzf_rencxx
+区住房建设局_个人信息
+*/
+case when length(zhengjh)=18 then '身份证' else '其他' end as zjlb --证件类别
+,upper(zhengjh) as zjhm --证件号码
+,upper(xingm) as xm --姓名
+,null as bdzbh --报到证编号
+,null as xxbzm --学校标识码
+,upper(biyyxjzy) as xxmc --学校名称
+,null as xz --学制
+,null as sxzy --所学专业
+,null as rxny --入学年月
+,"已就业"  as jybz --就业标志（0未就业；1已就业；-1未知）
+,upper(xuel) as xlmc --学历名称
+,null as xlzsh --学历证书号
+,null as byrq --毕业日期
+,null as bylx --毕业类型
+,null as byzhm --毕业证号码
+,null as dxbyscc --大学毕业生层次
+,null as ksh --考生号
+,'补充' as xxlylx --信息来源类型
+,'std_qzfjsj_uf_bzf_rencxx' as lyb --来源表
+,lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from (select *,row_number() over(partition by upper(zhengjh) order by timeflag desc) rn from std_qzfjsj_uf_bzf_rencxx
+where dt=(select max(dt) from std_qzfjsj_uf_bzf_rencxx))
+where rn=1
+
+
+union ALL
+/*
+来源08
+std_qyjglj_ajj_resexpert
+区应急管理局_专家
+*/
+select
+'身份证' as zjlb --证件类别
+,upper(idcard) as zjhm --证件号码
+,upper(name) as xm --姓名
+,null as bdzbh --报到证编号
+,null as xxbzm --学校标识码
+,upper(graduateschool) as xxmc --学校名称
+,graduateprofessional as xz --学制
+,null as sxzy --所学专业
+,null as rxny --入学年月
+,"已就业"  as jybz --就业标志（0未就业；1已就业；-1未知）
+,upper(degree) as xlmc --学历名称
+,null as xlzsh --学历证书号
+,null as byrq --毕业日期
+,null as bylx --毕业类型
+,null as byzhm --毕业证号码
+,null as dxbyscc --大学毕业生层次
+,null as ksh --考生号
+,'权威' as xxlylx --信息来源类型
+,'std_qyjglj_ajj_resexpert' as lyb --来源表
+,lyjg as lyjg --来源机构
+,current_timestamp as yxsj --运行时间
+from (select *,row_number() over(partition by upper(idcard) order by createtime desc) rn from std_qyjglj_ajj_resexpert
+where dt=(select max(dt) from std_qyjglj_ajj_resexpert))
+where rn=1
+
+)
+)

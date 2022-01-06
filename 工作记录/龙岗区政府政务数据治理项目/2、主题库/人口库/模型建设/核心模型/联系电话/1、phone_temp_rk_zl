@@ -1,0 +1,645 @@
+--SparkSQL
+--_********************************************************_
+--author: lizheng
+--create time: 2021-10-21 15:19:55
+--_********************************************************_
+--drop table ods_sdz_sbxxb109361_dh_test;
+--drop table ods_sdz_sbxxb109361_dh_temp;
+--create table ods_sdz_sbxxb109361_dh_temp as select from ods_sdz_sbxxb109361_dh where dt=20211020;
+--create table ods_sdz_sbxxb109361_dh_test like ods_sdz_sbxxb109361_dh_temp;
+insert overwrite table ods_sdz_sbxxb109361_dh_test
+select
+*
+from(select 
+    app_id
+,openid
+,username
+,phone
+,gender
+,birthday
+,identity_type
+,identity
+,city
+,city_code
+,area
+,areacode
+,street
+,street_code
+,community
+,community_code
+,address
+,symptom
+,living_type
+,create_time
+,if_help
+,cjlx
+,temperature
+,hospital_check
+,symptom_dscr
+,person_type
+,quarantine_check
+,social_credit_id
+,id
+,company
+,current_location
+,current_location_code
+,version
+,code
+,village
+,spare_d
+,spare_e
+,spare_f
+,spare_g
+,spare_h
+,data_from
+,ins
+,seq
+,updatestatus
+,updatetime
+,timeflag
+,new_data
+,identity1
+,community1
+,community_code1
+,street1
+,address1
+,grid_name1
+,username1
+,house_code1
+,build_code1
+,address2
+     from  ods_sdz_sbxxb109361_dh_temp)
+union all
+(select 
+app_id
+,openid
+,username
+,phone
+,gender
+,birthday
+,identity_type
+,identity
+,city
+,city_code
+,area
+,areacode
+,street
+,street_code
+,community
+,community_code
+,address
+,symptom
+,living_type
+,create_time
+,if_help
+,cjlx
+,temperature
+,hospital_check
+,symptom_dscr
+,person_type
+,quarantine_check
+,social_credit_id
+,id
+,company
+,current_location
+,current_location_code
+,version
+,code
+,village
+,spare_d
+,spare_e
+,spare_f
+,spare_g
+,spare_h
+,data_from
+,ins
+,seq
+,updatestatus
+,updatetime
+,timeflag
+,new_data
+,identity1
+,community1
+,community_code1
+,street1
+,address1
+,grid_name1
+,username1
+,house_code1
+,build_code1
+,address2
+ from ods_sdz_sbxxb109361_dh_zl where dt=(select max(dt) from ods_sdz_sbxxb109361_dh_zl));
+ 
+ 
+ insert overwrite table ods_sdz_sbxxb109361_dh_temp select * from ods_sdz_sbxxb109361_dh_test;
+ 
+ 
+-- insert overwrite ods_tpr_record_new107706_temp as select from ods_tpr_record_new107706 where dt=20211020;
+
+ --create table ods_tpr_record_new107706_test like ods_tpr_record_new107706_temp;
+
+ insert overwrite table ods_tpr_record_new107706_test
+ select 
+ *
+ from(select 
+      id_
+,cid
+,name_
+,phone_
+,check_result
+,checker_cid
+,checker_name
+,province
+,city
+,area
+,street
+,address
+,longitude
+,latitude
+,organizationcode
+,create_time
+,report_type
+,certified
+,group_cid
+,edu_organizationcode
+,edu_actiontype
+,channel
+,edu_remark
+,org_name
+,point_id
+,ymt_uid
+,plate_number
+,ins
+,seq
+,updatestatus
+,updatetime
+,timeflag
+,timeflag2
+      from ods_tpr_record_new107706_temp)
+ union all
+ (select 
+  id_
+,cid
+,name_
+,phone_
+,check_result
+,checker_cid
+,checker_name
+,province
+,city
+,area
+,street
+,address
+,longitude
+,latitude
+,organizationcode
+,create_time
+,report_type
+,certified
+,group_cid
+,edu_organizationcode
+,edu_actiontype
+,channel
+,edu_remark
+,org_name
+,point_id
+,ymt_uid
+,plate_number
+,ins
+,seq
+,updatestatus
+,updatetime
+,timeflag
+,timeflag2
+  from ods_tpr_record_new107706_zl where dt=(select max(dt) from ods_tpr_record_new107706_zl));
+  
+insert overwrite table ods_tpr_record_new107706_temp select * from ods_tpr_record_new107706_test;
+
+--insert overwrite e ods_qzfw_zfw_resident1_2_temp as select   from ods_qzfw_zfw_resident1_2 where dt=20211020;
+
+ --create table ods_qzfw_zfw_resident1_2_test like ods_qzfw_zfw_resident1_2_temp;
+
+ insert overwrite table ods_qzfw_zfw_resident1_2_test
+ select 
+id
+,nationality
+,name
+,alias
+,cardtypeid
+,cardno
+,effectivedate
+,issuingorgan
+,sex
+,nationid
+,nativeplace
+,registertype
+,marryid
+,registeraddtypeid
+,edulevelid
+,politicsid
+,registeraddress
+,beliefid
+,photo
+,managetype
+,tradeid
+,jobid
+,techtitleid
+,bidefashion
+,domiciletype
+,company
+,companyaddress
+,companytel
+,cpolicestation
+,tel
+,mtel
+,email
+,intime1
+,addtime
+,registrar
+,remarks
+,creator
+,createtime
+,updatetime
+,updater
+,isvalid
+,leasereasonid
+,degree
+,bloodtypeid
+,escuageid
+,finishschool
+,refisteraddresspre
+,registerplace
+,speciality
+,leaserelationid
+,health
+,homeaddress
+,areaid
+,houseid
+,diedate
+,marrydate
+,rapostalcode
+,resideinaddress
+,resideinpostalcode
+,singlekid
+,residenttype
+,height2
+,salary2
+,birthday
+,updatelivecode
+,homeaddressnew
+,housecode
+,islogout
+,istransact
+,transacttime
+,transactor
+,isrewriteaddress
+,rewritetime
+,rewriteperson
+,temp_areaid
+,temp_id
+,temp_mingzu
+,letdutybook
+,dutyname
+,logoutor
+,logouttime
+,temp_photo
+,isinhabitation
+,isaddressnot
+,islessee
+,leavedate
+,checkindate
+,procreatedynamic
+,contraceptive
+,cardholders
+,voucher
+,vouchercodenum
+,voucherphone
+,outreason
+,newareaid
+,cardno2
+,update_key
+,isstat
+,ishouseout
+,qhareaid
+,temp_hosueid
+,temp_fanghao
+,tmep_fh
+,temp_edit
+,temp_delete
+,height
+,salary
+,rksbid
+,iscard
+,registeraddressdetail
+,populationid
+,cloudappid
+,inserttime
+,data_sources
+,gat_remark
+,timeflag
+,flagfield
+,history_id
+,lyjg
+,load_time
+ from ods_qzfw_zfw_resident1_2_temp a where not exists(
+select 1 from ods_zfw_resident1_logback0709_2_dhzl b where a.id=b.id 
+ )
+ union all (select 
+ id
+,nationality
+,name
+,alias
+,cardtypeid
+,cardno
+,effectivedate
+,issuingorgan
+,sex
+,nationid
+,nativeplace
+,registertype
+,marryid
+,registeraddtypeid
+,edulevelid
+,politicsid
+,registeraddress
+,beliefid
+,photo
+,managetype
+,tradeid
+,jobid
+,techtitleid
+,bidefashion
+,domiciletype
+,company
+,companyaddress
+,companytel
+,cpolicestation
+,tel
+,mtel
+,email
+,intime1
+,addtime
+,registrar
+,remarks
+,creator
+,createtime
+,updatetime
+,updater
+,isvalid
+,leasereasonid
+,degree
+,bloodtypeid
+,escuageid
+,finishschool
+,refisteraddresspre
+,registerplace
+,speciality
+,leaserelationid
+,health
+,homeaddress
+,areaid
+,houseid
+,diedate
+,marrydate
+,rapostalcode
+,resideinaddress
+,resideinpostalcode
+,singlekid
+,residenttype
+,height2
+,salary2
+,birthday
+,updatelivecode
+,homeaddressnew
+,housecode
+,islogout
+,istransact
+,transacttime
+,transactor
+,isrewriteaddress
+,rewritetime
+,rewriteperson
+,temp_areaid
+,temp_id
+,temp_mingzu
+,letdutybook
+,dutyname
+,logoutor
+,logouttime
+,temp_photo
+,isinhabitation
+,isaddressnot
+,islessee
+,leavedate
+,checkindate
+,procreatedynamic
+,contraceptive
+,cardholders
+,voucher
+,vouchercodenum
+,voucherphone
+,outreason
+,newareaid
+,cardno2
+,update_key
+,isstat
+,ishouseout
+,qhareaid
+,temp_hosueid
+,temp_fanghao
+,tmep_fh
+,temp_edit
+,temp_delete
+,height
+,salary
+,rksbid
+,iscard
+,registeraddressdetail
+,populationid
+,cloudappid
+,inserttime
+,data_sources
+,gat_remark
+,timeflag
+,flagfield
+,history_id
+,lyjg
+,load_time
+ from ods_zfw_resident1_logback0709_2_dhzl where flagfield!='deleted');
+ 
+ insert overwrite table ods_zfw_resident1_logback0709_2_temp select * from ods_qzfw_zfw_resident1_2_test;
+ 
+ 
+
+
+--电话表增量制作
+drop table if exists phone_temp_rk_0813_temp_1;
+create table phone_temp_rk_0813_temp_1 as
+select
+phone,
+cardno,
+byzd3,
+updatetime,
+xh
+from (
+select
+phone,
+cardno,
+byzd3,
+updatetime,
+xh,
+row_number()over(partition by cardno order by updatetime desc,xh asc) rn
+from(
+
+
+
+select
+phone
+,cardno
+,byzd3
+,updatetime
+,xh
+,row_number()over(partition by cardno,phone order by updatetime desc) rn
+from(
+select
+		regexp_extract(LXSJ,'(134|135|136|137|138|139|147|150|151|152|157|158|159|172|178|182|183|184|187|188|195|197|198|130|131|132|145|155|156|166|175|176|185|186|196|133|149|153|180|181|189|173|177|190|191|193|199|192|167|170|171|162|165)([0-9]{8})',0) phone
+		,if(regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{18}',0)<>'',regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{18}',0)
+          ,if(regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{15}',0)<>'',regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{15}',0)
+          ,if(regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{11}',0)<>'',regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{11}',0)
+		  ,if(regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{10}',0)<>'',regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{10}',0)
+		  ,if(regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{9}',0)<>'',regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{9}',0)
+		  ,regexp_extract(trim(SFZ),'[0-9 a-z A-Z]{5,9}',0)))))) cardno
+		,'疫苗接种' byzd3
+		,YMJZRQ updatetime
+		,2 xh
+	from (select * from ymjz_new_cbk_ql where length(SFZ)>5) 
+	)where length(phone)>2 
+	
+	
+union all
+
+
+select
+phone
+,cardno
+,byzd3
+,updatetime
+,xh
+,row_number()over(partition by cardno,phone order by updatetime desc) rn
+from(
+      select
+        regexp_extract(phone,'(134|135|136|137|138|139|147|150|151|152|157|158|159|172|178|182|183|184|187|188|195|197|198|130|131|132|145|155|156|166|175|176|185|186|196|133|149|153|180|181|189|173|177|190|191|193|199|192|167|170|171|162|165)([0-9]{8})',0) phone
+		,if(regexp_extract(trim(identity),'[0-9 a-z A-Z]{18}',0)<>'',regexp_extract(trim(identity),'[0-9 a-z A-Z]{18}',0)
+          ,if(regexp_extract(trim(identity),'[0-9 a-z A-Z]{15}',0)<>'',regexp_extract(trim(identity),'[0-9 a-z A-Z]{15}',0)
+          ,if(regexp_extract(trim(identity),'[0-9 a-z A-Z]{11}',0)<>'',regexp_extract(trim(identity),'[0-9 a-z A-Z]{11}',0)
+		  ,if(regexp_extract(trim(identity),'[0-9 a-z A-Z]{10}',0)<>'',regexp_extract(trim(identity),'[0-9 a-z A-Z]{10}',0)
+		  ,if(regexp_extract(trim(identity),'[0-9 a-z A-Z]{9}',0)<>'',regexp_extract(trim(identity),'[0-9 a-z A-Z]{9}',0)
+		  ,regexp_extract(trim(identity),'[0-9 a-z A-Z]{5,9}',0)))))) cardno
+		,'深i您来源电话' byzd3
+		,updatetime
+		,5 xh
+	from (select * from ods_sdz_sbxxb109361_dh_test where area like '%龙岗%' and length(identity)>5) 
+	
+	)where length(phone)>2 
+	
+	
+union all
+
+
+select
+phone
+,cardno
+,byzd3
+,updatetime
+,xh
+,row_number()over(partition by cardno,phone order by updatetime desc) rn
+from(
+select 
+       regexp_extract(phone_,'(134|135|136|137|138|139|147|150|151|152|157|158|159|172|178|182|183|184|187|188|195|197|198|130|131|132|145|155|156|166|175|176|185|186|196|133|149|153|180|181|189|173|177|190|191|193|199|192|167|170|171|162|165)([0-9]{8})',0) phone
+       ,if(regexp_extract(cid,'[0-9 a-z A-Z]{18}',0)<>'',regexp_extract(cid,'[0-9 a-z A-Z]{18}',0)
+          ,if(regexp_extract(cid,'[0-9 a-z A-Z]{15}',0)<>'',regexp_extract(cid,'[0-9 a-z A-Z]{15}',0)
+          ,if(regexp_extract(cid,'[0-9 a-z A-Z]{11}',0)<>'',regexp_extract(cid,'[0-9 a-z A-Z]{11}',0)
+		  ,if(regexp_extract(cid,'[0-9 a-z A-Z]{10}',0)<>'',regexp_extract(cid,'[0-9 a-z A-Z]{10}',0)
+		  ,if(regexp_extract(cid,'[0-9 a-z A-Z]{9}',0)<>'',regexp_extract(cid,'[0-9 a-z A-Z]{9}',0)
+		  ,regexp_extract(cid,'[0-9 a-z A-Z]{5,9}',0)))))) as cardno	--证件号码
+        ,'i深圳来源电话' byzd3
+		,updatetime
+		,4 xh
+	from (select * from ods_tpr_record_new107706_test where length(cid)>5)
+	
+	)where length(phone)>2 
+	
+	union all
+	
+	
+select
+phone
+,cardno
+,byzd3
+,updatetime
+,xh
+,row_number()over(partition by cardno,phone order by updatetime desc) rn
+from(
+select
+       regexp_extract(mtel,'(134|135|136|137|138|139|147|150|151|152|157|158|159|172|178|182|183|184|187|188|195|197|198|130|131|132|145|155|156|166|175|176|185|186|196|133|149|153|180|181|189|173|177|190|191|193|199|192|167|170|171|162|165)([0-9]{8})',0) phone
+       ,if(regexp_extract(cardno,'[0-9 a-z A-Z]{18}',0)<>'',regexp_extract(cardno,'[0-9 a-z A-Z]{18}',0)
+          ,if(regexp_extract(cardno,'[0-9 a-z A-Z]{15}',0)<>'',regexp_extract(cardno,'[0-9 a-z A-Z]{15}',0)
+          ,if(regexp_extract(cardno,'[0-9 a-z A-Z]{11}',0)<>'',regexp_extract(cardno,'[0-9 a-z A-Z]{11}',0)
+		  ,if(regexp_extract(cardno,'[0-9 a-z A-Z]{10}',0)<>'',regexp_extract(cardno,'[0-9 a-z A-Z]{10}',0)
+		  ,if(regexp_extract(cardno,'[0-9 a-z A-Z]{9}',0)<>'',regexp_extract(cardno,'[0-9 a-z A-Z]{9}',0)
+		  ,regexp_extract(cardno,'[0-9 a-z A-Z]{5,9}',0)))))) as cardno	--证件号码
+        ,'实有人口表' byzd3
+		,updatetime
+		,3 xh
+	from (select * from ods_qzfw_zfw_resident1_2_test where  length(cardno)>5 )
+	
+	)where length(phone)>2 
+		union all
+		
+		
+select
+phone
+,cardno
+,byzd3
+,updatetime
+,xh
+,row_number()over(partition by cardno,phone order by updatetime desc) rn
+from(
+select
+       regexp_extract(PHONE,'(134|135|136|137|138|139|147|150|151|152|157|158|159|172|178|182|183|184|187|188|195|197|198|130|131|132|145|155|156|166|175|176|185|186|196|133|149|153|180|181|189|173|177|190|191|193|199|192|167|170|171|162|165)([0-9]{8})',0) phone
+       ,if(regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{18}',0)<>'',regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{18}',0)
+          ,if(regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{15}',0)<>'',regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{15}',0)
+          ,if(regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{11}',0)<>'',regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{11}',0)
+		  ,if(regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{10}',0)<>'',regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{10}',0)
+		  ,if(regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{9}',0)<>'',regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{9}',0)
+		  ,regexp_extract(ID_CARD_NO,'[0-9 a-z A-Z]{5,9}',0)))))) as cardno	--证件号码
+        ,'核酸' byzd3
+		,COLLECTION_TIME updatetime
+		,1 xh
+	from (select * from dm_yq_hsjcjg_incre_dqzl_sj where  length(ID_CARD_NO)>5 )
+	
+	)where length(phone)>2 
+	
+	
+	) where rn=1) where rn=1 and cardno!='';
+
+drop table if exists phone_temp_rk_0813_old_1;
+create table phone_temp_rk_0813_old_1 as select * from phone_temp_rk_0813_mk;
+--create table phone_temp_rk_0813_ls_1 as select * from phone_temp_rk_0813_old_1 where 1=2
+--create table phone_temp_rk_0813_ls_1 as select * from phone_temp_rk_0813_temp_1 where 1=2
+--select count(*) from phone_temp_rk_0813_ls_1
+
+drop table if exists phone_temp_rk_0813_1_1;
+create table phone_temp_rk_0813_1_1 as
+select a.* from phone_temp_rk_0813_temp_1 a
+left join phone_temp_rk_0813_old_1 b on a.cardno = b.cardno
+where a.updatetime > b.updatetime or (a.updatetime = b.updatetime and a.xh < b.xh) or b.updatetime is null;
+
+insert overwrite table phone_temp_rk_0813_mk
+select * from phone_temp_rk_0813_1_1 union all
+select * from phone_temp_rk_0813_old_1 a where not exists(select 1 from phone_temp_rk_0813_1_1 b where a.cardno = b.cardno);
+
+insert into phone_temp_rk_0813_ls_1
+select * from phone_temp_rk_0813_old_1 a where exists(select 1 from phone_temp_rk_0813_1_1 b where a.cardno = b.cardno);
+
+

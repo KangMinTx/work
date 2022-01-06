@@ -1,0 +1,110 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-19 14:45:58
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS std_zfw_lgqzxrkxx (
+    zxsj string COMMENT '注销时间',
+    zjlx string COMMENT '证件类型',
+    zjhm string COMMENT '证件号码',
+    xb string COMMENT '性别',
+    xbdm string COMMENT '性别代码',
+    mz string COMMENT '民族',
+    hyzk string COMMENT '婚姻状况',
+    whcd string COMMENT '文化程度',
+    zy string COMMENT '职业',
+    xm string COMMENT '姓名',
+    hkszd string COMMENT '户口所在地',
+    gzdw string COMMENT '工作单位',
+    jzfwdz string COMMENT '居住房屋地址',
+    sr string COMMENT '生日',
+    fwbm string COMMENT '房屋编码',
+    lksj string COMMENT '离开时间',
+    rzsj string COMMENT '入住时间',
+    cjsj string COMMENT '创建时间',
+    cjr string COMMENT '创建人',
+    sfzx string COMMENT '是否注销',
+    fwid string COMMENT '房屋id',
+    gxsj string COMMENT '更新时间',
+    djr string COMMENT '登记人',
+    qyid string COMMENT '区域id',
+    xzqhid string COMMENT '行政区划id',
+    xtgxsj string COMMENT '系统更新时间',
+    lyjg string COMMENT '来源机构',
+    lyb string COMMENT '来源表',
+    yxsj timestamp COMMENT '运行时间'
+)
+COMMENT '龙岗区注销人口信息'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/29 14:34:50
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_zfw_lgqzxrkxx(龙岗区注销人口信息)
+--#源表    ： std_qzf_zfw_resident_logout1(龙岗区注销人口信息详情)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_zfw_lgqzxrkxx partition (dt='${DayBeforeStartTime}')
+select      
+	t.logouttime as zxsj, -- 注销时间
+	t.cardtypeid as zjlx, -- 证件类型
+	t.cardno as zjhm, -- 证件号码
+	t.sex as xb, -- 性别
+	t.xbdm as xbdm, -- 性别代码
+	t.nationid as mz, -- 民族
+	t.marryid as hyzk, -- 婚姻状况
+	t.edulevelid as whcd, -- 文化程度
+	t.jobid as zy, -- 职业
+    if(t.name rlike '^[\u4E00-\u9FA5]+$',regexp_replace(NVL(t.name,''),'[\\s]+|[\\u3000]+|[\,]',''),t.name)as  xm, -- 中文姓名
+	t.registeraddress as hkszd, -- 户口所在地
+	t.company as gzdw, -- 工作单位
+	t.homeaddress as jzfwdz, -- 居住房屋地址
+	t.birthday as sr, -- 生日
+	t.housecode as fwbm, -- 房屋编码
+	t.leavedate as lksj, -- 离开时间
+	t.checkindate as rzsj, -- 入住时间
+	t.createtime as cjsj, -- 创建时间
+	t.creator as cjr, -- 创建人
+	t.islogout as sfzx, -- 是否注销
+	t.houseid as fwid, -- 房屋id
+	t.updatetime as gxsj, -- 更新时间
+	t.registrar as djr, -- 登记人
+	t.areaid as qyid, -- 区域id
+	t.qhareaid as xzqhid, -- 行政区划id
+	t.timeflag as xtgxsj, -- 系统更新时间
+	t.lyjg as lyjg, -- 来源机构
+	"std_qzf_zfw_resident_logout1" as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj -- 运行时间
+from
+(select 
+      logouttime, -- 注销时间
+      cardtypeid, -- 证件类型
+      cardno, -- 证件号码
+      sex, -- 性别
+      xbdm, -- 性别代码
+      nationid, -- 民族
+      marryid, -- 婚姻状况
+      edulevelid, -- 文化程度
+      jobid, -- 职业
+      name, -- 姓名
+      registeraddress, -- 户口所在地
+      company, -- 工作单位
+      homeaddress, -- 居住房屋地址
+      birthday, -- 生日
+      housecode, -- 房屋编码
+      leavedate, -- 离开时间
+      checkindate, -- 入住时间
+      createtime, -- 创建时间
+      creator, -- 创建人
+      islogout, -- 是否注销
+      houseid, -- 房屋id
+      updatetime, -- 更新时间
+      registrar, -- 登记人
+      areaid, -- 区域id
+      qhareaid, -- 行政区划id
+      timeflag, -- 系统更新时间
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(cardno,'') order by updatetime desc) as rn 
+from std_qzf_zfw_resident_logout1 )t
+where t.rn <= 1;	

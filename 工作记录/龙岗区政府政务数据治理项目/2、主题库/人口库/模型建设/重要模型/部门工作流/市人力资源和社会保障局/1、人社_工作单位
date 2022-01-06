@@ -1,0 +1,50 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-20 10:09:19
+--_********************************************************_
+CREATE TABLE IF NOT EXISTS std_rs_gzdw (
+    zjhm string COMMENT '证件号码',
+    zjlx string COMMENT '证件类型',
+    xm string COMMENT '姓名',
+    gzdw string COMMENT '工作单位',
+    dwdz string COMMENT '单位地址',
+    lyjg string COMMENT '来源机构',
+    lyb string COMMENT '来源表',
+    yxsj timestamp COMMENT '运行时间',
+    sbdnh string COMMENT '社保电脑号'
+)
+COMMENT '社保_工作单位'
+PARTITIONED BY (dt  STRING COMMENT '日期分区');
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/8/1 19:41:11
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_rs_gzdw(社保_工作单位)
+--#源表    ： std_srs_sbgrxx110041(个人基本信息)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_rs_gzdw partition (dt='${DayBeforeStartTime}')
+select      
+	t.id_no as zjhm, -- 证件号码
+	t.id_code as zjlx, -- 证件类型
+	t.name as xm, -- 姓名
+	t.unit_name as gzdw, -- 工作单位
+	t.unit_address as dwdz, -- 单位地址
+	t.lyjg as lyjg, -- 来源机构
+	"std_srs_sbgrxx110041" as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj, -- 运行时间
+	t.si_no as sbdnh -- 社保电脑号
+from
+(select 
+      id_no, -- 证件号码
+      id_code, -- 证件类型
+      name, -- 姓名
+      unit_name, -- 工作单位
+      unit_address, -- 工作单位通信地址
+      lyjg, -- 来源机构
+      si_no, -- 社保电脑号
+      row_number() over (partition by coalesce(id_no,'') order by si_no desc ) as rn 
+from std_srs_sbgrxx110041)t
+where t.rn <= 1;	

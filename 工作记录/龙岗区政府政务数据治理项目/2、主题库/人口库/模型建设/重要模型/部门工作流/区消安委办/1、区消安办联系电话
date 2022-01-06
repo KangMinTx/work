@@ -1,0 +1,62 @@
+--####################################################################
+--#开发者  ： 数梦工场
+--#开发日期  ： desc
+--#创建日期： 2020/7/27 15:48:09
+--#模型说明： 
+--#加工方式： 多源数据融合
+--#目标表  ： std_xa_lxdh(消安_联系电话)
+--#源表    ： std_qxa_t_staffs(人员表)、std_qxa_sx_bewatched_person(单位关联人员表)、std_qxa_t_person(经营者业主，雇员信息表)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_xa_lxdh partition (dt='${DayBeforeStartTime}')
+select      
+	 t.zjlx, -- 证件类型
+	 t.zjhm, -- 证件号码
+	 t.xm, -- 姓名
+	 t.lxdh, -- 联系电话
+	 t.djsj, -- 登记时间
+	 t.lyb, -- 来源表
+	 t.lyjg -- 来源机构
+from 
+	(
+	select      
+		tt.zjlx, -- 证件类型
+		tt.zjhm, -- 证件号码
+		tt.xm, -- 姓名
+		tt.lxdh, -- 联系电话
+		tt.djsj, -- 登记时间
+		tt.lyb, -- 来源表
+		tt.lyjg, -- 来源机构
+		row_number() over (partition by coalesce(tt.zjhm,''),coalesce(tt.lxdh,'') order by tt.djsj desc ) as rn
+	from 
+		(
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			IDCARD as zjhm, -- 身份证
+			NAME as xm, -- 姓名
+			MOBILE as lxdh, -- 手机
+			MTIME as djsj, -- 修改时间
+			"std_qxa_t_staffs" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_qxa_t_staffs a join  (select max(dt) maxdt from std_qxa_t_staffs) b on a.dt=b.maxdt
+		union all
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			certificateno as zjhm, -- 身份证或网格编号
+			name as xm, -- 单位相关人员姓名
+			phone as lxdh, -- 电话
+			timeflag as djsj, -- 更新时间
+			"std_qxa_sx_bewatched_person" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_qxa_sx_bewatched_person a join (select max(dt) maxdt from std_qxa_sx_bewatched_person)	b on a.dt=b.maxdt
+		union all
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			identity as zjhm, -- 身份证
+			name as xm, -- 名称
+			phone as lxdh, -- 电话
+			timeflag as djsj, -- 更新时间
+			"std_qxa_t_person" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_qxa_t_person a join (select max(dt) maxdt from std_qxa_t_person) b on a.dt=b.maxdt
+ ) tt ) t where t.rn=1;

@@ -1,0 +1,10 @@
+--SparkSQL
+--_********************************************************_
+--author: chenbaokang
+--create time: 2021-09-03 14:47:37
+--_********************************************************_
+TRUNCATE TABLE dm_yq_hsjcjg_incre_lsqlb;
+TRUNCATE TABLE dm_yq_hsjcjg_incre_lsqlb_DQ;
+TRUNCATE TABLE dm_rkk_syrkfyqk_hs_02;
+TRUNCATE TABLE dm_rkk_syrkfyqk_lsql_bqb;
+

@@ -1,0 +1,148 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-20 17:29:37
+--table_name : dwd_zzry_zyzgxx_cs
+--use_tables : std_ssjf_qsfjlszydjxx(区司法局_律师执业登记信息)
+-- 			   std_szfhjsj_zyzgxx_10_0515164645(市住房和建设局_建筑类人员执业资格信息)
+-- 			   std_sjtyswyh_dlyscyzgxx_10_0912095406(市交通运输委员会_道路运输从业资格信息)
+--取数逻辑 : 三张资格表 union all 然后关联 政法委实有人口表 获取人口证件类型
+
+
+--修改yxqq时间格式 72行
+--std_szfhjsj_zyzgxx_10_0515164645 时间格式为yyyy-MM-dd %,%:为空或者00:00等其他无效数据,遂截取保留前10位
+--std_sjtyswyh_dlyscyzgxx_10_0912095406 时间格式为yyyy-MM-dd 不做更改
+--晴风 2021-03-16
+--_********************************************************_
+
+
+insert overwrite table dwd_zzry_zyzgxx_cs partition (dt='${DayBeforeStartTime}')
+SELECT  null                    AS zjlb --证件类别 
+       ,null                    AS zjbh --证件编号 
+       ,t2.cardtypeid_name           AS czzsfzjlb --持证者身份证件类别 
+       ,null                    AS czzsfzjhm --持证者身份证件号码 
+       ,t1.lsxm                 AS xm --持证者姓名 
+       ,null                    AS qfjg --执业资格证件签发机关名称 
+       ,null                    AS qfjgdm --执业资格证件签发机关代码 
+       ,t1.zyzbzxhdxqk          AS zt --执业资格证件状态 
+       ,null                    AS yxqq --执业资格证件有效期起 
+       ,null                    AS yxqz --执业资格证件有效期止 
+       ,t1.qdzyzsj              AS qfrq --执业资格证件签发日期 
+       ,null                    AS ccqfjg --执业资格证件初次发证机关 
+       ,t1.qdzyzsj              AS ccqfrq --执业资格证件初次签发日期 
+       ,null                    AS zxrq --执业资格证件注销日期 
+       ,null                    AS zxyy --执业资格证件注销原因 
+       ,null                    AS dxrq --执业资格证件吊销日期 
+       ,null                    AS dxyy --执业资格证件吊销原因 
+       ,null                    AS dxjg --执业资格证件吊销机关 
+       ,null                    AS bzrq --执业资格证办证日期 
+       ,null                    AS zjmc --执业资格证件名称 
+       ,null                    AS lxmc --执业资格证件类型名称 
+       ,null                    AS xxdabh --执业资格信息档案编号 
+       ,null                    AS dah --执业资格证件档案号 
+       ,null                    AS djrq --执业资格证件登记日期 
+       ,null                    AS hfrq --执业资格证件核发日期 
+       ,null                    AS sfqy --执业资格证件是否启用 
+       ,null                    AS szdq --执业资格证件所在地区 
+       ,null                    AS yxq --执业资格证件有效期 
+       ,null                    AS zgzxfw --资格准许范围 
+       ,null                    AS cyszdwbm --从业所在单位编码 
+       ,t1.szlssws              AS cyszdwmc --从业所在单位名称 
+       ,null                    AS bz --备注 
+       ,'std_ssjf_qsfjlszydjxx' AS lyb --来源表 
+       ,t1.lyjg                 AS lyjg --来源机构 
+       ,CURRENT_TIMESTAMP       AS yxsj --运行时间
+FROM std_ssjf_qsfjlszydjxx t1
+LEFT JOIN std_qzfw_zfw_resident1 t2
+ON t1.lsxm=t2.name
+WHERE t1.dt=( 
+SELECT  MAX(dt)
+FROM std_ssjf_qsfjlszydjxx) 
+
+union
+
+SELECT  t1.category                        AS zjlb --证件类别 
+       ,t1.alt_cert_id                     AS zjbh --证件编号 
+       ,t2.cardtypeid_name                      AS czzsfzjlb --持证者身份证件类别 
+       ,t1.id_number                       AS czzsfzjhm --持证者身份证件号码 
+       ,t1.name                            AS xm --持证者姓名 
+       ,null                               AS qfjg --执业资格证件签发机关名称 
+       ,null                               AS qfjgdm --执业资格证件签发机关代码 
+       ,null                               AS zt --执业资格证件状态 
+       ,substr(trim(t1.valid_date),1,10)  AS yxqq --执业资格证件有效期起 
+       ,null                               AS yxqz --执业资格证件有效期止 
+       ,t1.issue_date                      AS qfrq --执业资格证件签发日期 
+       ,t1.issue_org                       AS ccqfjg --执业资格证件初次发证机关 
+       ,t1.issue_date                      AS ccqfrq --执业资格证件初次签发日期 
+       ,null                               AS zxrq --执业资格证件注销日期 
+       ,null                               AS zxyy --执业资格证件注销原因 
+       ,null                               AS dxrq --执业资格证件吊销日期 
+       ,null                               AS dxyy --执业资格证件吊销原因 
+       ,null                               AS dxjg --执业资格证件吊销机关 
+       ,null                               AS bzrq --执业资格证办证日期 
+       ,null                               AS zjmc --执业资格证件名称 
+       ,null                               AS lxmc --执业资格证件类型名称 
+       ,null                               AS xxdabh --执业资格信息档案编号 
+       ,null                               AS dah --执业资格证件档案号 
+       ,null                               AS djrq --执业资格证件登记日期 
+       ,null                               AS hfrq --执业资格证件核发日期 
+       ,null                               AS sfqy --执业资格证件是否启用 
+       ,null                               AS szdq --执业资格证件所在地区 
+       ,null                               AS yxq --执业资格证件有效期 
+       ,t1.change_cause                    AS zgzxfw --资格准许范围 
+       ,null                               AS cyszdwbm --从业所在单位编码 
+       ,null                               AS cyszdwmc --从业所在单位名称 
+       ,null                               AS bz --备注 
+       ,'std_szfhjsj_zyzgxx_10_0515164645' AS lyb --来源表 
+       ,t1.lyjg                            AS lyjg --来源机构 
+       ,CURRENT_TIMESTAMP                  AS yxsj --运行时间
+FROM std_szfhjsj_zyzgxx_10_0515164645 t1
+LEFT JOIN std_qzfw_zfw_resident1 t2
+ON t1.id_number=t2.cardno
+WHERE t1.dt=( 
+SELECT  MAX(dt)
+FROM std_szfhjsj_zyzgxx_10_0515164645) 
+
+union
+
+SELECT  t1.congyezigeleibie                     AS zjlb --证件类别 
+       ,t1.congyezigezhenghaoma                 AS zjbh --证件编号 
+       ,t2.cardtypeid_name                           AS czzsfzjlb --持证者身份证件类别 
+       ,t1.shenfenzhenghaoma                    AS czzsfzjhm --持证者身份证件号码 
+       ,t1.xingming                             AS xm --持证者姓名 
+       ,null                                    AS qfjg --执业资格证件签发机关名称 
+       ,null                                    AS qfjgdm --执业资格证件签发机关代码 
+       ,t1.zhengjianzhuangtai                   AS zt --执业资格证件状态 
+       ,t1.congyezigezhengfazhengriqi           AS yxqq --执业资格证件有效期起 
+       ,t1.congyezigezhengyouxiaoriqi           AS yxqz --执业资格证件有效期止 
+       ,null                                    AS qfrq --执业资格证件签发日期 
+       ,t1.fazhengjigoumingcheng                AS ccqfjg --执业资格证件初次发证机关 
+       ,t1.congyezigezhengfazhengriqi           AS ccqfrq --执业资格证件初次签发日期 
+       ,null                                    AS zxrq --执业资格证件注销日期 
+       ,null                                    AS zxyy --执业资格证件注销原因 
+       ,null                                    AS dxrq --执业资格证件吊销日期 
+       ,null                                    AS dxyy --执业资格证件吊销原因 
+       ,null                                    AS dxjg --执业资格证件吊销机关 
+       ,null                                    AS bzrq --执业资格证办证日期 
+       ,t1.congyezigeleibie                     AS zjmc --执业资格证件名称 
+       ,null                                    AS lxmc --执业资格证件类型名称 
+       ,null                                    AS xxdabh --执业资格信息档案编号 
+       ,null                                    AS dah --执业资格证件档案号 
+       ,null                                    AS djrq --执业资格证件登记日期 
+       ,null                                    AS hfrq --执业资格证件核发日期 
+       ,null                                    AS sfqy --执业资格证件是否启用 
+       ,null                                    AS szdq --执业资格证件所在地区 
+       ,null                                    AS yxq --执业资格证件有效期 
+       ,null                                    AS zgzxfw --资格准许范围 
+       ,null                                    AS cyszdwbm --从业所在单位编码 
+       ,null                                    AS cyszdwmc --从业所在单位名称 
+       ,null                                    AS bz --备注 
+       ,'std_sjtyswyh_dlyscyzgxx_10_0912095406' AS lyb --来源表 
+       ,t1.lyjg                                 AS lyjg --来源机构 
+       ,CURRENT_TIMESTAMP                       AS yxsj --运行时间
+FROM std_sjtyswyh_dlyscyzgxx_10_0912095406 t1
+LEFT JOIN std_qzfw_zfw_resident1 t2
+ON t1.shenfenzhenghaoma=t2.cardno
+WHERE t1.dt=( 
+SELECT  MAX(dt)
+FROM std_sjtyswyh_dlyscyzgxx_10_0912095406) 

@@ -1,0 +1,43 @@
+CREATE OR REPLACE procedure LQGSM.p_dm_rkk_log
+(error_id varchar2,
+data_dt varchar2,
+work_name varchar2 ,
+work_step varchar2 ,
+start_dt_time varchar2,
+v_Sqlstate varchar2 ,
+v_Sqlcode  varchar2 ,
+v_errortext varchar2 ,
+tab_conuts varchar2 ,
+v_des varchar2
+)
+is end_dt_time varchar2(32);
+BEGIN
+select TO_CHAR(SYSDATE,'yyyy-mm-dd hh24:mi:ss') into end_dt_time FROM dual;
+
+insert into dm_rkk_log
+(
+error_id,
+data_dt,
+work_name ,
+work_step ,
+start_dt_time,
+end_dt_time  ,
+v_Sqlstate  ,
+v_Sqlcode  ,
+v_errortext , 
+tab_conuts  ,
+v_des )
+select 
+error_id,
+data_dt,
+work_name ,
+work_step ,
+start_dt_time,
+end_dt_time  ,
+v_Sqlstate  ,
+v_Sqlcode  ,
+v_errortext , 
+tab_conuts  ,
+v_des from dual;
+commit;
+end;

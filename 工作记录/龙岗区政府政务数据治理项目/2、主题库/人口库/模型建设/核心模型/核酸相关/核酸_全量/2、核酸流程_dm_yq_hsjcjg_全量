@@ -1,0 +1,329 @@
+/**************************************************************************************************
+创建人：CHENBK
+创建时间：2021-08-10
+描述：重新创建核酸全量表，当且只跑一次全量，然后把此表当作历史表
+所涉及的表：
+ods_swsjkwyh_new_crown_virus_check_result_total_cs     核酸结果表
+ods_swsjkwyh_yqfkthreecomhd_total_cs                   市检测结果表
+ods_swsjkwyh_yqfkhscjcollection_total_cs               核酸采集表     
+ods_sjhpt_hscyxx102957_total_cs                        全市核酸采样数据 
+ods_sjhpt_yqfk_hsjcxx_jgfh20210606_total_cs_temp       需要替换的表（表输入为YQFK_HSJCXX_JGFH20210606_BF）         
+新增的表：ods_lgqwjj_yqfk_hscyxx_bf_temp_ql            表输入（yqfk_hscyxx_bf）
+ods_sjhpt_yqfk_hscyxx20210611_total                    0611市里比对核酸采样数据
+ods_lgqwjj_gdwj_ncov_share_no_result_hs_ql             新增的表
+ods_lgqwjj_yqfk_yhs_fh20210816_bf_total_hs             新增的表
+dm_yq_hsjcjg_incre_lsqlb                               核酸历史全量表
+***************************************************************************************************/
+drop table if EXISTS dm_yq_hsjcjg_incre_lsqlb;
+create table dm_yq_hsjcjg_incre_lsqlb
+select 
+ID --主键ID
+,RECEIVE_TIME --接收日期
+,REAL_NAME --姓名
+,SPECIMEN_CODE --标本编码
+,GENDER --性别
+,AGE --年龄
+,PHONE --手机
+,SPECIMEN_TYPE --标本类型
+,COLLECTION_TIME --采集日期
+,REPORT_TIME --报告日期
+,ID_CARD_NO --证件号码
+,COOPERATIVE_INSTITUTION --合作机构
+,CHECK_RESULT --检验结果
+,IMPORT_BATCH --导入批次
+,CREATER --创建者
+,CREATE_TIME --创建日期
+,TIMEFLAG --
+, Bz --是否采样表新增
+,wybs
+from (
+select a.*,row_number() over(partition by REAL_NAME,ID_CARD_NO,substr(COLLECTION_TIME,1,10) order by  CHECK_RESULT desc ,COLLECTION_TIME desc) rn2
+from (
+SELECT 
+ID --主键ID
+,RECEIVE_TIME --接收日期
+,if(length(regexp_replace(regexp_replace(REAL_NAME,'[\u4e00-\u9fa5]',''),'',''))=length(REAL_NAME), trim(REAL_NAME),
+ regexp_replace(trim(regexp_replace(trim(REAL_NAME),
+         '[/\[.*\]/]|[\A-Za-z]|[\0-9]|[(]|[)]|[:]|[：]|[。]
+        |[、]|[、]|[，]|[,]|[/]|[?]|[？]|[+]|[*]|[`]|[.]|[-]|[≤]|[·]|[‘]|[]|[‘]|[∵]|[′]|[；]|[]
+        |[＋]|[]|[｀]|[！]|[……]|[＇]|[|]|[…]|[。]|[@]|[〉]|[丶]|[“”]|[（）]|[\\^]|[\\_]|[　]','')),'','')) as REAL_NAME --姓名
+,SPECIMEN_CODE --标本编码
+,GENDER --性别
+,AGE --年龄
+,PHONE --手机
+,SPECIMEN_TYPE --标本类型
+,COLLECTION_TIME --采集日期
+,REPORT_TIME --报告日期
+,ID_CARD_NO --证件号码
+,COOPERATIVE_INSTITUTION --合作机构
+,CHECK_RESULT --检验结果
+,IMPORT_BATCH --导入批次
+,CREATER --创建者
+,CREATE_TIME --创建日期
+,TIMEFLAG --
+, Bz --是否采样表新增
+,wybs
+FROM (
+select aa.*,row_number() over(partition by REAL_NAME,ID_CARD_NO,substr(COLLECTION_TIME,1,10) order by  CHECK_RESULT desc ,COLLECTION_TIME desc) rn
+					   from (
+--------------------------------------1、核酸结果表(ods_swsjkwyh_new_crown_virus_check_result_total_cs)---------------------------------------
+select 
+ID --主键ID
+,RECEIVE_TIME --接收日期
+,REAL_NAME
+,SPECIMEN_CODE --标本编码
+,GENDER --性别
+,AGE --年龄
+,PHONE --手机
+,SPECIMEN_TYPE --标本类型
+,COLLECTION_TIME --采集日期
+,REPORT_TIME --报告日期
+,ID_CARD_NO --证件号码
+,COOPERATIVE_INSTITUTION --合作机构
+,CHECK_RESULT --检验结果
+,IMPORT_BATCH --导入批次
+,CREATER --创建者
+,CREATE_TIME --创建日期
+,TIMEFLAG --
+,'new_crown_virus_check_result' as Bz --是否采样表新增
+,concat_ws('',ID_CARD_NO,REAL_NAME,substr(COLLECTION_TIME,1,10),COOPERATIVE_INSTITUTION) as wybs			   
+from (select * from ods_swsjkwyh_new_crown_virus_check_result_total_cs where dt=(select max(dt) from ods_swsjkwyh_new_crown_virus_check_result_total_cs))a
+
+--------------------------------------2、市检测结果表(ods_swsjkwyh_yqfkthreecomhd_total_cs)------------------------------------------------                   
+union all
+select 
+ID as ID --主键ID
+,cast(null as String) as RECEIVE_TIME --接收日期
+,NAME as REAL_NAME --姓名
+,cast(null as String) as SPECIMEN_CODE --标本编码
+,SEX as GENDER --性别
+,AGE as AGE --年龄
+,phone as PHONE --手机
+,bblx as SPECIMEN_TYPE --标本类型
+,substr(cytime,1,19) as COLLECTION_TIME --采集日期
+,substr(jctime,1,19) as REPORT_TIME --报告日期
+,cardno as ID_CARD_NO --证件号码
+,jcjg as COOPERATIVE_INSTITUTION --合作机构
+,jcresult as CHECK_RESULT --检验结果
+,cast(null as String) as IMPORT_BATCH --导入批次
+,cast(null as String) as CREATER --创建者
+,cast(null as TIMESTAMP) as CREATE_TIME --创建日期
+,cast(null as TIMESTAMP) as TIMEFLAG 
+,'yqfkthreecomhd' as BZ 
+,concat_ws('',CARDNO,NAME,substr(cytime,1,10),jcjg) as wybs
+from  (select * from ods_swsjkwyh_yqfkthreecomhd_total_cs where dt=(select max(dt) from ods_swsjkwyh_yqfkthreecomhd_total_cs))a
+---------------------------------------3、核酸采集表(ods_swsjkwyh_yqfkhscjcollection_total_cs)----------------------------------------------            
+union all
+select 
+ ID --主键ID
+,cast(null as String) as RECEIVE_TIME --接收日期
+,NAME as REAL_NAME --姓名
+,CYTM as SPECIMEN_CODE --标本编码
+,SEX as GENDER --性别
+,AGE as AGE --年龄
+,MOBILEPHONE as PHONE --手机
+,cast(null as String) as SPECIMEN_TYPE --标本类型
+,CJTIME as COLLECTION_TIME --采集日期
+,cast(null as TIMESTAMP) as REPORT_TIME --报告日期
+,CARDNO as ID_CARD_NO --证件号码
+,JCJGMC as COOPERATIVE_INSTITUTION --合作机构
+,RESULT as CHECK_RESULT --检验结果
+,cast(null as String) as IMPORT_BATCH --导入批次
+,cast(null as String) as CREATER --创建者
+,cast(null as TIMESTAMP) as CREATE_TIME --创建日期
+,cast(null as TIMESTAMP) as TIMEFLAG 
+,'yqfkhscjcollection' as BZ 
+,concat_ws('',CARDNO,NAME,substr(CJTIME,1,10),JCJGMC) as wybs
+from  (select * from ods_swsjkwyh_yqfkhscjcollection_total_cs where dt=(select max(dt) from ods_swsjkwyh_yqfkhscjcollection_total_cs))a
+
+---------------------------------------4、全市核酸采样数据(ods_sjhpt_hscyxx102957_total_cs)------------------------------------------------                         
+union all
+select 
+		a.id as ID --主键ID
+		,cast(null as String) as RECEIVE_TIME --接收日期
+		,a.patient_name as REAL_NAME --姓名
+		,a.spec_no as SPECIMEN_CODE --标本编码
+		,a.patient_ggender as GENDER --性别
+		,substr(current_date,1,4)-substr(birth_date,1,4) as AGE --年龄
+		,a.patient_tel as PHONE --手机
+		,cast(null as String) as SPECIMEN_TYPE --标本类型
+		,a.sample_time as COLLECTION_TIME --采集日期
+		,cast(null as TIMESTAMP) as REPORT_TIME --报告日期
+		,a.id_card_no as ID_CARD_NO --证件号码
+		,a.org_name as COOPERATIVE_INSTITUTION --合作机构
+		,cast(null as String) as CHECK_RESULT --检验结果
+		,cast(null as String) as IMPORT_BATCH --导入批次
+		,cast(null as String) as CREATER --创建者
+		,cast(null as TIMESTAMP) as CREATE_TIME --创建日期
+		,cast(null as TIMESTAMP) as TIMEFLAG 
+		,'hscyxx102957' as BZ 
+		,concat_ws('',a.id_card_no,a.patient_name,substr(a.sample_time,1,10),a.org_name) as wybs
+	from dm_rkk_syrkkb_tjt b
+	inner  join  (select * from ods_sjhpt_hscyxx102957_total_cs where dt=(select max(dt) from ods_sjhpt_hscyxx102957_total_cs))a
+	on a.id_card_no=b.zjhm
+----------------------------------5、ods_sjhpt_yqfk_hsjcxx_jgfh20210606_total_cs_temp需要替换的表（表输入为YQFK_HSJCXX_JGFH20210606_BF)-------------
+	union all
+	select 
+		a.id as ID --主键ID
+		,jssj as RECEIVE_TIME --接收日期
+		,b.xm as REAL_NAME --姓名
+		,cast(null as String) as SPECIMEN_CODE --标本编码
+		,xb as GENDER --性别
+		,substr(current_date,1,4)-substr(csny,1,4) as AGE --年龄
+		,sj as PHONE --手机
+		,cast(null as String) as SPECIMEN_TYPE --标本类型
+		,cysj as COLLECTION_TIME --采集日期
+		,jcsj as REPORT_TIME --报告日期
+		,a.zjhm as ID_CARD_NO --证件号码
+		,jcjgmc as COOPERATIVE_INSTITUTION --合作机构
+		,jcjg as CHECK_RESULT --检验结果
+		,cast(null as String) as IMPORT_BATCH --导入批次
+		,cast(null as String) as CREATER --创建者
+		,a.create_time as CREATE_TIME --创建日期
+		,cast(null as TIMESTAMP) as TIMEFLAG 
+		,'hsjcxx_jgfh20210606_BF' as BZ 
+		,concat_ws('',a.zjhm,b.xm,substr(cysj,1,10),jcjgmc) as wybs
+	from (select * from ods_sjhpt_yqfk_hsjcxx_jgfh20210606_total_cs_temp where dt=(select max(dt) from ods_sjhpt_yqfk_hsjcxx_jgfh20210606_total_cs_temp)) a	
+	inner join(
+	select
+		zjhm
+		,sj
+		,xm
+		,csny
+		,xb
+	from dm_rkk_syrkkb_tjt
+	)b
+	on a.zjhm=b.zjhm
+-----------------------------------------6、新增的表：ods_lgqwjj_yqfk_yhs_fh20210816_bf_total_hs_ql  --------------------------------------------------------------
+	union all
+	select 
+	    a.id as ID --主键ID
+		,cast(null as String) as RECEIVE_TIME --接收日期
+		,a.xm as REAL_NAME --姓名
+		,cast(null as String) as SPECIMEN_CODE --标本编码
+		,xb  GENDER --性别
+		,nl  AGE --年龄
+		,regexp_replace(trim(regexp_replace(trim(sjhm),'[/\[.*\]/]|[\A-Za-z\u4e00-\u9fa5]|[(]|[)]|[:]|[。]|[、]|[，]|[,]|[/]|[?]|[+]|[*]|[`]|[.]|[-]','')),'','') as PHONE --手机
+		,cast(null as String) as SPECIMEN_TYPE --标本类型
+		,cyrq as COLLECTION_TIME --采集日期
+		,cast(null as String) as REPORT_TIME --报告日期
+		,a.zjhm as ID_CARD_NO --证件号码
+		,cyjgmc as COOPERATIVE_INSTITUTION --合作机构
+		,jcjg1 as CHECK_RESULT --检验结果
+		,cast(null as String) as IMPORT_BATCH --导入批次
+		,cast(null as String) as CREATER --创建者
+		,cast(null as String) as CREATE_TIME --创建日期
+		,cast(null as TIMESTAMP) as TIMEFLAG 
+		,'yhs_fh20210816_bf' as BZ 
+		,concat_ws('',a.zjhm,a.xm,substr(cyrq,1,10),cyjgmc) as wybs
+		from  (select * from ods_lgqwjj_yqfk_yhs_fh20210816_bf_total_hs_ql where dt=(select max(dt) from ods_lgqwjj_yqfk_yhs_fh20210816_bf_total_hs_ql)) A
+  -----------------------------------------7、新增的表：ods_lgqwjj_yqfk_hscyxx_qc_ql--------------------------------------------------------------
+  union all                      
+     select 
+		a.id as ID --主键ID
+		,cast(null as String) as RECEIVE_TIME --接收日期
+		,b.xm as REAL_NAME --姓名
+		,cast(null as String) as SPECIMEN_CODE --标本编码
+		,xb as GENDER --性别
+		,substr(current_date,1,4)-substr(csny,1,4) as AGE --年龄
+		,sj as PHONE --手机
+		,cast(null as String) as SPECIMEN_TYPE --标本类型
+		,sample_time as COLLECTION_TIME --采集日期
+		,cast(null as String) as REPORT_TIME --报告日期
+		,a.zjhm as ID_CARD_NO --证件号码
+		,org_name as COOPERATIVE_INSTITUTION --合作机构
+		,cast(null as String) as CHECK_RESULT --检验结果
+		,cast(null as String) as IMPORT_BATCH --导入批次
+		,cast(null as String) as CREATER --创建者
+		,a.create_time as CREATE_TIME --创建日期
+		,cast(null as TIMESTAMP) as TIMEFLAG 
+		,'yqfk_hscyxx_qc' as BZ 
+		,concat_ws('',a.zjhm,b.xm,substr(sample_time,1,10),org_name) as wybs
+	from (	select * from ods_lgqwjj_yqfk_hscyxx_qc_ql
+			where dt=(select max(dt) from ods_lgqwjj_yqfk_hscyxx_qc_ql )
+			) a
+	inner join(
+	select
+		zjhm
+		,sj
+		,xm
+		,csny
+		,xb
+	from  dm_rkk_syrkkb_tjt
+	)b
+	on a.zjhm=b.zjhm
+  ------------------------------------------------------------------8、0611市里比对核酸采样数据（ods_sjhpt_yqfk_hscyxx20210611_total）--------------
+  union ALL
+  select 
+		a.id as ID --主键ID
+		,cast(null as string) as RECEIVE_TIME --接收日期
+		,b.xm as REAL_NAME --姓名
+		,a.ybtxbm as SPECIMEN_CODE --标本编码
+		,b.xb as GENDER --性别
+		,substr(current_date,1,4)-substr(b.csny,1,4) as AGE --年龄
+		,b.sj as PHONE --手机
+		,cast(null as String) as SPECIMEN_TYPE --标本类型
+		,a.cysj as COLLECTION_TIME --采集日期
+		,cast(null as String) as REPORT_TIME --报告日期
+		,a.zjhm as ID_CARD_NO --证件号码
+		,a.jcjgmc as COOPERATIVE_INSTITUTION --合作机构
+		,cast(null as String) as CHECK_RESULT --检验结果
+		,cast(null as String) as IMPORT_BATCH --导入批次
+		,cast(null as String) as CREATER --创建者
+		,a.cjrq as CREATE_TIME --创建日期
+		,cast(null as TIMESTAMP) as TIMEFLAG 
+		,'hscyxx20210611' as BZ 
+		,concat_ws('',a.zjhm,b.xm,substr(cysj,1,10),jcjgmc) as wybs
+	from 
+	(
+	select 
+                    id
+					,xm
+					,ybtxbm
+					,zjhm
+					,cysj
+					,jcjgmc
+					,cjrq
+					from  ods_sjhpt_yqfk_hscyxx20210611_total  where dt=(select max(dt) from ods_sjhpt_yqfk_hscyxx20210611_total)
+			) a
+	inner join
+	(select
+		zjhm
+		,sj
+		,xm
+		,csny
+		,xb
+	from dm_rkk_syrkkb_tjt
+	)b
+	on a.zjhm=b.zjhm
+------------------------------------------------------------9、新增的表：ods_lgqwjj_gdwj_ncov_share_no_result_hs_ql
+	union all 
+	 select 
+	    kfgd_id as ID --主键ID
+		,cast(null as String) as RECEIVE_TIME --接收日期
+		,xm as REAL_NAME --姓名
+		,cast(null as String) as SPECIMEN_CODE --标本编码
+		,xb  GENDER --性别
+		,nl  AGE --年龄
+		,regexp_replace(trim(regexp_replace(trim(sjhm),'[/\[.*\]/]|[\A-Za-z\u4e00-\u9fa5]|[(]|[)]|[:]|[。]|[、]|[，]|[,]|[/]|[?]|[+]|[*]|[`]|[.]|[-]','')),'','') as PHONE --手机
+		,bblx as SPECIMEN_TYPE --标本类型
+		,cyrq as COLLECTION_TIME --采集日期
+		,cast(null as String) as REPORT_TIME --报告日期
+		,zjhm as ID_CARD_NO --证件号码
+		,jcjg as COOPERATIVE_INSTITUTION --合作机构
+		,jcjieguo as CHECK_RESULT --检验结果
+		,cast(null as String) as IMPORT_BATCH --导入批次
+		,cast(null as String) as CREATER --创建者
+		,cast(null as String) as CREATE_TIME --创建日期
+		,cast(null as TIMESTAMP) as TIMEFLAG 
+		,'gdwj_ncov_share_no_result' as BZ 
+		,concat_ws('',zjhm,xm,substr(cyrq,1,10),jcjg) as wybs
+		from ods_lgqwjj_gdwj_ncov_share_no_result_hs_ql
+	
+	) AA where length(COLLECTION_TIME)>=10) WHERE RN=1 ) a) where rn2=1;
+	
+    
+  ---保留当前的全量数据（因当增量起调时，会把增量的数据，回插到全量表中）
+  drop table if EXISTS dm_yq_hsjcjg_incre_lsqlb_dq;
+  create table dm_yq_hsjcjg_incre_lsqlb_DQ select * from dm_yq_hsjcjg_incre_lsqlb;
+ 

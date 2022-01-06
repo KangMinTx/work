@@ -1,0 +1,29 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2021-08-17 16:44:37
+--_********************************************************_
+--通过增量字段获取增量数据
+truncate table ymjz_new_cbk_XZ_TO_OR;
+INSERT into ymjz_new_cbk_XZ_TO_OR
+SELECT A.* FROM ymjz_new_cbk_ql A
+LEFT JOIN ymjz_new_cbk_ql_old B
+ON nvl(A.SFZ,'1')=nvl(B.SFZ,'1')
+AND nvl(A.RIQI,'1')=nvl(B.RIQI,'1')
+AND nvl(A.ZZC,'1') = nvl(B.ZZC,'1')
+WHERE B.YXSJ IS NULL;
+
+---保留上一次全量数据
+--drop table if EXISTS ymjz_new_cbk_ql_old_temp;
+truncate table ymjz_new_cbk_ql_old_temp;
+INSERT into ymjz_new_cbk_ql_old_temp select * from ymjz_new_cbk_ql_old;
+----保留历史增量数据
+truncate table ymjz_new_cbk_ql_old;
+INSERT into ymjz_new_cbk_ql_old
+SELECT * FROM ymjz_new_cbk_ql;
+
+----------------------------------------------------------------------------
+--推到14物理机的表（dm_rkk_ymfk_ymb 人口库疫情防控疫苗表）
+truncate table dm_rkk_ymfk_ymb;
+insert into dm_rkk_ymfk_ymb  select * from ymjz_new_cbk_XZ_TO_OR;
+

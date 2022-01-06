@@ -1,0 +1,49 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-15 18:19:58
+--_********************************************************_
+insert overwrite table dwd_jysb_ldzcxx partition (dt='${DayBeforeStartTime}')
+select
+UUID
+,lajg
+,lasj
+,ah
+,zslxmc
+,sqr
+,bsqr
+,ay
+,gxsj
+,jabz
+,jafs
+,jasj
+,ajlxmc
+,ajssjgdm
+,lyb
+,lyjg
+,yxrq
+FROM
+(
+select
+uuid() UUID                   ,--主键
+b1.LAJG lajg                   ,--立案结果
+b1.LADATE lasj                   ,--立案时间
+b1.ANHAO ah                   ,--案号
+b2.ZSLXMC zslxmc                   ,--主诉类型名称
+b1.SQR sqr                   ,--申请人
+b1.BSQR bsqr                   ,--被申请人
+b1.ANYOU ay                   ,--案由
+b1.UDATE gxsj                   ,--更新时间
+b2.JASIGN jabz                   ,--结案标志
+b2.jafs jafs                   ,--结案方式
+b2.JADATE jasj                   ,--结案时间
+b2.AJLXMC ajlxmc                   ,--案件类型名称
+b2.AJSSJGMC ajssjgdm                   ,--案件所属机构代码
+"T_BUSI_LDJ_LDZCLA T_BUSI_LDJ_LDZCJA" lyb                   ,--来源表
+b1.lyjg lyjg                   ,--来源机构
+now() yxrq                   ,--运行时间
+Row_Number() OVER (partition by b1.ANHAO,b1.UDATE ORDER BY b1.UDATE desc) rank
+from (select * from std_qfzggj_t_busi_ldj_ldzcla where dt=(select max(dt) from std_qfzggj_t_busi_ldj_ldzcla)) b1
+left join (select * from std_qfzggj_t_busi_ldj_ldzcja where dt=(select max(dt) from std_qfzggj_t_busi_ldj_ldzcja)) b2
+on b1.ANHAO=b2.ANHAO
+  )where rank=1

@@ -1,0 +1,147 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-16 16:32:05
+--_********************************************************_
+with
+table1
+as
+(
+select 
+distinct
+b1.cardtypeid_name zjlb                   ,--证件类别
+CASE WHEN length(replace(translate(b1.cardno,',./;''，。无？、-[无证',' '),' '))<5  THEN ''  ELSE b1.cardno END zjhm                   ,--证件号码
+b1.name xm                   ,--姓名
+b3.alias cym                   ,--曾用名
+b3.sex_name xb                   ,--性别
+b3.nationid_name mz                   ,--民族
+if(length(b3.birthday)=21,substr(b3.birthday,1,19),b3.birthday) csrq                   ,--出生日期
+b3.nationality_name gj                   ,--国籍
+null csdgjhdq                   ,--出生地国家和地区
+null csdssx                   ,--出生地省市县
+b3.politicsid_name zzmm                   ,--政治面貌
+b3.beliefid_name zjxy                   ,--宗教信仰
+b3.escuageid_name byzk                   ,--兵役状况
+b2.person_type_name hklx                   ,--户口类型
+b1.logouttime zxsj                   ,--注销时间
+b1.createtime sjdjsj                   ,--数据登记时间
+"NDRKXXZXB_10_0402145348" lyb                   ,--来源表
+b1.lyjg lyjg                   --来源机构
+from (select cardtypeid_name,cardno,name,logouttime,createtime,lyjg from std_czwglb_ndrkxxzxb_10_0402145348 where dt=(select max(dt) from std_czwglb_ndrkxxzxb_10_0402145348)) b1
+left join (select distinct person_type_name,card_no from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) b2
+on b1.cardno=b2.card_no
+left join (select cardno,alias,sex_name,nationid_name,birthday,nationality_name,politicsid_name,beliefid_name,escuageid_name from std_qzfw_zfw_resident1 where dt=(select max(dt) from std_qzfw_zfw_resident1))b3
+on b1.cardno=b3.cardno
+
+union all
+
+select 
+distinct
+b1.cardtypeid_name zjlb                   ,--证件类别
+CASE WHEN length(replace(translate(b1.cardno,',./;''，。无？、-[无证',' '),' '))<5  THEN ''  ELSE b1.cardno END zjhm                   ,--证件号码
+b1.name xm                   ,--姓名
+b3.alias cym                   ,--曾用名
+b1.sex_name xb                   ,--性别
+b1.nationid_name mz                   ,--民族
+b3.birthday csrq                   ,--出生日期
+b3.nationality_name gj                   ,--国籍
+NULL csdgjhdq                   ,--出生地国家和地区
+NULL csdssx                   ,--出生地省市县
+b1.politicsid_name zzmm                   ,--政治面貌
+b3.beliefid_name zjxy                   ,--宗教信仰
+b3.escuageid_name byzk                   ,--兵役状况
+b2.person_type_name hklx                   ,--户口类型
+b1.logouttime zxsj                   ,--注销时间
+b1.addtime sjdjsj                   ,--数据登记时间
+"std_czwglb_ndrkxxdjb_11_0402145313" lyb                   ,--来源表
+b1.lyjg lyjg                   --来源机构
+from (select cardtypeid_name,cardno,name,sex_name,nationid_name,politicsid_name,logouttime,addtime,lyjg from std_czwglb_ndrkxxdjb_11_0402145313 where dt=(select max(dt) from std_czwglb_ndrkxxdjb_11_0402145313) and cast(islogout as int)=0) b1
+left join (select distinct person_type_name,card_no from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) b2
+on b1.cardno=b2.card_no 
+left join (select cardno,alias,birthday,nationality_name,beliefid_name,escuageid_name from std_qzfw_zfw_resident1 where dt=(select max(dt) from std_qzfw_zfw_resident1))b3
+on b1.cardno=b3.cardno
+
+union all
+
+select 
+distinct
+b1.cardtypeid_name zjlb                   ,--证件类别
+CASE WHEN length(replace(translate(b1.cardno,',./;''，。无？、-[无证',' '),' '))<5  THEN ''  ELSE b1.cardno END  zjhm                   ,--证件号码
+b1.name xm                   ,--姓名
+b3.alias cym                   ,--曾用名
+b1.sex_name xb                   ,--性别
+b1.nationid_name mz                   ,--民族
+b1.birthday csrq                   ,--出生日期
+b3.nationality_name gj                   ,--国籍
+null csdgjhdq                   ,--出生地国家和地区
+null csdssx                   ,--出生地省市县
+b3.politicsid_name zzmm                   ,--政治面貌
+b3.beliefid_name zjxy                   ,--宗教信仰
+b3.escuageid_name byzk                   ,--兵役状况
+b2.person_type_name hklx                   ,--户口类型
+b1.logouttime zxsj                   ,--注销时间
+b1.addtime sjdjsj                   ,--数据登记时间
+"spmj_tenementinfo" lyb                   ,--来源表
+b1.lyjg lyjg                   --来源机构
+from (select cardtypeid_name,cardno,name,sex_name,nationid_name,birthday,logouttime,addtime,lyjg from std_gafj_spmj_tenementinfo where dt=(select max(dt) from std_gafj_spmj_tenementinfo) AND cast(islogout as int)=0) b1
+left join (select distinct person_type_name,card_no from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) b2
+on b1.cardno=b2.card_no 
+left join (select alias,nationality_name,politicsid_name,beliefid_name,escuageid_name,cardno from std_qzfw_zfw_resident1 where dt=(select max(dt) from std_qzfw_zfw_resident1))b3
+on b1.cardno=b3.cardno
+
+union all
+
+select 
+distinct
+b1.cardtypeid_name zjlb                   ,--证件类别
+CASE WHEN length(replace(translate(b1.cardno,',./;''，。无？、-[无证',' '),' '))<5  THEN ''  ELSE b1.cardno END zjhm                   ,--证件号码
+b1.name xm                   ,--姓名
+b1.alias cym                   ,--曾用名
+b1.sex_name xb                   ,--性别
+b1.nationid_name mz                   ,--民族
+b1.birthday csrq                   ,--出生日期
+b1.nationality_name gj                   ,--国籍
+null sdgjhdq                   ,--出生地国家和地区
+null csdssx                   ,--出生地省市县
+b1.politicsid_name zzmm                   ,--政治面貌
+b1.beliefid_name zjxy                   ,--宗教信仰
+b1.escuageid_name byzk                   ,--兵役状况
+b2.person_type_name hklx                   ,--户口类型
+b1.logouttime zxsj                   ,--注销时间
+b1.addtime sjdjsj                   ,--数据登记时间
+"std_qzfw_zfw_resident1" lyb                   ,--来源表
+b1.lyjg lyjg                   --来源机构
+from (select cardtypeid_name,cardno,name,alias,sex_name,nationid_name,birthday,nationality_name,politicsid_name,beliefid_name,escuageid_name,logouttime,addtime,lyjg from std_qzfw_zfw_resident1 where dt=(select max(dt) from std_qzfw_zfw_resident1) and cast(islogout as int)=0) b1
+left join (select distinct person_type_name,card_no from std_qgaj_ppu_zfw_fact_detail_info_hjbd where dt=(select max(dt) from std_qgaj_ppu_zfw_fact_detail_info_hjbd)) b2
+on b1.cardno=b2.card_no 
+)
+
+
+
+insert overwrite table dwd_jbxx_zxryxx partition (dt='${DayBeforeStartTime}')
+select
+DISTINCT
+zjlb                   ,--证件类别
+table1.zjhm zjhm                  ,--证件号码
+table1.xm xm                  ,--姓名
+cym                   ,--曾用名
+xb                   ,--性别
+mz                   ,--民族
+if(length(csrq)=21,substr(csrq,1,19),csrq)                   ,--出生日期
+gj                   ,--国籍
+csdgjhdq                   ,--出生地国家和地区
+csdssx                   ,--出生地省市县
+zzmm                   ,--政治面貌
+zjxy                   ,--宗教信仰
+byzk                   ,--兵役状况
+hklx                   ,--户口类型
+b2.sczxsj lsczxsj                   ,--首次注销时间
+if(length(b2.zxsj)=21,substr(b2.zxsj,1,19),if(length(b2.zxsj)=10,b2.zxsj || ' 00:00:00',b2.zxsj)) zxsj                   ,--最新注销时间
+sjdjsj                   ,--数据登记时间
+lyb                   ,--来源表
+lyjg                   ,--来源机构
+now() yxrq                   --运行时间
+from 
+table1
+left join (select zjhm,xm,max(zxsj) zxsj,min(zxsj) sczxsj from table1 group by zjhm,xm)b2
+on table1.zjhm=b2.zjhm and table1.xm=b2.xm

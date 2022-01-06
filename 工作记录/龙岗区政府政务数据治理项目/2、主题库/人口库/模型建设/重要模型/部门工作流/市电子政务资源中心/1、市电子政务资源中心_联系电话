@@ -1,0 +1,102 @@
+--####################################################################
+--#开发者  ： 数梦工场
+--#开发日期  ： desc
+--#创建日期： 2020/7/27 15:48:09
+--#模型说明： 
+--#加工方式： 多源数据融合
+--#目标表  ： std_dz_lxdh(电政_联系电话)
+--#源表    ： std_sdz_zzsbb100540(自主申报表)、std_sdz_zzsbbhsjg2020100624(自主申报表核实结果2020)、std_sdz_sbxxb109361(上报信息表v20)、std_sdz_fybbdjsj100209(防疫报备登记数据)、std_sdz_szsjjdjxx104503(深圳市居家登记表)、std_sdz_szsrcdjxxb102152(深圳市入城登记信息表)、std_sdz_yqzzsbyrkdzk103525(疫情自主上报与人口地址库)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_dz_lxdh partition (dt='${dt}')
+select      
+	if(zjhm RLIKE '(^[1-9][0-9]{5}(18|19|([23][0-9]))[0-9]{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)[0-9]{3}[0-9Xx]$)|(^[1-9][0-9]{5}[0-9]{2}((0[1-9])|(10|11|12))(([0-2][1-9])|10|20|30|31)[0-9]{3}$)',"中华人民共和国居民身份证", t.zjlx), -- 证件类型
+     t.zjhm, -- 证件号码
+	 t.xm, -- 姓名
+	 t.lxdh, -- 联系电话
+	 t.djsj, -- 登记时间
+	 t.lyb, -- 来源表
+	 t.lyjg -- 来源机构
+from 
+	(
+	select      
+		tt.zjlx, -- 证件类型
+		tt.zjhm, -- 证件号码
+		tt.xm, -- 姓名
+		tt.lxdh, -- 联系电话
+		tt.djsj, -- 登记时间
+		tt.lyb, -- 来源表
+		tt.lyjg, -- 来源机构
+		row_number() over (partition by coalesce(tt.zjhm,''),coalesce(tt.lxdh,'') order by tt.djsj desc ) as rn
+	from 
+		(
+		select 
+			identity_type as zjlx, -- 证件类型
+			identity as zjhm, -- 证件号码
+			username as xm, -- 姓名
+			phone as lxdh, -- 电话
+			create_time as djsj, -- 提交时间
+			"std_sdz_zzsbb100540" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_sdz_zzsbb100540 a join(select max(dt) maxdt from 	std_sdz_zzsbb100540) b on a.dt=b.maxdt
+		union all
+		select 
+			cardtypeid as zjlx, -- 证件类型
+			cardno as zjhm, -- 证件号码
+			name as xm, -- 姓名
+			tel as lxdh, -- 电话号码
+			createtime as djsj, -- 创建时间
+			"std_sdz_zzsbbhsjg2020100624" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_sdz_zzsbbhsjg2020100624 a join (select max(dt) maxdt from 	std_sdz_zzsbb100540) b on a.dt=b.maxdt
+		union all
+		select 
+			identity_type as zjlx, -- 证件类型
+			identity as zjhm, -- 证件号码
+			username as xm, -- 姓名
+			phone as lxdh, -- 电话
+			create_time as djsj, -- 提交时间
+			"std_sdz_sbxxb109361" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_sdz_sbxxb109361 
+		union all
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			id_card as zjhm, -- 身份证
+			full_name as xm, -- 姓名
+			phone as lxdh, -- 手机号
+			created_at as djsj, -- 登记时间
+			"std_sdz_fybbdjsj100209" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_sdz_fybbdjsj100209 a join (select max(dt) maxdt from 	std_sdz_zzsbb100540) b on a.dt=b.maxdt
+		union all
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			id_card as zjhm, -- 身份证
+			full_name as xm, -- 姓名
+			phone as lxdh, -- 手机号
+			created_at as djsj, -- 登记时间
+			"std_sdz_szsjjdjxx104503" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_sdz_szsjjdjxx104503 a join (select max(dt) maxdt from 	std_sdz_zzsbb100540) b on a.dt=b.maxdt
+		union all
+		select 
+			"中华人民共和国居民身份证" as zjlx, -- 证件类型
+			id_card as zjhm, -- 身份证
+			full_name as xm, -- 姓名
+			phone as lxdh, -- 手机号
+			created_at as djsj, -- 登记时间
+			"std_sdz_szsrcdjxxb102152" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_sdz_szsrcdjxxb102152 a join (select max(dt) maxdt from 	std_sdz_zzsbb100540) b on a.dt=b.maxdt
+		union all
+		select 
+			zzsb_identity_type as zjlx, -- 证件类型
+			zzsb_identity as zjhm, -- 证件号码
+			zzsb_user_name as xm, -- 姓名
+			zzsb_phone as lxdh, -- 电话
+			zzsb_create_time as djsj, -- 提交时间
+			"std_sdz_yqzzsbyrkdzk103525" as lyb, -- 来源表
+			lyjg as lyjg -- 来源机构
+		from std_sdz_yqzzsbyrkdzk103525
+ ) tt ) t where t.rn=1;

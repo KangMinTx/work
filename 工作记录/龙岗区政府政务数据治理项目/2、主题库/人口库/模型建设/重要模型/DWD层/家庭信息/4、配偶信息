@@ -1,0 +1,312 @@
+--SparkSQL
+--_********************************************************_
+--author: LZ
+--create time: 2020-12-23 14:53:52
+--_********************************************************_
+/*
+1、SZHJRKJBXX141281户籍信息中，关联
+以“户号HH”为分组，取“与户主关系”为“夫、配偶、妻”作为配偶信息，对应的户主作为个人信息（主体）；
+取“与户主关系”为“夫、配偶、妻”作为个人信息（主体），对应的户主作为配偶信息；
+2、POP_MARRIAGE婚姻状况中，取丈夫信息作为个人信息（主体），妻子信息作为配偶信息；
+POP_MARRIAGE婚姻状况中，取丈夫信息作为配偶信息（主体），妻子信息作为个人信息（主体）；
+婚姻变动日期：婚姻变动日期
+（POP_MARRIAGE个人GUID数据可匹配POP_PERSON获取对应身份证号）
+3、POP_PERSON人口基本信息，取主体信息作为个人信息（主体），配偶姓名、配偶公民身份号码作为配偶信息
+婚姻变动日期：coalesce（婚姻变动日期，初婚日期）
+4、根据证件号码+配偶证件号码去重
+5、最终用基本登记信息表关联，取证据号码在龙岗的数据"""
+*/
+
+
+insert overwrite table dwd_jbxx_poxx partition (dt='${DayBeforeStartTime}')
+select
+uuid() uuid,
+zjlx            ,--证件类型
+b5.zjhm            ,--证件号码
+xm            ,--姓名
+xb            ,--性别
+substr(now(),1,4)-substr(b5.zjhm,7,4)            ,--年龄
+pozjlx            ,--配偶证件类型
+pozjhm            ,--配偶证件号码
+poxm            ,--配偶姓名
+poxb            ,--配偶性别
+hybdrq            ,--婚姻变动日期
+xxlylx            ,--信息来源类型
+lyjg            ,--来源机构名称
+lyb            ,--来源表名称
+now() yxsj
+from
+(
+SELECT
+zjlx            ,--证件类型
+zjhm            ,--证件号码
+xm            ,--姓名
+xb            ,--性别
+nl            ,--年龄
+pozjlx            ,--配偶证件类型
+pozjhm            ,--配偶证件号码
+poxm            ,--配偶姓名
+poxb            ,--配偶性别
+hybdrq            ,--婚姻变动日期
+xxlylx            ,--信息来源类型
+lyjg            ,--来源机构名称
+lyb            --来源表名称
+FROM
+(
+SELECT
+zjlx            ,--证件类型
+zjhm            ,--证件号码
+xm            ,--姓名
+xb            ,--性别
+nl            ,--年龄
+pozjlx            ,--配偶证件类型
+pozjhm            ,--配偶证件号码
+poxm            ,--配偶姓名
+poxb            ,--配偶性别
+hybdrq            ,--婚姻变动日期
+xxlylx            ,--信息来源类型
+lyjg            ,--来源机构名称
+lyb            ,--来源表名称
+--4根据证件号码+配偶证件号码去重
+row_number() over(partition by zjhm,pozjhm order by zjhm desc) rn
+FROM
+(
+
+--1、SZHJRKJBXX141281户籍信息中，关联
+--以“户号HH”为分组，取“与户主关系”为“夫、配偶、妻”作为配偶信息，对应的户主作为个人信息（主体）；
+--取“与户主关系”为“夫、配偶、妻”作为个人信息（主体），对应的户主作为配偶信息；
+--具体步骤：
+--1.找到所在龙岗区的hh
+--2.内连接取户主信息
+--3.根据户号取配偶信息
+(
+select
+b2.zjlx_name zjlx            ,--证件类型
+b2.gmsfhm zjhm            ,--证件号码
+b2.xm xm            ,--姓名
+b2.xbmc xb            ,--性别
+null nl            ,--年龄
+b3.zjlx_name pozjlx            ,--配偶证件类型
+b3.gmsfhm pozjhm            ,--配偶证件号码
+b3.xm poxm            ,--配偶姓名
+b3.xbmc poxb            ,--配偶性别
+null hybdrq            ,--婚姻变动日期
+"权威" xxlylx            ,--信息来源类型
+b2.lyjg lyjg            ,--来源机构名称
+b2.lyb lyb            --来源表名称
+from
+
+
+    (
+    select hh,count(1) js
+    from 
+        (
+        select hh
+        from std_sgaj_szhjrkjbxx141281 
+        where dt=(select max(dt) from std_sgaj_szhjrkjbxx141281) 
+        and yhzgxmc="户主" 
+        )b0
+    group by b0.hh
+    having js=1
+    )b1
+inner join
+    (
+    select hh,zjlx_name,gmsfhm,xm,xbmc,"std_sgaj_szhjrkjbxx141281" lyb,lyjg
+    from std_sgaj_szhjrkjbxx141281 
+    where dt=(select max(dt) from std_sgaj_szhjrkjbxx141281) 
+    and yhzgxmc="户主" 
+    )b2
+on b1.hh=b2.hh
+left join
+    (
+    select DISTINCT hh,zjlx_name,gmsfhm,xm,xbmc,"std_sgaj_szhjrkjbxx141281" lyb,lyjg
+    from std_sgaj_szhjrkjbxx141281 
+    where dt=(select max(dt) from std_sgaj_szhjrkjbxx141281) 
+    and (yhzgxmc="夫" or  yhzgxmc="配偶" or yhzgxmc="妻")
+    )b3
+on b1.hh=b3.hh
+)
+
+union all
+
+
+--1、SZHJRKJBXX141281户籍信息中，关联
+--以“户号HH”为分组，取“与户主关系”为“夫、配偶、妻”作为配偶信息，对应的户主作为个人信息（主体）；
+--取“与户主关系”为“夫、配偶、妻”作为个人信息（主体），对应的户主作为配偶信息；
+--具体步骤：
+--1.找到所在龙岗区的hh
+--2.内连接取非户主信息
+--3.根据户号取配偶信息
+(
+select
+b2.zjlx_name zjlx            ,--证件类型
+b2.gmsfhm zjhm            ,--证件号码
+b2.xm xm            ,--姓名
+b2.xbmc xb            ,--性别
+null nl            ,--年龄
+b3.zjlx_name pozjlx            ,--配偶证件类型
+b3.gmsfhm pozjhm            ,--配偶证件号码
+b3.xm poxm            ,--配偶姓名
+b3.xbmc poxb            ,--配偶性别
+null hybdrq            ,--婚姻变动日期
+"权威" xxlylx            ,--信息来源类型
+b2.lyjg lyjg            ,--来源机构名称
+b2.lyb lyb            --来源表名称
+from
+    (
+    select hh,count(1) js
+    from 
+        (
+        select hh
+        from std_sgaj_szhjrkjbxx141281 
+        where dt=(select max(dt) from std_sgaj_szhjrkjbxx141281) 
+        and yhzgxmc="户主" 
+        )b0
+    group by b0.hh
+    having js=1
+    )b1
+inner join
+    (
+    select DISTINCT hh,zjlx_name,gmsfhm,xm,xbmc,"std_sgaj_szhjrkjbxx141281" lyb,lyjg
+    from std_sgaj_szhjrkjbxx141281 
+    where dt=(select max(dt) from std_sgaj_szhjrkjbxx141281) 
+    and (yhzgxmc="夫" or  yhzgxmc="配偶" or yhzgxmc="妻")
+    )b2
+on b1.hh=b2.hh
+left join
+    (
+    select hh,zjlx_name,gmsfhm,xm,xbmc,"std_sgaj_szhjrkjbxx141281" lyb,lyjg
+    from std_sgaj_szhjrkjbxx141281 
+    where dt=(select max(dt) from std_sgaj_szhjrkjbxx141281) 
+    and yhzgxmc="户主" 
+    )b3
+on b1.hh=b3.hh
+)
+
+union all
+
+
+--3、POP_PERSON人口基本信息，取主体信息作为个人信息（主体），配偶姓名、配偶公民身份号码作为配偶信息
+--婚姻变动日期：coalesce（婚姻变动日期，初婚日期）
+
+
+(
+select
+identity_type zjlx            ,--证件类型
+identity_number zjhm            ,--证件号码
+person_name xm            ,--姓名
+gender xb            ,--性别
+null nl            ,--年龄
+null pozjlx            ,--配偶证件类型
+spouse_identity_number pozjhm            ,--配偶证件号码
+spouse_name poxm            ,--配偶姓名
+null poxb            ,--配偶性别
+substr(coalesce(marriage_change_date,first_marriage_date),1,10) hybdrq            ,--婚姻变动日期
+"补充" xxlylx            ,--信息来源类型
+lyjg lyjg            ,--来源机构名称
+"ods_swsjkwyh_pop_person" lyb            --来源表名称
+from std_swsjkwyh_pop_person
+where dt=(select max(dt) from ods_swsjkwyh_pop_person)
+)
+
+union all
+
+
+--2.POP_MARRIAGE婚姻状况中，取丈夫信息作为个人信息（主体），妻子信息作为配偶信息；
+--POP_MARRIAGE婚姻状况中，取丈夫信息作为配偶信息（主体），妻子信息作为个人信息（主体）；
+--婚姻变动日期：婚姻变动日期
+--（POP_MARRIAGE个人GUID数据可匹配POP_PERSON获取对应身份证号）
+--具体步骤：
+--1.根据个人GUID数据可匹配POP_PERSON获取对应身份证号，补在POP_MARRIAGE（补两次，一个主体的，一个配偶的）
+--2.然后直接取信息
+(
+--丈夫
+select
+null zjlx            ,--证件类型
+husband_identity_number zjhm            ,--证件号码
+husband_name xm            ,--姓名
+'男' xb            ,--性别
+null nl            ,--年龄
+null pozjlx            ,--配偶证件类型
+wife_identity_number pozjhm            ,--配偶证件号码
+wife_name poxm            ,--配偶姓名
+'女' poxb            ,--配偶性别
+change_date hybdrq            ,--婚姻变动日期
+"补充" xxlylx            ,--信息来源类型
+lyjg lyjg            ,--来源机构名称
+"std_qwjw_pop_marriage" lyb            --来源表名称
+from  
+ (
+   select 
+   DISTINCT
+   nvl(wife_identity_number,b2.identity_number)  wife_identity_number,
+   wife_name,
+   nvl(husband_identity_number,b2.identity_number) husband_identity_number,
+   husband_name,
+   substr(change_date,1,10) change_date,
+   lyjg 
+   from (select DISTINCT wife_guid,husband_guid,wife_identity_number,wife_name,husband_identity_number,husband_name,change_date,lyjg from ods_qwjw_pop_marriage where dt=(select max(dt) from ods_qwjw_pop_marriage) )b1 
+   left join (select DISTINCT guid,identity_number from ods_swsjkwyh_pop_person where dt=(select max(dt) from ods_swsjkwyh_pop_person))b2
+   on b1.wife_guid=b2.guid
+   left join (select DISTINCT guid,identity_number from ods_swsjkwyh_pop_person where dt=(select max(dt) from ods_swsjkwyh_pop_person))b3
+   on b1.husband_guid=b3.guid
+   
+ )b1
+)
+
+
+union all
+
+
+--2.POP_MARRIAGE婚姻状况中，取丈夫信息作为个人信息（主体），妻子信息作为配偶信息；
+--POP_MARRIAGE婚姻状况中，取丈夫信息作为配偶信息（主体），妻子信息作为个人信息（主体）；
+--婚姻变动日期：婚姻变动日期
+--（POP_MARRIAGE个人GUID数据可匹配POP_PERSON获取对应身份证号）
+--具体步骤：
+--1.根据个人GUID数据可匹配POP_PERSON获取对应身份证号，补在POP_MARRIAGE（补两次，一个主体的，一个配偶的）
+--2.然后直接取信息
+(
+--妻子
+select
+null zjlx            ,--证件类型
+wife_identity_number zjhm            ,--证件号码
+wife_name xm            ,--姓名
+'女' xb            ,--性别
+null nl            ,--年龄
+null pozjlx            ,--配偶证件类型
+husband_identity_number pozjhm            ,--配偶证件号码
+husband_name poxm            ,--配偶姓名
+'男' poxb            ,--配偶性别
+substr(change_date,1,10) hybdrq            ,--婚姻变动日期
+"补充" xxlylx            ,--信息来源类型
+lyjg lyjg            ,--来源机构名称
+"std_qwjw_pop_marriage" lyb            --来源表名称
+from  
+ (
+   select 
+   DISTINCT
+   nvl(wife_identity_number,b2.identity_number)  wife_identity_number,
+   wife_name,
+   nvl(husband_identity_number,b2.identity_number) husband_identity_number,
+   husband_name,
+   change_date,
+   lyjg 
+   from (select DISTINCT wife_guid,husband_guid,wife_identity_number,wife_name,husband_identity_number,husband_name,change_date,lyjg from ods_qwjw_pop_marriage where dt=(select max(dt) from ods_qwjw_pop_marriage) )b1 
+   left join (select DISTINCT guid,identity_number from ods_swsjkwyh_pop_person where dt=(select max(dt) from ods_swsjkwyh_pop_person))b2
+   on b1.wife_guid=b2.guid
+   left join (select DISTINCT guid,identity_number from ods_swsjkwyh_pop_person where dt=(select max(dt) from ods_swsjkwyh_pop_person))b3
+   on b1.husband_guid=b3.guid
+   
+ )b1
+)
+))where rn=1
+)b5
+
+--5最终用基本登记信息表关联，取证据号码在龙岗的数据"
+inner join (select DISTINCT zjhm from dwd_jbxx_jbdjxx where dt=(select max(dt) from dwd_jbxx_jbdjxx))b6
+on b5.zjhm=b6.zjhm
+
+
+
+
+

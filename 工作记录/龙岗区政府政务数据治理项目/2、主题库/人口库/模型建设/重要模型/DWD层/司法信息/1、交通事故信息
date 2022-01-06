@@ -1,0 +1,23 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-20 14:32:30
+--_********************************************************_
+--修改证件类别"1"为判断是18或15位则是身份证,否则是其它
+--晴风 2021-03-18
+
+insert overwrite table dwd_sssf_jtsg_cs partition (dt='${DayBeforeStartTime}') 
+select
+IF(length(sfzh) in (18,15),"中华人民共和国居民身份证","其它") zjlb            ,--证件类别
+sfzh zjhm                    ,--证件号码
+xm xm                    ,--姓名
+jszh jszh                    ,--驾驶证号
+null sgbh                    ,--事故序号
+null jtfs                    ,--交通方式
+null sgzr                    ,--事故责任
+null wfxw1                    ,--主要违法行为
+"lgjjddjtsgryxx" lyb                    ,--来源表
+"龙岗交警大队" lyjg                    ,--来源机构
+now() yxrq                    --运行时间
+from std_lgjjdd_lgjjddjtsgryxx
+where dt=(select max(dt) from std_lgjjdd_lgjjddjtsgryxx)

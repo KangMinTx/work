@@ -1,0 +1,43 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-12-24 14:10:24
+--table_name : dwd_jbxx_xdjmxx(兄弟姐妹信息)
+/*
+取数逻辑 : 1、取dwd_jbxx_znxx表中同一父母的人员
+2、按所属孩次和性别计算关系说明 例：本人孩次3，孩次1为男，则关系为 兄
+关系说明：兄、弟、姐、妹
+
+步骤说明:先根据子女身份证号去重,保留一条记录
+通过母亲或父亲身份证号关联源表,条件是父母身份证相同,但子女身份证不同
+*/
+--_********************************************************_
+insert overwrite table dwd_jbxx_xdjmxx partition (dt='${DayBeforeStartTime}')
+select
+uuid() as uuid
+,t1.znzjlx as zjlx
+,t1.znzjhm as zjhm
+,t1.znxm as xm
+,t1.znxb as xb
+,t2.znzjlx as xdjmzjlx
+,t2.znzjhm as xdjmzjhm
+,t2.znxm as xdjmxm
+,t2.znxb as xdjmxb
+,case when t1.hc<t2.hc and t2.znxb='男' then '弟'
+when t1.hc<t2.hc and t2.znxb='女' then '妹'
+when t1.hc>t2.hc and t2.znxb='男' then '兄'
+when t1.hc>t2.hc and t2.znxb='女' then '姐'
+else null end as gxsm
+,t1.lyjg as lyjg
+,'dwd_jbxx_znxx' as lyb
+,current_timestamp as yxsj
+from 
+(select * from (
+select  znzjlx,znzjhm,znxm,znxb,lyjg,zjhm,hc,row_number() over(partition by znzjhm order by zjhm desc) rn from dwd_jbxx_znxx where dt=(select max(dt) from dwd_jbxx_znxx) ) where rn=1  ) t1
+left join 
+(select * from (
+select  znzjlx,znzjhm,znxm,znxb,lyjg,zjhm,hc,row_number() over(partition by znzjhm order by zjhm desc) rn from dwd_jbxx_znxx where dt=(select max(dt) from dwd_jbxx_znxx)) where rn=1  ) t2 
+on t1.zjhm=t2.zjhm and t1.znzjhm<>t2.znzjhm
+where t2.znzjhm is not null;
+
+

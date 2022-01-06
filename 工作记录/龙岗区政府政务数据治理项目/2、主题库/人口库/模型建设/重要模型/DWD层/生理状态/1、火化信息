@@ -1,0 +1,34 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-11-20 10:32:24
+--_********************************************************_
+--33行='深圳龙岗' 改为 like '%龙岗%'
+--晴风 2021-03-18
+
+insert overwrite table dwd_jbxx_hhxx_cs partition (dt='${DayBeforeStartTime}')
+select
+dabh DABH                    ,--档案编号
+hhzh HHZH                    ,--火化证号
+zjlx ZJLX                    ,--证件类型
+sfzhm ZJHM                    ,--证件号码
+sqzz SQZZ                    ,--生前住址
+zxbz ZXBZ                    ,--注销标志
+hhsj HHSJ                    ,--火化时间
+xm XM                    ,--姓名
+nl NL                    ,--年龄
+xb_name XB                    ,--性别
+mz_name MZ                    ,--民族
+swsj SWSJ                    ,--死亡时间
+cbrlxdh CBRLXDH                    ,--承办人联系电话
+hhdwzzjgdm HHDWZZJGDM                    ,--火化单位组织机构代码
+hhdwmc HHDWMC                    ,--火化单位名称
+sfbdhk SFBDHK                    ,--是否本地户口
+hkszd HKSZD                    ,--户口所在地
+"swrkxx107215" lyb                    ,--来源表
+"市民政局" lyjg                    ,--来源机构
+now() yxsj                    --运行时间
+from std_smz_swrkxx107215 
+where dt=(select max(dt) from std_smz_swrkxx107215) 
+--and hkszd="深圳龙岗";
+and hkszd like "%龙岗%"

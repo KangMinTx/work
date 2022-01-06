@@ -1,0 +1,28 @@
+--SparkSQL
+--_********************************************************_
+--author: lgadmin
+--create time: 2020-10-20 10:10:10
+--_********************************************************_
+insert overwrite table std_rs_gzdw partition (dt='${DayBeforeStartTime}')
+select      
+	t.id_no as zjhm, -- 证件号码
+	t.id_code as zjlx, -- 证件类型
+	t.name as xm, -- 姓名
+	t.unit_name as gzdw, -- 工作单位
+	t.unit_address as dwdz, -- 单位地址
+	t.lyjg as lyjg, -- 来源机构
+	"std_srs_sbgrxx110041" as lyb, -- 来源表
+	from_unixtime(unix_timestamp(),'yyyy-MM-dd HH:mm:ss') as yxsj, -- 运行时间
+	t.si_no as sbdnh -- 社保电脑号
+from
+(select 
+      id_no, -- 证件号码
+      id_code, -- 证件类型
+      name, -- 姓名
+      unit_name, -- 工作单位
+      unit_address, -- 工作单位通信地址
+      lyjg, -- 来源机构
+      si_no, -- 社保电脑号
+      row_number() over (partition by coalesce(id_no,'') order by si_no desc ) as rn 
+from std_srs_sbgrxx110041)t
+where t.rn <= 1;	

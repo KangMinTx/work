@@ -1,0 +1,29 @@
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/27 10:05:55
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_jy_lxdh(教育_联系电话)
+--#源表    ： std_qjy_qjyjjyrcxxcj(教育人才信息采集)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_jy_lxdh partition (dt = '${DayBeforeStartTime}')
+select      
+	"中华人民共和国居民身份证" as zjlx, -- 证件类型
+	t.sfzh as zjhm, -- 证件号码
+	t.xm as xm, -- 姓名
+	t.lxdh as lxdh, -- 联系电话
+	t.u_insert_time as djsj, -- 登记时间
+	"std_qjy_qjyjjyrcxxcj" as lyb, -- 来源表
+	t.lyjg as lyjg -- 来源机构
+from
+(select 
+      sfzh, -- 身份证号
+      xm, -- 姓名
+      lxdh, -- 联系电话(手机)
+      u_insert_time, -- 插入时间
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(sfzh,''),coalesce(lxdh,'') order by u_insert_time desc) as rn 
+from std_qjy_qjyjjyrcxxcj a join (select max(dt) maxdt from std_qjy_qjyjjyrcxxcj)b on a.dt=b.maxdt
+)t
+where t.rn = 1;	

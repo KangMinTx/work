@@ -1,0 +1,33 @@
+--####################################################################
+--#开发者  ： 数梦工场
+--#创建日期： 2020/7/27 15:09:45
+--#模型说明： 
+--#加工方式： 单表映射
+--#目标表  ： std_ga_lxdh(公安_联系电话)
+--#源表    ： std_qga_spmj_tenementinfo(租户表)
+--#******************AUTO SQL*****************************************
+--####################################################################
+insert overwrite table std_ga_lxdh partition(dt = '${DayBeforeStartTime}')
+select      
+	COALESCE(t.cardtypeid,"中华人民共和国居民身份证") as zjlx, -- 证件类型
+	t.cardno as zjhm, -- 证件号码
+	t.name as xm, -- 姓名
+	t.mtel as lxdh, -- 联系电话
+	t.updatetime as djsj, -- 登记时间
+	"std_qfg_t_busi_gtxh_sb" as lyb, -- 来源表
+	t.lyjg as lyjg -- 来源机构
+from
+(select 
+      cardtypeid, -- 证件类型
+      cardno, -- 证件号码
+      name, -- 姓名
+      mtel, -- 手机
+      updatetime, -- 修改时间
+      lyjg, -- 来源机构
+      row_number() over (partition by coalesce(cardno,''),coalesce(mtel,'') order by updatetime desc) as rn 
+ --修改std_qga_spmj_tenementinfo为std_gafj_spmj_tenementinfo
+from std_gafj_spmj_tenementinfo a  JOIN (select max(dt) maxdt  from std_gafj_spmj_tenementinfo) b on a.dt=b.maxdt
+where mtel REGEXP '^((13[0-9])|(14[0-9])|16[0-9]|(15([0-9]))|(17[0-9])|(18[0-9])|(19[0-9]))\\d{8}$' or
+ mtel REGEXP '^(0\\d{2}-\\d{8}(-\\d{1,4})?)|(0\\d{3}-\\d{7,8}(-\\d{1,4})?)$')t
+where t.rn <= 1;	
+    

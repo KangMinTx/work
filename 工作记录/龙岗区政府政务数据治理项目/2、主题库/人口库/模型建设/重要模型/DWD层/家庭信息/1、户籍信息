@@ -1,0 +1,98 @@
+--SparkSQL
+--_********************************************************_
+--author: He
+--create time: 2020-11-20 09:09:28
+--table_name:dwd_jbxx_hjxx_sh
+--use_tables:std_sgaj_szhjrkjbxx141281(市公安局_深圳户藉人口基本信息2016)
+--			 std_qgaj_ppu_zfw_fact_detail_info_hjbd (区公安局_ppu_zfw_fact_detail_info_hjbd)
+--取数逻辑:以std_sgaj_szhjrkjbxx141281 作为主表,通过身份证号 关联 std_qgaj_ppu_zfw_fact_detail_info_hjbd 表 补充户籍类型字段
+--驱虫逻辑:根据身份证号 , 按数据更新时间倒排 取最新
+--0128变更，He 只要std_qgaj_ppu_zfw_fact_detail_info_hjbd表中person_type是“1:深户且是龙岗户籍”的数据
+--_********************************************************_
+
+insert overwrite table dwd_jbxx_hjxx_sh partition (dt='${DayBeforeStartTime}')
+SELECT  ZJLX --证件类型 
+       ,ZJHM --证件号码 
+       ,XM --姓名 
+       ,XBMC --性别 
+       ,CYM --曾用名 
+       ,CSRQ --出生日期 
+       ,MZMC --民族 
+       ,CSDGJ --出生地国家（地区 
+       ,CSDSSX --出生地省市县（ 
+       ,JGGJ --籍贯国家（地区） 
+       ,JGSSX --籍贯省市县（区） 
+       ,JLXMC --街路巷 
+       ,XZJDMC --乡镇（街道） 
+       ,JCWMC --村（居）委会 
+       ,MLPH --门（楼）牌号 
+       ,DZ --门（楼）详址 
+       ,HSQL --迁入日期 
+       ,ZXRQ --迁出日期 
+       ,SWZXRQ --死亡日期 
+       ,HXZMC --户别 
+       ,HH --户号 
+       ,YHZGXMC --与户主关系 
+       ,PERSON_TYPE_DM 
+       ,person_type 
+       ,SFZQFJG --身份证签发机构 
+       ,SFZYXQQ --身份证有效期起 
+       ,SFZYXQZ --身份证有效期止 
+       ,PCSMC --派出所名称 
+       ,ZT --人员状态 
+       ,RID --人员ID 
+       ,lyb --来源表 
+       ,lyjg --来源机构 
+       ,yxsj
+FROM 
+(
+	SELECT  t1.zjlx                    AS ZJLX --证件类型 
+	       ,t1.gmsfhm                 	AS ZJHM --证件号码 
+	       ,t1.xm                     	AS XM --姓名 
+	       ,t1.xbmc                   	AS XBMC --性别 
+	       ,t1.cym                    	AS CYM --曾用名 
+	       ,t1.csrq                   	AS CSRQ --出生日期 
+	       ,t1.mzmc                   	AS MZMC --民族 
+	       ,t1.csdgj                    AS CSDGJ --出生地国家（地区） 
+	       ,t1.csdssx                   AS CSDSSX --出生地省市县（区） 
+	       ,t1.jggj                     AS JGGJ --籍贯国家（地区） 
+	       ,t1.jgssx                    AS JGSSX --籍贯省市县（区） 
+	       ,t1.jlxmc                    AS JLXMC --街路巷 
+	       ,t1.xzjdmc                   AS XZJDMC --乡镇（街道） 
+	       ,t1.jcwmc                    AS JCWMC --村（居）委会 
+	       ,t1.mlph                     AS MLPH --门（楼）牌号 
+	       ,t1.dz                       AS DZ --门（楼）详址 
+	       ,t1.hsql                     AS HSQL --迁入日期 
+	       ,t1.zxrq                     AS ZXRQ --迁出日期 
+	       ,t1.swzxrq                   AS SWZXRQ --死亡日期 
+	       ,t1.hxzmc                    AS HXZMC --户别 
+	       ,t1.hh                       AS HH --户号 
+	       ,t1.yhzgxmc                  AS YHZGXMC --与户主关系 
+	       ,t2.person_type              AS PERSON_TYPE_DM 
+	       ,t2.PERSON_TYPe_name         AS person_type 
+	       ,t1.sfzqfjg                  AS SFZQFJG --身份证签发机构 
+	       ,t1.sfzyxqq                  AS SFZYXQQ --身份证有效期起 
+	       ,t1.sfzyxqz                  AS SFZYXQZ --身份证有效期止 
+	       ,t1.pcsmc                    AS PCSMC --派出所名称 
+	       ,t1.zt                       AS ZT --人员状态 
+	       ,t1.rid                      AS RID --人员ID 
+	       ,'std_sgaj_szhjrkjbxx141281' AS lyb --来源表 
+	       ,t1.lyjg                     AS lyjg --来源机构 
+	       ,CURRENT_TIMESTAMP           AS yxsj 
+	       ,row_number() over(partition by gmsfhm ORDER BY t1.timeflag desc) rn
+	FROM std_sgaj_szhjrkjbxx141281 t1
+	INNER  JOIN 
+	(
+		SELECT  *
+		FROM std_qgaj_ppu_zfw_fact_detail_info_hjbd
+		WHERE dt = ( 
+		SELECT  MAX(dt)
+		FROM std_qgaj_ppu_zfw_fact_detail_info_hjbd ) 
+	) t2
+	ON t1.gmsfhm=t2.card_no
+	WHERE t1.dt=( 
+	SELECT  MAX(dt)
+	FROM std_sgaj_szhjrkjbxx141281) 
+and person_type=1
+)
+WHERE rn=1  
