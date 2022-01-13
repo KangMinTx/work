@@ -1,0 +1,61 @@
+Sub generateSql()
+ 
+    'sql语句变量和表名变量
+    Dim sql As String
+    Dim tableName As String
+    
+    '第一个sheet用于保存生成的SQL语句，所以从第二个开始
+    For si = 2 To Workbooks(1).Sheets.Count
+ 
+        Set mysheet = Workbooks(1).Sheets(si) 'sheet对象
+        
+        tableName = mysheet.Range("A2").Value '表名-英文(第一列第二行)
+        
+        '如果表已经存在，则删除
+        sql = sql & "DROP TABLE IF EXISTS '" & tableName & "'; " & vbCrLf
+        
+        '创建表
+        sql = sql & "CREATE TABLE '" & tableName & "' ( " & vbCrLf
+            
+        
+        For i = 2 To mysheet.UsedRange.Rows.Count '遍历列
+            Dim nameStr As String '字段名
+            Dim typeStr As String '类型及长度
+            Dim nullStr As String '是否为空
+            Dim comment As String '注释
+        
+            '以下四行是为上面的变量赋值
+            nameStr = mysheet.Range("B" & i).Value
+            typeStr = mysheet.Range("C" & i).Value
+            nullStr = mysheet.Range("D" & i).Value
+            comment = mysheet.Range("E" & i).Value
+            
+            sql = sql & "'" & nameStr & "' " & typeStr
+            
+            '判断是否为空
+            If nullStr = "Y" Then
+                sql = sql & " NOT NULL "
+            Else
+                sql = sql & " NULL "
+            End If
+            
+            sql = sql & "COMMENT '" & comment & "'"
+            
+            
+            If i <= mysheet.UsedRange.Rows.Count Then
+                sql = sql & ","
+            End If
+            
+            sql = sql & vbCrLf
+        Next i
+        
+        '默认id为主键
+        sql = sql & "PRIMARY KEY ('id')"
+        '建表完成
+        sql = sql & vbCrLf
+        sql = sql & ");" & vbCrLf
+        sql = sql & "-----创建表 " & tableName & " 成功" & vbCrLf & vbCrLf
+    Next si
+    Workbooks(1).Sheets(1).Range("A" & 1).Value = sql
+End Sub
+ 

@@ -1,0 +1,130 @@
+2022年1月7日问题总结
+1.核酸数据不可用；大数据平台的核酸结果表dm_yq_hsjcjg_incre_lsqlb，从原本的4千多万数据，在12月24日出现数据被删除的情况，一直未发现，直到1月7日用核酸数据（通过身份证信息核查核酸检测记录）才发现，数仓的表只有262万数据，数据无法使用；
+2.核酸的结果表dm_yq_hsjcjg_incre_lsqlb，出现不定时数据被清空，导致需要不断的跑全量流程，补14物理机的增量数据；
+3.实有人口的流程很乱，名称命名很多类似，项目组人员不清楚改用哪个流程？哪张表的名？
+4.14物理机出现表空间不足，导致数仓的核酸数据无法推送到14物理机，花费了时间找出数据差异进行补数，大致差距10万数据
+5.恢复数据（跑了全量后，发现数仓数据与14物理机给到永兴元的数据差了30多万）花费时间很长，几乎全天在恢复数据
+6.实有人口数据电话信息不可用；电话信息前期对接永兴元全量用电话融合表刷新过一次实有人口的电话信息，后期也做了实有人口增量及电话融合表的增量都会同步修改实有人口的电话信息，但是目前使用数据发现，数仓的电话没有按照以上逻辑修改，导致项目组不能直接用电话信息，还得关联电话融合表，同时开放给四方、前海等厂家的实有人口视图也只能关联电话融合表，不能使用电话信息
+7.统计结果导出慢:在数仓写好的脚本，跑出来的数据需要推送到14物理机，从14物理机挨个导出，后期客户找四方开展通过街道名称核查未做核酸人员明细信息及电话信息，项目组3个人同时执行脚本导出数据的速度和四方1个人用工具导出数据的时间相似；四方的脚本是项目组人员配合编写
+8.核酸流程跑数任务执行时间太长:核酸目前每次30分钟的调度会抽取前两天的数据，每次调度的跑数时间25分钟，客户妃妃找太极尧斌优化节点脚本，抽数节点脚本写的有问题，优化后，同时将抽取时间周期改成了前12小时的数据，时间降到17分钟左右，将核酸的调度改成了每20分钟跑一次，一个脚本修改缩短6到7分钟
+9.每天晚上跑的全量任务不能随时停止，再启动:目前最重要的核酸跑数，由于疫情发生，核酸近一天会有大量数据，全量任务晚上12点到凌晨8点会有大量跑数任务，影响核酸跑数，但是紧急时刻，可以批量停掉任务，但是会出现无法批量启动这批全量任务，项目组人员不能直接停掉，导致核酸数据运行受到影响，积压调度
+
+
+
+一、给到时空、四方的视图表有
+LQGSM.phone_temp_rk_0813_mk_view 电话表
+LQGSM.DM_RKK_YQFMYMBQB_VIEW 疫苗视图表
+LQGSM.DM_YQ_HSJCJG_view  核酸结果表_没有关联实有人口
+LQGSM.dm_rkk_syrkkb_tjt_VIEW 实有人口表
+LQGSM.DM_RKK_SYRKFYQK_1_view 核酸关联实有人口
+LQGSM.DM_RKK_SYRK_view   实有人口表_永兴元人口
+
+二、现在他们常用的视图为
+LQGSM.phone_temp_rk_0813_mk_view 电话表
+LQGSM.DM_RKK_SYRKFYQK_1_view 核酸关联实有人口
+LQGSM.dm_rkk_syrkkb_tjt_VIEW 实有人口表
+
+在大数据平台上，查询这两张表dm_yq_hsjcjg_incre_lsqlb【没有关联实有人口】和dm_rkk_syrkfyqk_lsql_bqb【以核酸为主表，关联实有人口】的数据都是一样的，47602801【如果不一样，需要跑全量流程，跑全量流程会影响增量流程？】
+
+5张核酸增量来源表，抽数时间从抽前两天的数据，改成抽最近12个小时的数据
+调试时间改为 每20分钟 实时更新，
+
+三、交接
+1、dm_rkk_syrkkb_tjt 实有人口表，需要更新电话号码的字段，用LQGSM.phone_temp_rk_0813_mk 电话表更新
+
+
+四、查出核酸检测结果及没有出核酸结果的人数
+select count(1),jcjieguo from (                     
+SELECT *
+from dm_rkk_syrkkb_tjt a -- yxx='有效'  and length(zjhm) in (9,10,11,15,18) and jdmc is not null
+left join dm_rkk_syrkfyqk_lsql_bqb b
+on trim(a.zjhm)=trim(b.zjhm)
+and substr(b.hsjcsj,1,10)>='2022-01-07' ) group by jcjieguo;--69247
+
+五、查出已经做了核酸的实有人口及没有做核酸的实有人口
+select count(1),substr(hsjcsj,1,10) from (                     
+SELECT *
+from dm_rkk_syrkkb_tjt a -- yxx='有效'  and length(zjhm) in (9,10,11,15,18) and jdmc is not null
+left join dm_rkk_syrkfyqk_lsql_bqb b
+on trim(a.zjhm)=trim(b.zjhm)
+and substr(b.hsjcsj,1,10)>='2022-01-07' ) group by substr(hsjcsj,1,10);--69247
+
+
+六、等调度完成后，需要同步查询一下，在14物理机查询相应的sql
+select count(1),jcjieguo from (                     
+SELECT *
+from dm_rkk_syrkkb_tjt a -- yxx='有效'  and length(zjhm) in (9,10,11,15,18) and jdmc is not null
+left join DM_RKK_SYRKFYQK_1 b
+on trim(a.zjhm)=trim(b.zjhm)
+and substr(b.hsjcsj,1,10)>='2022-01-07' ) group by jcjieguo;--69247
+
+select count(1),substr(hsjcsj,1,10) from (                     
+SELECT *
+from dm_rkk_syrkkb_tjt a -- yxx='有效'  and length(zjhm) in (9,10,11,15,18) and jdmc is not null
+left join DM_RKK_SYRKFYQK_1 b
+on trim(a.zjhm)=trim(b.zjhm)
+and substr(b.hsjcsj,1,10)>='2022-01-07' ) group by substr(hsjcsj,1,10);--69247
+
+查出的结果，记录到相应的excel，新增行，对同一天的数据要执行合并单元格，表格带有公式，实有总人口不需要改，注意表格美观性和边界线；
+
+
+七、14物理机表空间不足
+
+--先在14物理机管理员的帐号上，执行这语句，查看表空间占用率
+ SELECT UPPER(F.TABLESPACE_NAME) "表空间名",
+       D.TOT_GROOTTE_MB "表空间大小(M) ",
+       D.TOT_GROOTTE_MB - F.TOTAL_BYTES "已使用空间(M) ",
+       TO_CHAR(ROUND((D.TOT_GROOTTE_MB - F.TOTAL_BYTES) / D.TOT_GROOTTE_MB * 100,
+                     2),
+               '990.99') "使用比",
+       F.TOTAL_BYTES "空闲空间(M) ",
+       F.MAX_BYTES "最大块(M) "
+  FROM (SELECT TABLESPACE_NAME,
+               ROUND(SUM(BYTES) / (1024 * 1024), 2) TOTAL_BYTES,
+               ROUND(MAX(BYTES) / (1024 * 1024), 2) MAX_BYTES
+          FROM SYS.DBA_FREE_SPACE
+         GROUP BY TABLESPACE_NAME) F,
+       (SELECT DD.TABLESPACE_NAME,
+               ROUND(SUM(DD.BYTES) / (1024 * 1024), 2) TOT_GROOTTE_MB
+          FROM SYS.DBA_DATA_FILES DD
+         GROUP BY DD.TABLESPACE_NAME) D
+ WHERE D.TABLESPACE_NAME = F.TABLESPACE_NAME
+ ORDER BY 4 DESC;
+
+----当表空间不足时，执行以下语句
+ALTER TABLESPACE USERS ADD DATAFILE '/u01/oradata/orcl/orcl/users17.dbf' SIZE 24G AUTOEXTEND ON NEXT 1G MAXSIZE 30g;
+ALTER TABLESPACE USERS ADD DATAFILE '/u01/oradata/orcl/orcl/users18.dbf' SIZE 24G AUTOEXTEND ON NEXT 1G MAXSIZE 30g;
+
+八、现在核酸提供出去的，只有DM_RKK_SYRKFYQK_1（核酸结果表_实有人口）、DM_YQ_HSJCJG（核酸结果表_没有关联实有人口），且这两张表
+的数据是最近两个月的数据，核酸调度优化可以考虑把全量推数任务先停掉。
+
+--DM_RKK_SYRKFYQK_1和DM_YQ_HSJCJG，这两张表的采样时间从2022-01-07之后，两张表的数量应该为一样，差几张条，没有啥关系
+SELECT COUNT(1) FROM  DM_RKK_SYRKFYQK_1 WHERE substr(hsjcsj,1,10)>='2022-01-07'
+UNION ALL 
+SELECT COUNT(1) FROM  dm_yq_hsjcjg WHERE substr(collection_time,1,10)>='2022-01-07'
+
+
+九、查询某个街道未做核酸人员列表
+SELECT
+a.zjhm `证件号码`,
+a.xm `姓名`,
+nvl(c.phone,b.byzd2) `联系方式`,
+nvl(b.jdmc,a.jdmc) `街道名称`,
+nvl(b.sqmc,a.sqmc) `社区名称`,
+nvl(b.wgmc,a.wgmc) `网格名称`,
+nvl(b.syrkjzdz,a.syrkjzdz) `居住房屋地址`
+from dm_rkk_syrkkb_tjt a -- yxx='有效'  and length(zjhm) in (9,10,11,15,18) and jdmc is not null
+left join dm_rkk_syrkfyqk_lsql_bqb b
+on trim(a.zjhm)=trim(b.zjhm)
+and substr(b.hsjcsj,1,10)>='2022-01-07' 
+left join phone_temp_rk_0813_mk c
+on trim(a.zjhm)=trim(c.cardno)
+WHERE b.hsjcsj is null 
+and nvl(b.jdmc,a.jdmc) = '园山'
+
+
+
+
+
+
+
