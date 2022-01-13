@@ -1,0 +1,110 @@
+Scala版Flink程序编写
+
+本项目使用的Flink版本为最新版本，也就是1.11.0。现在提供maven项目的配置文件。
+
+使用Intellij IDEA创建一个Maven新项目
+勾选Create from archetype，然后点击Add Archetype按钮
+GroupId中输入org.apache.flink，ArtifactId中输入flink-quickstart-scala，Version中输入1.11.0，然后点击OK
+点击向右箭头，出现下拉列表，选中flink-quickstart-scala:1.11.0，点击Next
+Name中输入FlinkTutorial，GroupId中输入com.atguigu，ArtifactId中输入FlinkTutorial，点击Next
+最好使用IDEA默认的Maven工具 Bundled（Maven 3），点击Finish，等待一会儿，项目就创建好了
+
+
+最新安装
+1、使用Intellij IDEA创建一个Maven新项目
+2、勾选Create from archetype，然后点击Add Archetype按钮
+3、GroupId中输入org.apache.flink
+4、ArtifactId中输入flink-quickstart-scala
+5、Version中输入1.10.0
+6、或直接选择flink-quickstart-scala:1.10.0
+7、输出文件名称
+8、Groupld:输入 com.chenbk
+9、Version 去掉-SNAPSHOT
+10、Maven home directory 要选择:Bundled（Maven 3)
+11、点击完成 就可以创建项目了
+
+
+
+第一步: 下载最新的 IDEA 2021.3.1 版本安装包
+我们先从 IDEA 官网下载 IDEA 2021.3.1 版本的安装包，下载链接如下
+
+https://www.jetbrains.com/idea/download/
+
+第二步: 先卸载老版本的 IDEA
+前言 为了重装，先彻底删除
+
+ 
+
+第1步 在访达中将idea移到垃圾桶
+
+ 
+
+第2步 删除缓存
+
+在iTerm中先后输入如下语句，打开相应文件夹，删除对应文件
+
+
+kang@kangdeMacBook-Pro JetBrains % cd /Users/kang/Library/Caches/JetBrains
+kang@kangdeMacBook-Pro JetBrains % open .
+
+把IntelliJIdea2021.2文件，移到垃圾桶
+
+
+
+第3步 删除应用的一些信息
+
+在iTerm中先后输入如下语句，打开相应文件夹，删除对应文件
+
+kang@kangdeMacBook-Pro Application Support % cd /Users/kang/Library/Application\ Support/JetBrains 
+kang@kangdeMacBook-Pro JetBrains % open .
+
+ 把IntelliJIdea2021.2文件，移到垃圾桶
+
+
+第三步: 开始安装 IDEA 2021.3.1 版本
+
+第四步: 开始激活
+
+等待 IDEA 2021.3.1 运行, 中间会先弹出一个注册框，我们勾选 Evaluate for free, 点击 Evaluate， 先试用30天:
+
+注意，如果没有弹出上面的界面，可先执行 reset_script 文件夹中的重置试用期脚本，脚本网盘地址下文可获取，先进到 IDEA 里面
+
+打开该文件夹后，有对应系统的执行脚本，执行即可
+windows系统:reset_jetbrains_eval_windows.vbs
+linux/mac系统:reset_jetbrains_eval_mac_linux.sh
+
+最新的 IDEA 2021.3.1 版本 IDEA 界面发生了变化，取消了直接试用 30 天的按钮，需要我们先注册一个 JetBrains（这里我用的 GitHub 账号注册的）
+
+如果点击注册 JetBrains 按钮后，网页打不开，无法访问，原因是因为他在 hosts 文件中添加了东西，删除还原回去就能正常访问了。
+
+
+第五步:清空 IDEA 以前使用过的激活方式【非常重要】
+如果你之前安装过 IDEA, 且手动为 IDEA 修改过 hosts 文件，那么添加的配置，记得要删除；引用过的补丁也要移除掉等, 不然可能会与本文提供的补丁有冲突，出现各种奇奇怪怪的问题。
+
+如果没有动过 hosts 文件，则不用管，继续走下面的步骤。
+
+第六步:引用破解补丁包
+
+注册好 JetBrains 账号后，登录打开 IDEA，准备引用破解补丁包
+
+依次点击左下角小齿轮-> Edit Custom VM Options 菜单
+
+增加如何内容
+# custom IntelliJ IDEA VM options (expand/override 'bin/idea.vmoptions')
+
+-javaagent:/Users/bd/ja-netfilter/ja-netfilter.jar
+
+# 我这边将补丁文件夹放置在了/Users/下，可以根据自己实际的位置进行修改。注意：路径中不要含有中文，可能会导致 IDEA 打不开
+-javaagent:/Users/bd/ja-netfilter/ja-netfilter.jar
+
+保存
+
+第八步:查看是否激活成功
+
+点击菜单 Help -> Register:
+
+可以看到已经成功激活到 9999 年，证明已经成功
+
+参考文献:https://www.exception.site/essay/how-to-free-use-intellij-idea-2019-3
+
+
