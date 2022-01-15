@@ -1,0 +1,49 @@
+Sub genCreateTableSql()
+    Dim conn As Object
+    Dim connStr As String
+    Dim myDBQ As String, my As String
+    Dim sql As String, outSQLFile As String
+    Dim tbName As String
+    Dim i As Integer, row As Integer, col As Integer
+    Dim tbNames, tbFields
+    
+    Set conn = CreateObject("adodb.connection")
+    cnnStr = "provider=microsoft.ace.OLEDB.12.0;Data Source=" & ThisWorkbook.FullName & ";Extended Properties='Excel 12.0;IMEX=1;HDR=YES'"
+    conn.Open cnnStr
+    tbNames = conn.Execute("select distinct [表名称] from [Sheet1$]").getrows()
+    Sheets("Sheet2").Range("a1").ClearContents
+    outSQLFile = ""
+    For i = 0 To UBound(tbNames, 2)
+        tbFields = conn.Execute("select [表中文名称],[字段名称],[字段中文名称],[字段类型] from [Sheet1$] where [表名称]='" & tbNames(0, i) & "'").getrows()
+        tbName = UCase(tbNames(0, i))
+        'table
+
+        outSQLFile = outSQLFile + "DROP TABLE " & tbName & ";" + vbCrLf + "CREATE TABLE " & tbName & "(" + vbCrLf
+            For j = 0 To UBound(tbFields, 2)
+                If LCase(tbFields(3, j)) = "string" Then
+                    '最后一个逗号
+                    If j < UBound(tbFields, 2) Then
+                        outSQLFile = outSQLFile + UCase(tbFields(1, j)) & " VARCHAR2(255 CHAR)," + vbCrLf
+                    Else
+                        outSQLFile = outSQLFile + UCase(tbFields(1, j)) & " VARCHAR2(255 CHAR)" & ");" + vbCrLf
+                    End If
+                Else
+                    If j < UBound(tbFields, 2) Then
+                       outSQLFile = outSQLFile + UCase(tbFields(1, j)) & " " & UCase(tbFields(3, j)) & "," + vbCrLf
+                    Else
+                        outSQLFile = outSQLFile + UCase(tbFields(1, j)) & " " & UCase(tbFields(3, j)) & ");" + vbCrLf
+                    End If
+                End If
+            Next
+            outSQLFile = outSQLFile + vbCrLf
+            
+            'comment
+            outSQLFile = outSQLFile + "COMMENT ON TABLE " & tbName & " IS '" & tbFields(0, 0) & "';" + vbCrLf
+            For j = 0 To UBound(tbFields, 2)
+                outSQLFile = outSQLFile + "COMMENT ON COLUMN " & tbName & "." & UCase(tbFields(1, j)) & " IS '" & tbFields(2, j) & "';" + vbCrLf
+            Next
+            outSQLFile = outSQLFile + vbCrLf
+    Next
+    Sheets("Sheet2").Range("a1") = outSQLFile
+    Set conn = Nothing
+End Sub
