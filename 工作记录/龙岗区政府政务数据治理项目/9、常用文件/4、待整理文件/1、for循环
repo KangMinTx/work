@@ -1,0 +1,56 @@
+object for_test {
+  def main(args: Array[String]): Unit = {
+    println(1 to 10) //打印1到10
+    println(1 until 10) //打印1到9
+    //步长
+    println(1 to(10, 2)) //打印1，3，5，7，9
+
+    //for循环
+    for (i <- 1 to 10){
+      println(i)
+    }
+    //for循环 加条件
+    for(j <- 1 to 10;if j>5){ //只要大于5的数，6，7，8，9，10
+      println(j)
+    }
+    //for循环 加条件
+    for(l <- 1 to 10;if l>5; if l%2==0){ //只要大于5的数，且以被2除尽，6，8，10
+      println(l)
+    }
+    println()
+    //另一种方式
+    for (k<- 1 to 10){
+      if (k>5 &&k%2==0){
+        println(k)
+      }
+    }
+
+    //双重for 循环
+    for (q<- 1 to 10;w<-1 to 10){
+      println(q + ":" +w)
+    }
+    //另一种方式
+    for(e<- 1 to 10){
+      for (r<-1 to 10){
+        println(e + ":" +r)
+      }
+    }
+    //99乗法表
+    for (t<-1 to 9;y<-1 to t){
+      print(y + "*" + t + "=" + t * y + "\t")
+      if(t==y)
+        println()
+    }
+//将for中的符合条件的元素通过yield关键字，返回成一个集合
+    val list=for (p<-1 to 10;if(p>5)) yield p
+    for (n <-list){
+      println(n)
+    }
+    //案例2
+    val list1=for (p<-1 to 10;if(p>5)) yield p%2
+    for (c<-list1){
+      println(c)
+    }
+  }
+
+}

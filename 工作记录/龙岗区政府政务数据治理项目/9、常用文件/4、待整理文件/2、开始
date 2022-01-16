@@ -1,0 +1,80 @@
+/*
+1、变量、常量的声明 var 修饰变量，val 修饰常量
+ val=2  常量
+ var a=2  变量
+  a=3
+ */
+object test{
+  def main(args: Array[String]): Unit = {
+    /*
+    常量
+     */
+ val a=2
+    println(a)
+    /*
+    变量
+     */
+    var b=3
+    b=4
+    println(b)
+
+  }
+}
+/*
+2、声明类，class 默认实现了getter setter方法
+ */
+class Person{
+  val name="zs"
+  val age="35"
+}
+
+/*
+3、调用类，new出来
+ */
+object test1{
+  def main(args: Array[String]): Unit = {
+    val person=new Person //调用
+    println(person) //打印出来，但没有把其属性调用出来
+    println(person.name+":"+person.age)//打印出来，并把把其属性调用出来
+
+  }
+}
+
+/*
+ 4、构造器的方式：class 中如果有参数的传入，那么这个构造器就是这个类的默认构造器
+ */
+class Person1(xname:String,xage:Int){ //构造式
+  val name=xname
+  val age=xage
+}
+
+object test2{
+  def main(args: Array[String]): Unit = {
+    val person1=new Person1("lisi",36)
+    println(person1.name+":"+person1.age)
+  }
+}
+
+
+/*
+5、重写构造器，必须调用类默认的构造器
+
+ */
+
+class Person2(xname:String,xage:Int){
+  val name=xname
+  val age=xage
+  var money=100
+  //重写构造器的方式 def this{}
+  def this (xname:String,xage:Int,xmoney:Int){
+    this (xname,xage)
+    money=xmoney
+  }
+}
+
+object test3{
+  def main(args: Array[String]): Unit = {
+    var person2=new Person2(xname = "ww",xage = 36,xmoney = 60)
+    println(person2.name + ":" + person2.age + ":" + person2.money)
+  }
+}
