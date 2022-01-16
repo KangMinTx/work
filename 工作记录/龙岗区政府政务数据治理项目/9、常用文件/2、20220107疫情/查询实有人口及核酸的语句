@@ -1,0 +1,71 @@
+--实有人口数（包含暂离和分不到街道的）：4733877
+select count(1),count(DISTINCT zjhm) from 
+(select zjhm,xm,xgsj from(
+select zjhm,xm, if(substr(xgsj,1,19)>substr(cjsj,1,19),substr(xgsj,1,19),substr(cjsj,1,19))  xgsj,
+row_number()over(partition by zjhm order by xm nulls last,substr(xgsj,1,19)) rn from
+  (select *,row_number()over(partition by zjhm,xm order by xm nulls last,substr(xgsj,1,19) desc,substr(cjsj,1,19) desc) rn 
+from dm_rkk_syrkkb_temp ) 
+where length(zjhm) in (9,10,11,15,18) --and yxx='有效'
+and rn=1)where rn=1) a ;
+
+
+---实有人口数（暂离人数）：223440
+select count(1),count(DISTINCT zjhm) from 
+(select zjhm,xm,xgsj from(
+select zjhm,xm, if(substr(xgsj,1,19)>substr(cjsj,1,19),substr(xgsj,1,19),substr(cjsj,1,19))  xgsj,
+row_number()over(partition by zjhm order by xm nulls last,substr(xgsj,1,19)) rn from
+  (select *,row_number()over(partition by zjhm,xm order by xm nulls last,substr(xgsj,1,19) desc,substr(cjsj,1,19) desc) rn 
+from dm_rkk_syrkkb_temp ) 
+where length(zjhm) in (9,10,11,15,18) and yxx='暂离'
+and rn=1)where rn=1) a ;
+
+
+
+
+--实有人口（包含暂离）已做核酸数：4061390
+select count(a.zjhm),count(DISTINCT a.zjhm) from 
+(select zjhm,xm,xgsj from(
+select zjhm,xm, if(substr(xgsj,1,19)>substr(cjsj,1,19),substr(xgsj,1,19),substr(cjsj,1,19))  xgsj,
+row_number()over(partition by zjhm order by xm nulls last,substr(xgsj,1,19)) rn from
+  (select *,row_number()over(partition by zjhm,xm order by xm nulls last,substr(xgsj,1,19) desc,substr(cjsj,1,19) desc) rn 
+from dm_rkk_syrkkb_temp ) 
+where length(zjhm) in (9,10,11,15,18) --and yxx='有效'
+and rn=1)where rn=1) a 
+left join 
+(select * from (
+select a.*,row_number()over(PARTITION by zjhm,xm order by hsjcsj desc) as rn from dm_rkk_syrkfyqk_lsql_bqb a 
+where  a.hsjcsj>='2022-01-07 00:00:00' )where rn=1) b
+on trim(a.zjhm)=trim(b.zjhm) and trim(a.xm)=trim(b.xm)
+where  b.zjhm is not null;
+
+
+
+----实有人口（包含暂离）未做核酸数：672489
+select count(a.zjhm),count(DISTINCT a.zjhm) from 
+(select zjhm,xm,xgsj from(
+select zjhm,xm, if(substr(xgsj,1,19)>substr(cjsj,1,19),substr(xgsj,1,19),substr(cjsj,1,19))  xgsj,
+row_number()over(partition by zjhm order by xm nulls last,substr(xgsj,1,19)) rn from
+  (select *,row_number()over(partition by zjhm,xm order by xm nulls last,substr(xgsj,1,19) desc,substr(cjsj,1,19) desc) rn 
+from dm_rkk_syrkkb_temp ) 
+where length(zjhm) in (9,10,11,15,18) --and yxx='有效'
+and rn=1)where rn=1) a 
+left join (select * from (
+select a.*,row_number()over(PARTITION by zjhm,xm order by hsjcsj desc) as rn from dm_rkk_syrkfyqk_lsql_bqb a 
+where  a.hsjcsj>='2022-01-07 00:00:00' )where rn=1) b
+on trim(a.zjhm)=trim(b.zjhm) and trim(a.xm)=trim(b.xm)
+where  b.zjhm is  null;
+
+
+
+----实有人口（暂离）未做核酸数：108456
+select count(a.zjhm),count(DISTINCT a.zjhm) from 
+(select zjhm,xm,xgsj from(
+select zjhm,xm, if(substr(xgsj,1,19)>substr(cjsj,1,19),substr(xgsj,1,19),substr(cjsj,1,19))  xgsj,
+row_number()over(partition by zjhm order by xm nulls last,substr(xgsj,1,19)) rn from
+  (select *,row_number()over(partition by zjhm,xm order by xm nulls last,substr(xgsj,1,19) desc,substr(cjsj,1,19) desc) rn 
+from dm_rkk_syrkkb_temp ) 
+where length(zjhm) in (9,10,11,15,18) and yxx='暂离'
+and rn=1)where rn=1) a 
+left join (select DISTINCT zjhm,xm from dm_rkk_syrkfyqk_lsql_bqb where where hsjcsj>='2022-01-07 00:00:00') B 
+on trim(a.zjhm)=trim(b.zjhm) and trim(a.xm)=trim(b.xm)
+where  b.zjhm is  null;
