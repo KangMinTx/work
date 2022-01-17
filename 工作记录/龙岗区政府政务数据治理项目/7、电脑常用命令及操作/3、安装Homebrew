@@ -5,6 +5,17 @@
 
 等待执行完成
 
+3、安装you-get 
+执行命令:brew install you-get
 
+4、安装ffmpeg
+执行命令:brew install ffmpeg 
+
+
+ brew search 查找
+ brew install 下载
+
+ you-get 可以下载视频
+ 
 苹果电脑 卸载脚本
 /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/HomebrewUninstall.sh)"
