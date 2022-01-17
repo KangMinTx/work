@@ -1,0 +1,39 @@
+
+/*
+ 4、构造器的方式：class 中如果有参数的传入，那么这个构造器就是这个类的默认构造器
+ */
+class Person1(xname:String,xage:Int){ //构造式
+  val name=xname
+  val age=xage
+}
+
+object test2{
+  def main(args: Array[String]): Unit = {
+    val person1=new Person1("lisi",36)
+    println(person1.name+":"+person1.age)
+  }
+}
+
+
+/*
+5、重写构造器，必须调用类默认的构造器
+
+ */
+
+class Person2(xname:String,xage:Int){
+  val name=xname
+  val age=xage
+  var money=100
+  //重写构造器的方式 def this{}
+  def this (xname:String,xage:Int,xmoney:Int){
+    this (xname,xage)
+    money=xmoney
+  }
+}
+
+object test3{
+  def main(args: Array[String]): Unit = {
+    var person2=new Person2(xname = "ww",xage = 36,xmoney = 60)
+    println(person2.name + ":" + person2.age + ":" + person2.money)
+  }
+}

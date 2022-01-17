@@ -1,0 +1,57 @@
+/*
+  1.return关键字，可以省略！scala自动将函数的最后一行作为返回值
+  2、{}只有一句时，可以省略大括号
+ */
+object ifutuion {
+  def main(args: Array[String]): Unit = {
+    //自定义一个求最大值的方法，比较两个参数的大小
+    def getMax(a:Int,b:Int)={
+      if (a>b){
+        a
+      }
+      else {
+        b
+      }
+    }
+    //接收一下，这个方法
+    val result =getMax(1,20)
+    println(result)
+
+  }
+}
+
+//省略
+object ifutuion2 {
+  def main(args: Array[String]): Unit = {
+    //自定义一个求最大值的方法，比较两个参数的大小
+    def getMax(a:Int,b:Int)={
+      if (a>b)
+        a
+      else
+        b
+    }
+    //接收一下，这个方法
+    val result =getMax(1,20)
+    println(result)
+
+  }
+}
+
+
+object ifutuion3 {
+  def main(args: Array[String]): Unit = {
+    //自定义一个求最大值的方法，比较两个参数的大小
+    def getMax(a:Int,b:Int)={
+      if (a>b)
+        a
+      else {
+        b
+        123 //在这里返回的是123，最后一行作为返回值
+      }
+    }
+    //接收一下，这个方法
+    val result =getMax(1,20)
+    println(result)
+
+  }
+}

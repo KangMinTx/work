@@ -1,0 +1,19 @@
+/*
+2、声明类，class 默认实现了getter setter方法
+ */
+class Person{
+  val name="zs"
+  val age="35"
+}
+
+/*
+3、调用类，new出来
+ */
+object test1{
+  def main(args: Array[String]): Unit = {
+    val person=new Person //调用
+    println(person) //打印出来，但没有把其属性调用出来
+    println(person.name+":"+person.age)//打印出来，并把把其属性调用出来
+
+  }
+}

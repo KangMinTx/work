@@ -1,0 +1,22 @@
+/*
+1、变量、常量的声明 var 修饰变量，val 修饰常量
+ val=2  常量
+ var a=2  变量
+  a=3
+ */
+object test{
+  def main(args: Array[String]): Unit = {
+    /*
+    常量
+     */
+ val a=2
+    println(a)
+    /*
+    变量
+     */
+    var b=3
+    b=4
+    println(b)
+
+  }
+}

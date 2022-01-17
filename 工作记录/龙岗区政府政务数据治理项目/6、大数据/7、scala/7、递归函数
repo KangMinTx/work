@@ -1,0 +1,64 @@
+object ifutuion4 {
+  def main(args: Array[String]): Unit = {
+  //1、递归函数，关键点在于递归的定义，终止条件（栈溢出）
+ //   2、递归函数不能省略方法的返回类型，省略就会报错
+    def f1(num:Int):Int={
+      if (num==1)
+     return num //需要加，return,否则报错
+        num*f1(num-1) //结果720
+
+
+    }
+    def f2(num:Int):Int= {
+      if (num == 1)
+         num //需要加，return,否则报错，也可以用省略return,用else
+      else
+      num * f1(num - 1) //结果720
+
+
+    }
+
+    println(f2(num = 6))
+  }
+}
+
+
+
+object ifutuion5 {
+  def main(args: Array[String]): Unit = {
+    /**
+     * 包含参数默认值的函数
+     */
+    def f3(a:Int=10,b:Int=20)={
+      a+b
+    }
+
+    println(f3()) //30
+    println(f3(60, 70)) //130
+    println(f3(200)) //220
+    println(f3(b = 300)) //310
+  }
+}
+
+
+
+/**
+ * 可变参数个数函数,传入的参数，就是不定长数组
+ */
+
+object ifutuion6 {
+  def main(args: Array[String]): Unit = {
+
+    def getsum(m:Int*)={
+      var sum=0
+      for (i <-m ){
+        sum +=i
+      }
+      sum
+
+    }
+
+    println(getsum(1, 2, 3, 4, 5, 6))
+
+  }
+}

@@ -1,0 +1,18 @@
+/**
+ *嵌套函数
+ * 函数是里面写其他函数
+ */
+
+object ifutuion8 {
+  def main(args: Array[String]): Unit = {
+    def f10(a:Int,b:Int): Unit ={
+      def f11(c:Int): Unit ={
+        println((a + b) * c)
+      }
+
+      println(f11(10))
+    }
+    f10(1,3)
+
+  }
+}

@@ -1,0 +1,18 @@
+object gjhs {
+  def main(args: Array[String]): Unit = {
+    /**
+     * 高阶函数
+     * 1、函数的参数是函数
+     * 2、函数的返回类型是函数
+     * 3、两者结合
+     */
+    def f1(a:Int,f:(Int,Int)=>Int) ={
+      val result=f(1,2)
+      a * result
+    }
+    def f2(a:Int,b:Int):Int= a+b
+    f1(5,f2)//f2(1,2) //无输出
+    println(f1(5, f2))//输出 15
+  }
+
+}
