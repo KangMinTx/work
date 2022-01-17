@@ -1,0 +1,10 @@
+1、执行命令
+/bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/Homebrew.sh)"
+
+2、先择2
+
+等待执行完成
+
+
+苹果电脑 卸载脚本
+/bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/HomebrewUninstall.sh)"
