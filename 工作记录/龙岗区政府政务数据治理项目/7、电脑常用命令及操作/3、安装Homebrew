@@ -17,5 +17,10 @@
 
  you-get 可以下载视频
  
+ brew list 查看安装的软件
+
+ brew uninstall 卸载软件
+
+Homebrew 的位置在，/opt/homebrew
 苹果电脑 卸载脚本
 /bin/zsh -c "$(curl -fsSL https://gitee.com/cunkai/HomebrewCN/raw/master/HomebrewUninstall.sh)"
