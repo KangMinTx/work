@@ -1,0 +1,31 @@
+/*
+ * 要想看占用资源的SQL top10之类的数据
+ */
+SELECT a.sql_text,b.username,a.disk_reads AS "磁盘读取",a.EXECUTIONS,a.executions exec,a.disk_reads/decode(a.executions,0,1,a.executions) rds_exec_ratio
+FROM v$sqlarea a,dba_users b
+WHERE  a.parsing_user_id=b.user_id AND  a.disk_reads > 100000
+order by a.disk_reads DESC;
+
+/*
+ * 查看各用户的各种资源占用，可以运行下面的SQL
+ */
+
+select se.SID, ses.username, ses.osuser,n.NAME, se.VALUE
+from v$statname n, v$sesstat se, v$session ses
+where n.statistic# = se.statistic# AND se.sid = ses.sid AND ses.username is not NULL
+AND n.name in ('CPU used by this session','db block gets',
+'consistent gets',
+'physical reads',
+'free buffer requested',
+'table scans (long tables)',
+'table scan rows gotten',
+'sorts (memory)',
+'sorts (disk)',
+'sorts (rows)',
+'session uga memory max' ,
+'session pga memory max')
+order by sid, n.statistic#;
+
+
+
+
